@@ -1,0 +1,71 @@
+{
+  "name": "openclaw-simplex",
+  "version": "0.1.0",
+  "description": "SimpleX channel plugin for OpenClaw",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup index.ts --format esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run test && npm run typecheck && npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/qrcode": "^1.5.5",
+    "openclaw": "^2026.2.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "channel": {
+      "id": "simplex",
+      "label": "SimpleX",
+      "selectionLabel": "SimpleX (CLI)",
+      "docsPath": "/channels/simplex",
+      "docsLabel": "simplex",
+      "blurb": "SimpleX Chat over CLI WebSocket API.",
+      "order": 95,
+      "quickstartAllowFrom": true
+    },
+    "install": {
+      "npmSpec": "openclaw-simplex",
+      "defaultChoice": "npm"
+    }
+  }
+}
