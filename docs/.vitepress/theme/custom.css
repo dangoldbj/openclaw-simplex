@@ -1,0 +1,17 @@
+:root {
+  --vp-layout-max-width: 1680px;
+}
+
+@media (min-width: 1440px) {
+  .VPDoc.has-aside .content-container {
+    max-width: 900px;
+  }
+
+  .VPDoc:not(.has-aside) .content-container {
+    max-width: 980px;
+  }
+}
+
+.vp-doc img {
+  border-radius: 10px;
+}

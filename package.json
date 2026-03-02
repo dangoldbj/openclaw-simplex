@@ -27,12 +27,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "dist",
-    "openclaw.plugin.json",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsup index.ts --format esm --dts --clean",
     "docs:dev": "vitepress dev docs",
@@ -68,9 +63,7 @@
     "vitest": "^3.2.4"
   },
   "openclaw": {
-    "extensions": [
-      "./dist/index.js"
-    ],
+    "extensions": ["./dist/index.js"],
     "channel": {
       "id": "simplex",
       "label": "SimpleX",

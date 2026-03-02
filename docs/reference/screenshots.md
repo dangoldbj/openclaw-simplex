@@ -1,26 +1,19 @@
 # Screenshots
 
-Use this page to show the real setup and operator flow.
+This page shows the SimpleX invite flow in OpenClaw Control UI.
 
-## Where to place images
+## Control UI invite flow
 
-Put image files in:
+1. Open `Control -> Channels -> SimpleX`.
 
-`docs/public/images/`
+Before invite generation:
 
-## Example embeds
+![SimpleX channel card before invite generation](/images/control-ui.png)
 
-```md
-![Plugin install in terminal](/images/plugin-install-terminal.png)
-![SimpleX channel config](/images/simplex-config.png)
-![Gateway method response](/images/simplex-invite-response.png)
-```
+2. Click `Create 1-time Link`.
 
-## Suggested screenshots to include
+After link generation:
 
-- Plugin installation (`openclaw plugins install ...`)
-- Control UI channel settings for `simplex`
-- Managed mode runtime status
-- External mode status/health
-- Invite create/list/revoke responses
-- Example inbound/outbound message flow
+![SimpleX one-time link generated in Control UI](/images/1-time-link-generation.png)
+
+3. Click `Create Address` when you want a reusable address link.

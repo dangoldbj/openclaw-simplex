@@ -6,11 +6,50 @@ SimpleX channel plugin for OpenClaw.
 
 SimpleX is a strong fit when you want a messaging channel with privacy-first defaults and self-hostable infrastructure options. This plugin lets OpenClaw use SimpleX as a production message channel without custom glue code.
 
+SimpleX channel here is backed by local `simplex-chat` CLI and supports send/receive (text/media), pairing + allowlist, message actions, invite link + QR generation, onboarding/status, and Control UI config parity.
+
+Why this matters:
+
+- privacy-preserving, end-to-end encrypted option in the channel set
+- local runtime via official `simplex-chat` (no hosted bot service)
+- no phone number requirement
+- no third-party bot API dependency
+- avoids unofficial CLI dependency chains
+- low risk to other channels (opt-in and isolated unless configured)
+
 ## Install
+
+Package:
+
+`npm`
 
 ```bash
 npm i @dangoldbj/openclaw-simplex
+```
+
+`pnpm`
+
+```bash
+pnpm add @dangoldbj/openclaw-simplex
+```
+
+`yarn`
+
+```bash
+yarn add @dangoldbj/openclaw-simplex
+```
+
+OpenClaw plugin setup:
+
+Install plugin in OpenClaw:
+
+```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
+```
+
+Enable plugin:
+
+```bash
 openclaw plugins enable simplex
 ```
 
@@ -21,6 +60,39 @@ openclaw plugins enable simplex
 3. Inbound events are normalized into OpenClaw message context.
 4. OpenClaw runs policy checks (`dmPolicy`, `allowFrom`, group policy).
 5. Replies/actions are sent back through SimpleX.
+
+## Architecture
+
+```text
+            +-------------------------+
+            |        OpenClaw         |
+            |  (agent + router/core)  |
+            +------------+------------+
+                         |
+                         | channel plugin API
+                         v
+            +-------------------------+
+            | @dangoldbj/openclaw-    |
+            |        simplex          |
+            | - inbound monitor       |
+            | - outbound actions      |
+            | - policy enforcement    |
+            | - account/runtime state |
+            +------------+------------+
+                         |
+                         | WebSocket API
+                         v
+            +-------------------------+
+            |   SimpleX CLI Runtime   |
+            |      (simplex-chat)     |
+            +------------+------------+
+                         |
+                         | network
+                         v
+            +-------------------------+
+            |      SimpleX Network    |
+            +-------------------------+
+```
 
 ## External vs Managed
 
@@ -67,7 +139,6 @@ External mode example:
 
 - Channel-level sender gating: `dmPolicy`, `allowFrom`, `groupPolicy`, `groupAllowFrom`.
 - Pairing mode support for explicit sender approval.
-- No hard dependency on public cloud relay for your OpenClaw runtime.
 - You control process/network boundaries in managed vs external mode.
 
 ## Example Commands
@@ -92,46 +163,14 @@ Gateway invite methods exposed by this plugin:
 
 ## Screenshots
 
-Store screenshots in `docs/public/images/` and reference as:
+Control UI channel view:
 
-```md
-![SimpleX setup](/images/simplex-setup.png)
-```
+![SimpleX channel card before invite generation](./docs/public/images/control-ui.png)
 
-## What It Adds
+See full invite flow screenshots:
 
-- Channel id: `simplex`
-- Outbound text/media delivery through SimpleX CLI WS API
-- Inbound monitor + account runtime tracking
-- Directory resolution helpers
-- Invite gateway methods
+- https://dangoldbj.github.io/openclaw-simplex/reference/screenshots
 
-## Development
+## Full Docs
 
-```bash
-pnpm install
-pnpm run test
-pnpm run typecheck
-pnpm run docs:build
-pnpm run build
-```
-
-## Docs
-
-- Local preview: `pnpm run docs:dev`
-- Build static docs: `pnpm run docs:build`
-- Published via GitHub Pages workflow: `.github/workflows/docs.yml`
-- Docs entrypoint: `docs/index.md`
-
-## Publish
-
-```bash
-pnpm publish --access public --provenance
-```
-
-## GitHub Actions
-
-- `CI` workflow runs test, typecheck, and build on pushes/PRs.
-- `Publish` workflow publishes to npm on release publish, `v*` tags, or manual trigger.
-- `Docs` workflow publishes VitePress docs to GitHub Pages.
-- Add repo secret `NPM_TOKEN` for publish workflow.
+- https://dangoldbj.github.io/openclaw-simplex/

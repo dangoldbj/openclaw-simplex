@@ -2,14 +2,35 @@
 
 ## 1. Install package
 
+`npm`
+
 ```bash
 npm i @dangoldbj/openclaw-simplex
 ```
 
+`pnpm`
+
+```bash
+pnpm add @dangoldbj/openclaw-simplex
+```
+
+`yarn`
+
+```bash
+yarn add @dangoldbj/openclaw-simplex
+```
+
 ## 2. Register with OpenClaw
+
+Install plugin in OpenClaw:
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
+```
+
+Enable plugin:
+
+```bash
 openclaw plugins enable simplex
 ```
 
@@ -41,3 +62,10 @@ Restart OpenClaw so plugin/channel registry reloads.
 openclaw plugins list
 openclaw plugins info simplex
 ```
+
+In Control UI, open `Control -> Channels -> SimpleX` and test:
+
+- `Create 1-time Link`
+- `Create Address`
+
+Screenshot walkthrough: [Screenshots](/reference/screenshots)
