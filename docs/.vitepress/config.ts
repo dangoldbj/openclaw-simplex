@@ -19,6 +19,7 @@ export default defineConfig({
           { text: "Why SimpleX", link: "/guide/why-simplex" },
           { text: "Getting Started", link: "/guide/getting-started" },
           { text: "How It Works", link: "/guide/how-it-works" },
+          { text: "Architecture", link: "/guide/architecture" },
           { text: "External vs Managed", link: "/guide/external-vs-managed" },
           { text: "Security Model", link: "/guide/security-model" },
           { text: "Troubleshooting", link: "/guide/troubleshooting" },
