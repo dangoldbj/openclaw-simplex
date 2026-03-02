@@ -1,5 +1,7 @@
 # Setup
 
+Prerequisite: install `simplex-chat` first (see [Getting Started](/guide/getting-started)).
+
 ## Managed mode
 
 Use when OpenClaw should start and manage `simplex-chat`.
