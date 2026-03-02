@@ -109,24 +109,24 @@ Store screenshots in `docs/public/images/` and reference as:
 ## Development
 
 ```bash
-npm install
-npm run test
-npm run typecheck
-npm run docs:build
-npm run build
+pnpm install
+pnpm run test
+pnpm run typecheck
+pnpm run docs:build
+pnpm run build
 ```
 
 ## Docs
 
-- Local preview: `npm run docs:dev`
-- Build static docs: `npm run docs:build`
+- Local preview: `pnpm run docs:dev`
+- Build static docs: `pnpm run docs:build`
 - Published via GitHub Pages workflow: `.github/workflows/docs.yml`
 - Docs entrypoint: `docs/index.md`
 
 ## Publish
 
 ```bash
-npm publish --access public --provenance
+pnpm publish --access public --provenance
 ```
 
 ## GitHub Actions
