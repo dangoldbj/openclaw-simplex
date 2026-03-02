@@ -165,7 +165,7 @@ Gateway invite methods exposed by this plugin:
 
 Control UI channel view:
 
-![SimpleX channel card before invite generation](./docs/public/images/simplex-control-before-invite.png)
+![SimpleX channel card before invite generation](./docs/public/images/control-ui.png)
 
 See full invite flow screenshots:
 
