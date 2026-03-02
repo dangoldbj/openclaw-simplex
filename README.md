@@ -163,11 +163,13 @@ Gateway invite methods exposed by this plugin:
 
 ## Screenshots
 
-Store screenshots in `docs/public/images/` and reference as:
+Control UI channel view:
 
-```md
-![SimpleX setup](/images/simplex-setup.png)
-```
+![SimpleX channel card before invite generation](./docs/public/images/simplex-control-before-invite.png)
+
+See full invite flow screenshots:
+
+- https://dangoldbj.github.io/openclaw-simplex/reference/screenshots
 
 ## Full Docs
 

@@ -62,3 +62,10 @@ Restart OpenClaw so plugin/channel registry reloads.
 openclaw plugins list
 openclaw plugins info simplex
 ```
+
+In Control UI, open `Control -> Channels -> SimpleX` and test:
+
+- `Create 1-time Link`
+- `Create Address`
+
+Screenshot walkthrough: [Screenshots](/reference/screenshots)
