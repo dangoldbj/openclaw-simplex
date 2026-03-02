@@ -181,7 +181,7 @@ Control UI channel view:
 
 See full invite flow screenshots:
 
-- https://dangoldbj.github.io/openclaw-simplex/reference/screenshots
+- https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
 
 ## Full Docs
 
