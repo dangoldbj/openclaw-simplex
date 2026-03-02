@@ -15,7 +15,7 @@
   "packageManager": "pnpm@10.17.1",
   "publishConfig": {
     "access": "public",
-    "provenance": true,
+    "provenance": false,
     "registry": "https://registry.npmjs.org/"
   },
   "main": "./dist/index.js",
