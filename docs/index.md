@@ -8,6 +8,20 @@ This plugin brings OpenClaw to SimpleX with clear policy controls, multi-account
 
 ## Install
 
+Required runtime (`simplex-chat` CLI):
+
+Official installer:
+
+```bash
+curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
+```
+
+If the official installer resolves the wrong Darwin/Linux target on your host, use this temporary arch-matrix installer:
+
+```bash
+curl -o- https://raw.githubusercontent.com/dangoldbj/simplex-chat/install-arch-matrix/install.sh | bash
+```
+
 Package:
 
 `pnpm`
