@@ -1,17 +1,17 @@
-# openclaw-simplex
+# @dangoldbj/openclaw-simplex
 
 SimpleX channel plugin for OpenClaw.
 
 ## Install
 
 ```bash
-npm i openclaw-simplex
+npm i @dangoldbj/openclaw-simplex
 ```
 
 Then install/enable in OpenClaw:
 
 ```bash
-openclaw plugins install openclaw-simplex
+openclaw plugins install @dangoldbj/openclaw-simplex
 openclaw plugins enable simplex
 ```
 

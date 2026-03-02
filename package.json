@@ -1,5 +1,5 @@
 {
-  "name": "openclaw-simplex",
+  "name": "@dangoldbj/openclaw-simplex",
   "version": "0.1.0",
   "description": "SimpleX channel plugin for OpenClaw",
   "license": "MIT",
@@ -61,7 +61,7 @@
       "quickstartAllowFrom": true
     },
     "install": {
-      "npmSpec": "openclaw-simplex",
+      "npmSpec": "@dangoldbj/openclaw-simplex",
       "defaultChoice": "npm"
     }
   }
