@@ -35,6 +35,15 @@ jobs:
           node_version: "22"
           pnpm_version: "10.17.1"
 
+      - name: Upgrade npm for trusted publishing
+        run: npm i -g npm@latest
+
+      - name: Configure npm registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
       - name: Test
         run: pnpm run test
 
@@ -47,7 +56,7 @@ jobs:
       - name: Publish to npm
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm publish --access public --provenance --tag "${{ inputs.npm_tag }}" --dry-run
+            npm publish --access public --provenance --tag "${{ inputs.npm_tag }}" --dry-run
           else
-            pnpm publish --access public --provenance --tag "${{ inputs.npm_tag }}"
+            npm publish --access public --provenance --tag "${{ inputs.npm_tag }}"
           fi
