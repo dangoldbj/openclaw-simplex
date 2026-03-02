@@ -161,6 +161,18 @@ Gateway invite methods exposed by this plugin:
 - Inbound drops: review `dmPolicy`, `allowFrom`, `groupPolicy`, `groupAllowFrom`.
 - Media issues: validate URL accessibility and `mediaMaxMb` limits.
 
+## Happy Path
+
+1. Open `Control -> Channels -> SimpleX`.
+2. Click `Create 1-time Link` and scan QR in the SimpleX app.
+3. Send a first message in the SimpleX app and note the pairing approval code.
+4. Run `pnpm openclaw pairing list`, then approve in OpenClaw.
+5. Send another message and confirm OpenClaw responds.
+
+Full walkthrough with screenshots:
+
+- https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
+
 ## Screenshots
 
 Control UI channel view:
