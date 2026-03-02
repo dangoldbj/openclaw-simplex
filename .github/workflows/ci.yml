@@ -21,6 +21,9 @@ jobs:
       - name: Install
         run: npm ci --include=optional
 
+      - name: Workaround Rollup optional binary
+        run: npm i @rollup/rollup-linux-x64-gnu --no-save
+
       - name: Audit (prod only)
         run: npm audit --omit=dev --audit-level=high
 
