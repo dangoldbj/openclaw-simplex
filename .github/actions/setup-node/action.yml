@@ -1,0 +1,30 @@
+name: Setup Node
+description: Setup node with pnpm and optional authentication
+
+inputs:
+  node_version:
+    description: Node.js version
+    required: false
+    default: "22"
+  pnpm_version:
+    description: pnpm version
+    required: false
+    default: "10.17.1"
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm_version }}
+        run_install: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

@@ -6,7 +6,7 @@ on:
     paths:
       - "docs/**"
       - "package.json"
-      - "package-lock.json"
+      - "pnpm-lock.yaml"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -29,17 +29,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+          run_install: false
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 22
+          cache: pnpm
 
       - name: Install
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build docs
-        run: npm run docs:build
+        run: pnpm run docs:build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@10.17.1",
   "publishConfig": {
     "access": "public",
     "provenance": true,
@@ -26,7 +27,12 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup index.ts --format esm --dts --clean",
     "docs:dev": "vitepress dev docs",
@@ -37,10 +43,10 @@
     "check": "biome check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prepublishOnly": "npm run test && npm run typecheck && npm run build"
+    "prepublishOnly": "pnpm run test && pnpm run typecheck && pnpm run build"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "qrcode": "^1.5.4",
@@ -54,6 +60,7 @@
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^24.3.0",
     "@types/qrcode": "^1.5.5",
+    "@types/ws": "^8.18.1",
     "openclaw": "^2026.2.1",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
@@ -61,7 +68,9 @@
     "vitest": "^3.2.4"
   },
   "openclaw": {
-    "extensions": ["./dist/index.js"],
+    "extensions": [
+      "./dist/index.js"
+    ],
     "channel": {
       "id": "simplex",
       "label": "SimpleX",
