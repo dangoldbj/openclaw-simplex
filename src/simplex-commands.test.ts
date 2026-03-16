@@ -51,6 +51,31 @@ describe("simplex commands", () => {
     ).toBe('/_send @123 json [{"msgContent":{"type":"text","text":"hello world"}}]');
   });
 
+  it("normalizes scoped SimpleX group refs in send command", () => {
+    expect(
+      buildSendMessagesCommand({
+        chatRef: "simplex:group:1",
+        composedMessages: [
+          {
+            msgContent: {
+              type: "text",
+              text: "hello group",
+            },
+          },
+        ],
+      })
+    ).toBe('/_send #1 json [{"msgContent":{"type":"text","text":"hello group"}}]');
+  });
+
+  it("normalizes scoped SimpleX direct refs in delete command", () => {
+    expect(
+      buildDeleteChatItemCommand({
+        chatRef: "simplex:4",
+        chatItemIds: [12],
+      })
+    ).toBe("/_delete item @4 12 broadcast");
+  });
+
   it("emits raw JSON payload in update group profile command", () => {
     expect(
       buildUpdateGroupProfileCommand({

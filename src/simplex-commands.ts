@@ -52,14 +52,56 @@ function isSignedIntegerToken(value: string): boolean {
   return true;
 }
 
+function normalizeSimplexChatRef(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  const withoutPrefix = trimmed.toLowerCase().startsWith("simplex:")
+    ? trimmed.slice("simplex:".length).trim()
+    : trimmed;
+  if (!withoutPrefix) {
+    return withoutPrefix;
+  }
+  if (withoutPrefix.startsWith("@") || withoutPrefix.startsWith("#")) {
+    return withoutPrefix;
+  }
+
+  const lowered = withoutPrefix.toLowerCase();
+  if (lowered.startsWith("group:")) {
+    const id = withoutPrefix.slice("group:".length).trim();
+    return id ? `#${id}` : withoutPrefix;
+  }
+  if (
+    lowered.startsWith("contact:") ||
+    lowered.startsWith("user:") ||
+    lowered.startsWith("member:")
+  ) {
+    const id = withoutPrefix.slice(withoutPrefix.indexOf(":") + 1).trim();
+    return id ? `@${id}` : withoutPrefix;
+  }
+
+  return `@${withoutPrefix}`;
+}
+
 function normalizeChatRefToken(value: string): string {
   const trimmed = value.trim();
-  const prefix = trimmed[0];
-  const body = trimmed.slice(1);
+  const lowered = trimmed.toLowerCase();
+  const normalized =
+    lowered.startsWith("simplex:") ||
+    lowered.startsWith("group:") ||
+    lowered.startsWith("contact:") ||
+    lowered.startsWith("user:") ||
+    lowered.startsWith("member:")
+      ? normalizeSimplexChatRef(trimmed)
+      : trimmed;
+  const prefix = normalized[0];
+  const body = normalized.slice(1);
   if ((prefix !== "@" && prefix !== "#") || !isAsciiAlnumUnderscoreOrHyphen(body)) {
     throw new Error(`invalid SimpleX chat ref: ${value}`);
   }
-  return trimmed;
+  return normalized;
 }
 
 function normalizeChatItemIdToken(value: number | string): string {
