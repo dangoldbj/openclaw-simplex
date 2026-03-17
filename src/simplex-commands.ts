@@ -22,6 +22,8 @@ export type SimplexComposedMessage = {
   mentions?: Record<string, number>;
 };
 
+export const SIMPLEX_SEND_COMMAND_SAFE_BYTES = 14_000;
+
 function isAsciiAlnumUnderscoreOrHyphen(value: string): boolean {
   for (const ch of value) {
     const code = ch.charCodeAt(0);
@@ -52,14 +54,54 @@ function isSignedIntegerToken(value: string): boolean {
   return true;
 }
 
+function normalizeSimplexChatRef(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  const withoutPrefix = trimmed.toLowerCase().startsWith("simplex:")
+    ? trimmed.slice("simplex:".length).trim()
+    : trimmed;
+  if (!withoutPrefix) {
+    return withoutPrefix;
+  }
+  if (withoutPrefix.startsWith("#") || withoutPrefix.toLowerCase().startsWith("group:")) {
+    return normalizeGroupRef(withoutPrefix);
+  }
+  if (withoutPrefix.startsWith("@")) {
+    return normalizeContactRef(withoutPrefix);
+  }
+
+  const lowered = withoutPrefix.toLowerCase();
+  if (
+    lowered.startsWith("contact:") ||
+    lowered.startsWith("user:") ||
+    lowered.startsWith("member:")
+  ) {
+    return normalizeContactRef(withoutPrefix);
+  }
+
+  return normalizeContactRef(withoutPrefix);
+}
+
 function normalizeChatRefToken(value: string): string {
   const trimmed = value.trim();
-  const prefix = trimmed[0];
-  const body = trimmed.slice(1);
+  const lowered = trimmed.toLowerCase();
+  const normalized =
+    lowered.startsWith("simplex:") ||
+    lowered.startsWith("group:") ||
+    lowered.startsWith("contact:") ||
+    lowered.startsWith("user:") ||
+    lowered.startsWith("member:")
+      ? normalizeSimplexChatRef(trimmed)
+      : trimmed;
+  const prefix = normalized[0];
+  const body = normalized.slice(1);
   if ((prefix !== "@" && prefix !== "#") || !isAsciiAlnumUnderscoreOrHyphen(body)) {
     throw new Error(`invalid SimpleX chat ref: ${value}`);
   }
-  return trimmed;
+  return normalized;
 }
 
 function normalizeChatItemIdToken(value: number | string): string {
@@ -111,6 +153,146 @@ export function buildSendMessagesCommand(params: {
   const ttlFlag = typeof params.ttl === "number" ? ` ttl=${params.ttl}` : "";
   const json = JSON.stringify(params.composedMessages);
   return `/_send ${chatRef}${liveFlag}${ttlFlag} json ${json}`;
+}
+
+function measureSendMessagesCommandBytes(params: {
+  chatRef: string;
+  composedMessages: SimplexComposedMessage[];
+}): number {
+  return Buffer.byteLength(buildSendMessagesCommand(params), "utf8");
+}
+
+function withUpdatedMessageText(
+  message: SimplexComposedMessage,
+  text: string
+): SimplexComposedMessage {
+  return {
+    ...message,
+    msgContent: {
+      ...message.msgContent,
+      text,
+    },
+  };
+}
+
+function buildContinuationTextMessage(
+  message: SimplexComposedMessage,
+  text: string
+): SimplexComposedMessage {
+  if (message.fileSource || message.msgContent.type !== "text") {
+    return {
+      msgContent: {
+        type: "text",
+        text,
+      },
+    };
+  }
+  return {
+    msgContent: {
+      ...message.msgContent,
+      text,
+    },
+  };
+}
+
+function splitOversizedComposedMessage(params: {
+  chatRef: string;
+  message: SimplexComposedMessage;
+  maxBytes: number;
+}): SimplexComposedMessage[] {
+  const text = params.message.msgContent.text;
+  if (!text) {
+    throw new Error("SimpleX composed message exceeds safe send budget");
+  }
+
+  const codePoints = Array.from(text);
+  const chunks: SimplexComposedMessage[] = [];
+  let offset = 0;
+
+  while (offset < codePoints.length) {
+    const buildMessage =
+      chunks.length === 0
+        ? (chunkText: string) => withUpdatedMessageText(params.message, chunkText)
+        : (chunkText: string) => buildContinuationTextMessage(params.message, chunkText);
+    let low = 1;
+    let high = codePoints.length - offset;
+    let best = 0;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const candidate = buildMessage(codePoints.slice(offset, offset + mid).join(""));
+      const size = measureSendMessagesCommandBytes({
+        chatRef: params.chatRef,
+        composedMessages: [candidate],
+      });
+      if (size <= params.maxBytes) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    if (best === 0) {
+      throw new Error("SimpleX composed message exceeds safe send budget");
+    }
+
+    const chunkText = codePoints.slice(offset, offset + best).join("");
+    chunks.push(buildMessage(chunkText));
+    offset += best;
+  }
+
+  return chunks;
+}
+
+export function splitSendMessageBatches(params: {
+  chatRef: string;
+  composedMessages: SimplexComposedMessage[];
+  maxBytes?: number;
+}): SimplexComposedMessage[][] {
+  const maxBytes = params.maxBytes ?? SIMPLEX_SEND_COMMAND_SAFE_BYTES;
+  const batches: SimplexComposedMessage[][] = [];
+  let currentBatch: SimplexComposedMessage[] = [];
+
+  const pushMessage = (message: SimplexComposedMessage): void => {
+    const nextBatch = [...currentBatch, message];
+    if (
+      currentBatch.length === 0 ||
+      measureSendMessagesCommandBytes({
+        chatRef: params.chatRef,
+        composedMessages: nextBatch,
+      }) <= maxBytes
+    ) {
+      currentBatch = nextBatch;
+      return;
+    }
+    batches.push(currentBatch);
+    currentBatch = [message];
+  };
+
+  for (const message of params.composedMessages) {
+    const messageFits =
+      measureSendMessagesCommandBytes({
+        chatRef: params.chatRef,
+        composedMessages: [message],
+      }) <= maxBytes;
+    const normalizedMessages = messageFits
+      ? [message]
+      : splitOversizedComposedMessage({
+          chatRef: params.chatRef,
+          message,
+          maxBytes,
+        });
+    for (const normalizedMessage of normalizedMessages) {
+      pushMessage(normalizedMessage);
+    }
+  }
+
+  if (currentBatch.length > 0) {
+    batches.push(currentBatch);
+  }
+
+  return batches;
 }
 
 export function buildUpdateChatItemCommand(params: {

@@ -6,6 +6,7 @@ import {
   buildReceiveFileCommand,
   buildSendMessagesCommand,
   formatChatRef,
+  splitSendMessageBatches,
 } from "./simplex-commands.js";
 import { resolveSimplexCommandError } from "./simplex-errors.js";
 import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "./simplex-media.js";
@@ -229,25 +230,34 @@ async function sendSimplexPayload(params: {
   if (composedMessages.length === 0) {
     return {};
   }
-  const cmd = buildSendMessagesCommand({
+  const batches = splitSendMessageBatches({
     chatRef: params.chatRef,
     composedMessages,
   });
-  const response = await params.client.sendCommand(cmd);
-  const resp = response.resp as {
-    type?: string;
-    chatError?: { errorType?: { type?: string; message?: string } };
-    chatItems?: Array<{ chatItem?: { meta?: { itemId?: number } } }>;
-  };
-  const commandError = resolveSimplexCommandError(resp);
-  if (commandError) {
-    throw new Error(commandError);
+  let messageId: number | undefined;
+  for (const batch of batches) {
+    const cmd = buildSendMessagesCommand({
+      chatRef: params.chatRef,
+      composedMessages: batch,
+    });
+    const response = await params.client.sendCommand(cmd);
+    const resp = response.resp as {
+      type?: string;
+      chatError?: { errorType?: { type?: string; message?: string } };
+      chatItems?: Array<{ chatItem?: { meta?: { itemId?: number } } }>;
+    };
+    const commandError = resolveSimplexCommandError(resp);
+    if (commandError) {
+      throw new Error(commandError);
+    }
+    if (resp?.type === "newChatItems") {
+      const itemId = resp.chatItems?.[0]?.chatItem?.meta?.itemId;
+      if (typeof itemId === "number") {
+        messageId = itemId;
+      }
+    }
   }
-  if (resp?.type === "newChatItems") {
-    const itemId = resp.chatItems?.[0]?.chatItem?.meta?.itemId;
-    return { messageId: typeof itemId === "number" ? itemId : undefined };
-  }
-  return {};
+  return { messageId };
 }
 
 export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{

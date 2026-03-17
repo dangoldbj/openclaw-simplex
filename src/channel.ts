@@ -17,7 +17,11 @@ import { simplexMessageActions } from "./actions.js";
 import { SimplexChannelConfigSchema } from "./config-schema.js";
 import { simplexOnboardingAdapter } from "./onboarding.js";
 import { startSimplexCli } from "./simplex-cli.js";
-import { type SimplexComposedMessage, buildSendMessagesCommand } from "./simplex-commands.js";
+import {
+  type SimplexComposedMessage,
+  buildSendMessagesCommand,
+  splitSendMessageBatches,
+} from "./simplex-commands.js";
 import {
   listSimplexDirectoryGroups,
   listSimplexDirectoryPeers,
@@ -250,26 +254,34 @@ async function sendComposedMessages(params: {
   if (params.composedMessages.length === 0) {
     return {};
   }
-  const cmd = buildSendMessagesCommand({
+  const batches = splitSendMessageBatches({
     chatRef: params.chatRef,
     composedMessages: params.composedMessages,
   });
-  const response = await withSimplexClient(params.account, (client) => client.sendCommand(cmd));
-  const resp = response.resp as {
-    type?: string;
-    chatError?: { errorType?: { type?: string; message?: string } };
-    chatItems?: Array<{ chatItem?: { meta?: { itemId?: unknown } } }>;
-    itemId?: unknown;
-    messageId?: unknown;
-  };
-  const commandError = resolveSimplexCommandError(resp);
-  if (commandError) {
-    throw new Error(commandError);
+  let messageId: string | undefined;
+  for (const composedMessages of batches) {
+    const cmd = buildSendMessagesCommand({
+      chatRef: params.chatRef,
+      composedMessages,
+    });
+    const response = await withSimplexClient(params.account, (client) => client.sendCommand(cmd));
+    const resp = response.resp as {
+      type?: string;
+      chatError?: { errorType?: { type?: string; message?: string } };
+      chatItems?: Array<{ chatItem?: { meta?: { itemId?: unknown } } }>;
+      itemId?: unknown;
+      messageId?: unknown;
+    };
+    const commandError = resolveSimplexCommandError(resp);
+    if (commandError) {
+      throw new Error(commandError);
+    }
+    messageId =
+      normalizeSimplexMessageId(resp.chatItems?.[0]?.chatItem?.meta?.itemId) ??
+      normalizeSimplexMessageId(resp.messageId) ??
+      normalizeSimplexMessageId(resp.itemId) ??
+      messageId;
   }
-  const messageId =
-    normalizeSimplexMessageId(resp.chatItems?.[0]?.chatItem?.meta?.itemId) ??
-    normalizeSimplexMessageId(resp.messageId) ??
-    normalizeSimplexMessageId(resp.itemId);
   return { messageId };
 }
 
