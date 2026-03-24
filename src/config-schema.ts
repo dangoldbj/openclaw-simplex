@@ -1,17 +1,19 @@
-import {
-  BlockStreamingCoalesceSchema,
-  DmConfigSchema,
-  DmPolicySchema,
-  MarkdownConfigSchema,
-  ToolPolicySchema,
-  buildChannelConfigSchema,
-} from "openclaw/plugin-sdk";
+import { buildChannelConfigSchema } from "openclaw/plugin-sdk/channel-config-schema";
 import { z } from "zod";
 
 const allowFromEntry = z.union([z.string(), z.number()]);
+const ToolPolicySchema = z.object({}).catchall(z.unknown());
+const MarkdownConfigSchema = z.object({}).passthrough().default({});
+const DmPolicySchema = z.enum(["pairing", "open", "allowlist"]);
+const DmConfigSchema = z
+  .object({
+    historyLimit: z.number().int().min(0).optional(),
+  })
+  .strict();
+const BlockStreamingCoalesceSchema = z.object({}).passthrough();
 const groupConfigSchema = z.object({
   requireMention: z.boolean().optional(),
-  tools: ToolPolicySchema,
+  tools: ToolPolicySchema.optional(),
 });
 
 const SimplexConnectionSchema = z

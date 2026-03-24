@@ -1,4 +1,5 @@
-import { DEFAULT_ACCOUNT_ID, type OpenClawConfig } from "openclaw/plugin-sdk";
+import type { OpenClawConfig } from "openclaw/plugin-sdk";
+import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/core";
 import { describe, expect, it } from "vitest";
 import {
   listSimplexAccountIds,

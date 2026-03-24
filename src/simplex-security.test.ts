@@ -91,7 +91,7 @@ describe("simplex allowlist", () => {
       wsHost: "127.0.0.1",
       wsPort: 5225,
       cliPath: "simplex-chat",
-      config: { dmPolicy: "open" },
+      config: { markdown: {}, dmPolicy: "open" },
     };
     const result = resolveSimplexDmPolicy({
       cfg,

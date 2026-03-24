@@ -1,5 +1,4 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk";
-import { normalizeAllowFrom } from "openclaw/plugin-sdk";
 import type { ResolvedSimplexAccount } from "./types.js";
 
 export type SimplexAllowlistEntry = {
@@ -62,15 +61,19 @@ export function resolveSimplexAllowFrom(params: {
   const accountAllow = params.cfg.channels?.simplex?.accounts?.[accountId]?.allowFrom;
   const baseAllow = params.cfg.channels?.simplex?.allowFrom;
   const raw = Array.isArray(accountAllow) ? accountAllow : baseAllow;
-  return normalizeAllowFrom(raw ?? []);
+  return normalizeSimplexAllowFrom(raw ?? []);
 }
 
 export function formatSimplexAllowFrom(allowFrom: Array<string | number>): string[] {
-  return normalizeAllowFrom(allowFrom)
+  return normalizeSimplexAllowFrom(allowFrom)
     .map((entry) => stripSimplexPrefix(entry))
     .map((entry) => entry.trim())
     .filter(Boolean)
     .map((entry) => entry.toLowerCase());
+}
+
+function normalizeSimplexAllowFrom(allowFrom: Array<string | number>): string[] {
+  return allowFrom.map((entry) => String(entry).trim()).filter(Boolean);
 }
 
 export function resolveSimplexDmPolicy(params: {
