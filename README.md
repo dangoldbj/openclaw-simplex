@@ -8,51 +8,75 @@ This plugin enables OpenClaw agents to communicate over SimpleX, a decentralized
 
 It introduces a new class of channel for OpenClaw: **local-first, self-hostable, and identity-minimal agent communication.**
 
+Designed for real-world OpenClaw deployments where privacy, local control, and minimal external dependencies are required.
+
+---
+
 ## Why this plugin exists
 
 OpenClaw supports multiple messaging channels, but most rely on:
 
-- phone numbers or platform-bound identities
-- hosted bot APIs
-- centralized infrastructure
+* phone numbers or platform-bound identities
+* hosted bot APIs
+* centralized infrastructure
 
 This plugin adds support for SimpleX, enabling:
 
-- fully end-to-end encrypted messaging
-- no global identifiers, so no phone or email is required
-- self-hosted or local-first operation
-- agent communication without third-party dependencies
+* fully end-to-end encrypted messaging
+* no global identifiers, so no phone or email is required
+* self-hosted or local-first operation
+* agent communication without third-party dependencies
 
-**This fills a gap for privacy-sensitive and self-hosted OpenClaw deployments.**
+**This introduces a privacy-first messaging capability that was previously not available in the OpenClaw channel ecosystem.**
+
+### Compared to other channels
+
+Unlike typical messaging integrations (e.g. bot APIs or phone-based channels), this plugin:
+
+* does not require platform accounts or phone numbers
+* does not depend on hosted bot infrastructure
+* allows fully local or self-hosted operation
+* minimizes external trust assumptions
+
+---
 
 ## Why SimpleX
 
 SimpleX is uniquely suited for privacy-critical communication:
 
-- no user identifiers, so no phone or email
-- end-to-end encrypted by default
-- decentralized relay architecture
-- supports self-hosting
+* no user identifiers, so no phone or email
+* end-to-end encrypted by default
+* decentralized relay architecture
+* fully supports self-hosting
 
 This plugin integrates SimpleX into OpenClaw as a production-ready channel backed by the official `simplex-chat` CLI.
 
+---
+
 ## What this plugin provides
 
-- send and receive messages, including text and media
-- pairing and allowlist support
-- invite link and QR generation
-- message actions and responses
-- runtime status and lifecycle management
-- Control UI configuration
-- managed or external runtime modes
+* send and receive messages reliably, including text and media
+* pairing and allowlist support
+* invite link and QR generation
+* message actions and responses
+* runtime status and lifecycle management
+* Control UI configuration
+* managed or external runtime modes
+* designed for production use with explicit runtime and policy control
+
+---
 
 ## Use Cases
 
-- running OpenClaw agents in fully self-hosted environments
-- privacy-sensitive workflows with no external messaging providers
-- peer-to-peer agent communication without global identifiers
-- secure local automation systems
-- experimental decentralized agent networks
+* running OpenClaw agents in fully self-hosted environments
+* privacy-sensitive workflows with no external messaging providers
+* peer-to-peer agent communication without global identifiers
+* secure local automation systems
+* experimental decentralized agent networks
+
+This plugin is particularly relevant for developers building privacy-first or fully self-hosted agent systems.
+
+---
 
 ## Install
 
@@ -76,6 +100,8 @@ Verify:
 simplex-chat -h
 ```
 
+---
+
 ### 2. Install plugin
 
 ```bash
@@ -85,6 +111,8 @@ pnpm add @dangoldbj/openclaw-simplex
 # or
 yarn add @dangoldbj/openclaw-simplex
 ```
+
+---
 
 ### 3. Install in OpenClaw
 
@@ -104,23 +132,33 @@ Trust plugin:
 openclaw config set plugins.allow '["simplex"]' --strict-json
 ```
 
+If you already trust other external plugins, include them too. For example:
+
+```bash
+openclaw config set plugins.allow '["duckduckgo","simplex"]' --strict-json
+```
+
 Important:
 
-- `openclaw plugins enable simplex` only enables the plugin.
-- OpenClaw will not start the SimpleX channel until `channels.simplex.connection` is configured.
-- The current Control UI SimpleX card is a config editor, not a guided setup wizard.
-- `openclaw channels add --channel simplex --cli-path simplex-chat` works.
-- The interactive `openclaw channels add` picker may not list this external plugin yet.
+* `openclaw plugins enable simplex` only enables the plugin
+* OpenClaw will not start the SimpleX channel until `channels.simplex.connection` is configured
+* The current Control UI SimpleX card is a config editor, not a guided setup wizard
+* `openclaw channels add --channel simplex --cli-path simplex-chat` works
+* The interactive `openclaw channels add` picker may not list this external plugin yet
+
+---
 
 ## How It Works
 
-1. OpenClaw loads the plugin and registers the `simplex` channel.
-2. OpenClaw can load the lightweight setup entry before the full runtime entry for disabled or unconfigured channels.
-3. The channel only becomes startup-capable after `channels.simplex.connection` is configured.
-4. The plugin connects to SimpleX via the CLI WebSocket API.
-5. Incoming messages are normalized into OpenClaw context.
-6. OpenClaw applies policies such as `dmPolicy` and `allowFrom`.
-7. Responses are sent back through SimpleX.
+1. OpenClaw loads the plugin and registers the `simplex` channel
+2. OpenClaw can load the lightweight setup entry before the full runtime entry for disabled or unconfigured channels
+3. The channel only becomes startup-capable after `channels.simplex.connection` is configured
+4. The plugin connects to SimpleX via the CLI WebSocket API
+5. Incoming messages are normalized into OpenClaw context
+6. OpenClaw applies policies such as `dmPolicy` and `allowFrom`
+7. Responses are sent back through SimpleX
+
+---
 
 ## Architecture
 
@@ -155,6 +193,8 @@ Important:
             +-------------------------+
 ```
 
+---
+
 ## External vs Managed Modes
 
 ### Managed mode (OpenClaw runs SimpleX)
@@ -176,6 +216,8 @@ Important:
 }
 ```
 
+---
+
 ### External mode (you run SimpleX separately)
 
 ```json
@@ -193,12 +235,16 @@ Important:
 }
 ```
 
+---
+
 ## Security Model
 
-- channel-level sender gating such as `dmPolicy` and `allowFrom`
-- pairing-based approval flow
-- explicit control over runtime boundaries
-- no reliance on external messaging APIs
+* channel-level sender gating such as `dmPolicy` and `allowFrom`
+* pairing-based approval flow
+* explicit control over runtime boundaries
+* no reliance on external messaging APIs
+
+---
 
 ## Example Commands
 
@@ -211,30 +257,38 @@ openclaw pairing list
 
 Invite APIs:
 
-- `simplex.invite.create`
-- `simplex.invite.list`
-- `simplex.invite.revoke`
+* `simplex.invite.create`
+* `simplex.invite.list`
+* `simplex.invite.revoke`
+
+---
 
 ## Troubleshooting
 
-- plugin not visible: check `plugins.allow` and `openclaw plugins list`
-- channel not starting: verify `channels.simplex.connection` exists and points to a working SimpleX runtime
-- `Configured No`: add explicit `channels.simplex.connection` config; plugin defaults alone are not enough for OpenClaw startup
-- inbound issues: review policies such as `allowFrom`, `dmPolicy`, and group policy
-- media issues: validate URLs and size limits
+* plugin not visible: check `plugins.allow` and `openclaw plugins list`
+* channel not starting: verify `channels.simplex.connection` exists and points to a working SimpleX runtime
+* `Configured No`: add explicit `channels.simplex.connection` config; plugin defaults alone are not enough for OpenClaw startup
+* inbound issues: review policies such as `allowFrom`, `dmPolicy`, and group policy
+* media issues: validate URLs and size limits
+
+---
 
 ## Happy Path
 
-1. Open `Control -> Channels -> SimpleX`.
-2. Configure SimpleX in managed mode.
-3. Generate an invite link or QR code.
-4. Connect via the SimpleX app.
-5. Approve pairing in OpenClaw.
-6. Send a message and verify the response.
+1. Open `Control -> Channels -> SimpleX`
+2. Configure SimpleX in managed mode by either:
+   - running `openclaw channels add --channel simplex --cli-path simplex-chat`
+   - or filling in the managed connection fields on the Control UI card
+3. Generate an invite link or QR code
+4. Connect via the SimpleX app
+5. Approve pairing in OpenClaw
+6. Send a message and verify the response
 
 Full walkthrough:
 
-- https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
+* https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
+
+---
 
 ## Screenshots
 
@@ -244,8 +298,10 @@ Control UI channel view:
 
 More screenshots:
 
-- https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
+* https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
+
+---
 
 ## Full Docs
 
-- https://dangoldbj.github.io/openclaw-simplex/
+* https://dangoldbj.github.io/openclaw-simplex/

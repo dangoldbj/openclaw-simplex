@@ -60,7 +60,13 @@ Trust the plugin explicitly:
 openclaw config set plugins.allow '["simplex"]' --strict-json
 ```
 
-`plugins enable simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.simplex` is configured.
+If you already trust other external plugins, include them too. For example:
+
+```bash
+openclaw config set plugins.allow '["duckduckgo","simplex"]' --strict-json
+```
+
+`plugins enable simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.simplex.connection` is configured.
 
 ## 4. Configure channel
 
