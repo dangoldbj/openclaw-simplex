@@ -26,6 +26,13 @@ export type SimplexWsClientOptions = {
   };
 };
 
+export type SimplexWsConnectionState = {
+  connected: boolean;
+  at: number;
+  expected?: boolean;
+  error?: string | null;
+};
+
 type PendingCommand = {
   resolve: (value: SimplexWsResponse) => void;
   reject: (err: Error) => void;
@@ -40,6 +47,8 @@ export class SimplexWsClient {
   private connectPromise: Promise<void> | null = null;
   private pending = new Map<string, PendingCommand>();
   private eventHandlers = new Set<(event: SimplexWsEvent) => void>();
+  private connectionHandlers = new Set<(state: SimplexWsConnectionState) => void>();
+  private closing = false;
 
   constructor(options: SimplexWsClientOptions) {
     this.url = options.url;
@@ -51,6 +60,13 @@ export class SimplexWsClient {
     this.eventHandlers.add(handler);
     return () => {
       this.eventHandlers.delete(handler);
+    };
+  }
+
+  onConnectionState(handler: (state: SimplexWsConnectionState) => void): () => void {
+    this.connectionHandlers.add(handler);
+    return () => {
+      this.connectionHandlers.delete(handler);
     };
   }
 
@@ -84,6 +100,7 @@ export class SimplexWsClient {
 
       const ws = new WebSocket(this.url);
       this.ws = ws;
+      this.closing = false;
 
       const timeout = setTimeout(() => {
         const timeoutError = new Error(
@@ -98,6 +115,7 @@ export class SimplexWsClient {
         opened = true;
         clearTimeout(timeout);
         this.logger?.info?.(`SimpleX WS connected: ${this.url}`);
+        this.emitConnectionState({ connected: true, at: Date.now(), error: null });
         settleResolve();
       });
 
@@ -141,6 +159,7 @@ export class SimplexWsClient {
 
   async close(): Promise<void> {
     this.rejectAllPending(new Error("SimpleX WS closed"));
+    this.closing = true;
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       await new Promise<void>((resolve) => {
         this.ws?.once("close", () => resolve());
@@ -148,6 +167,7 @@ export class SimplexWsClient {
       });
     }
     this.ws = null;
+    this.closing = false;
   }
 
   async sendCommand(cmd: string, timeoutMs = 20_000): Promise<SimplexWsResponse> {
@@ -231,7 +251,20 @@ export class SimplexWsClient {
     if (this.ws !== ws) {
       return;
     }
+    const expected = this.closing;
     this.ws = null;
     this.rejectAllPending(error);
+    this.emitConnectionState({
+      connected: false,
+      at: Date.now(),
+      expected,
+      error: expected ? null : error.message,
+    });
+  }
+
+  private emitConnectionState(state: SimplexWsConnectionState): void {
+    for (const handler of this.connectionHandlers) {
+      handler(state);
+    }
   }
 }

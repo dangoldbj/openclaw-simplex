@@ -1,6 +1,9 @@
 {
   "id": "simplex",
+  "kind": "channel",
   "channels": ["simplex"],
+  "name": "SimpleX",
+  "description": "SimpleX Chat channel plugin via CLI",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

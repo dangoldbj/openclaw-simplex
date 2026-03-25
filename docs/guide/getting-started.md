@@ -54,7 +54,29 @@ Enable plugin:
 openclaw plugins enable simplex
 ```
 
+Trust the plugin explicitly:
+
+```bash
+openclaw config set plugins.allow '["simplex"]' --strict-json
+```
+
+If you already trust other external plugins, include them too. For example:
+
+```bash
+openclaw config set plugins.allow '["duckduckgo","simplex"]' --strict-json
+```
+
+`plugins enable simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.simplex.connection` is configured.
+
 ## 4. Configure channel
+
+Managed mode via CLI:
+
+```bash
+openclaw channels add --channel simplex --cli-path simplex-chat
+```
+
+Or write config directly:
 
 ```json
 {
@@ -85,6 +107,8 @@ openclaw plugins info simplex
 
 In Control UI, open `Control -> Channels -> SimpleX`:
 
+Note: the current SimpleX card is a config editor. For this external plugin, the interactive `openclaw channels add` picker may not list SimpleX yet.
+
 ![SimpleX channel card before invite generation](/images/control-ui.png)
 
 ## 7. Create a 1-time link
@@ -109,7 +133,7 @@ OpenClaw creates a pairing request and returns an approval code.
 List pairing requests and get the code:
 
 ```bash
-pnpm openclaw pairing list
+openclaw pairing list
 ```
 
 Pairing request table in OpenClaw:

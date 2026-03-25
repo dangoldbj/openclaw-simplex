@@ -11,6 +11,33 @@ const DEFAULT_WS_HOST = "127.0.0.1";
 const DEFAULT_WS_PORT = 5225;
 const DEFAULT_CLI_PATH = "simplex-chat";
 
+function hasMeaningfulConnectionConfig(connection: SimplexConnectionConfig | undefined): boolean {
+  if (!connection) {
+    return false;
+  }
+  return Boolean(
+    connection.mode?.trim() ||
+      connection.wsUrl?.trim() ||
+      connection.wsHost?.trim() ||
+      connection.wsPort !== undefined ||
+      connection.cliPath?.trim() ||
+      connection.dataDir?.trim()
+  );
+}
+
+function resolveRawSimplexAccountConfig(
+  cfg: OpenClawConfig,
+  accountId: string
+): SimplexAccountConfig {
+  if (accountId === DEFAULT_ACCOUNT_ID) {
+    const { accounts: _ignored, ...base } = (cfg.channels?.simplex ?? {}) as SimplexConfig & {
+      accounts?: unknown;
+    };
+    return base;
+  }
+  return (cfg.channels?.simplex?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
+}
+
 function listConfiguredAccountIds(cfg: OpenClawConfig): string[] {
   const accounts = cfg.channels?.simplex?.accounts;
   if (!accounts || typeof accounts !== "object") {
@@ -33,6 +60,15 @@ export function resolveDefaultSimplexAccountId(cfg: OpenClawConfig): string {
     return DEFAULT_ACCOUNT_ID;
   }
   return ids[0] ?? DEFAULT_ACCOUNT_ID;
+}
+
+export function hasMeaningfulSimplexConfig(params: {
+  cfg: OpenClawConfig;
+  accountId?: string | null;
+}): boolean {
+  const accountId = normalizeAccountId(params.accountId);
+  const raw = resolveRawSimplexAccountConfig(params.cfg, accountId);
+  return hasMeaningfulConnectionConfig(raw.connection);
 }
 
 function mergeConnection(
@@ -80,6 +116,7 @@ export function resolveSimplexAccount(params: {
 }): ResolvedSimplexAccount {
   const accountId = normalizeAccountId(params.accountId);
   const merged = mergeSimplexAccountConfig(params.cfg, accountId);
+  const hasMeaningfulConfig = hasMeaningfulSimplexConfig({ cfg: params.cfg, accountId });
   const baseEnabled = params.cfg.channels?.simplex?.enabled !== false;
   const enabled = baseEnabled && merged.enabled !== false;
   const connection = merged.connection ?? {};
@@ -89,7 +126,7 @@ export function resolveSimplexAccount(params: {
   const wsHost = resolveWsHost(connection);
   const wsPort = resolveWsPort(connection);
   const cliPath = connection.cliPath?.trim() || DEFAULT_CLI_PATH;
-  const configured = mode === "external" ? Boolean(explicitWsUrl) : Boolean(cliPath);
+  const configured = hasMeaningfulConfig && (mode === "external" ? Boolean(explicitWsUrl) : true);
   return {
     accountId,
     enabled,

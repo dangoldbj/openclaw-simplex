@@ -2,6 +2,7 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk";
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/core";
 import { describe, expect, it } from "vitest";
 import {
+  hasMeaningfulSimplexConfig,
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
   resolveSimplexAccount,
@@ -143,5 +144,28 @@ describe("simplex accounts", () => {
 
     const beta = resolveSimplexAccount({ cfg, accountId: "beta" });
     expect(beta.configured).toBe(true);
+  });
+
+  it("treats missing channel config as unconfigured despite managed defaults", () => {
+    const cfg = { channels: {} } as OpenClawConfig;
+
+    expect(hasMeaningfulSimplexConfig({ cfg })).toBe(false);
+    expect(resolveSimplexAccount({ cfg, accountId: "default" }).configured).toBe(false);
+  });
+
+  it("treats explicit managed connection config as configured", () => {
+    const cfg = {
+      channels: {
+        simplex: {
+          connection: {
+            mode: "managed",
+            cliPath: "simplex-chat",
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    expect(hasMeaningfulSimplexConfig({ cfg })).toBe(true);
+    expect(resolveSimplexAccount({ cfg, accountId: "default" }).configured).toBe(true);
   });
 });
