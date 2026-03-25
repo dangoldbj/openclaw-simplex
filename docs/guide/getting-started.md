@@ -109,7 +109,7 @@ OpenClaw creates a pairing request and returns an approval code.
 List pairing requests and get the code:
 
 ```bash
-pnpm openclaw pairing list
+openclaw pairing list
 ```
 
 Pairing request table in OpenClaw:

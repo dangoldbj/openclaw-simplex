@@ -44,6 +44,7 @@ vi.mock("qrcode", () => ({
 
 import type { PluginRuntime } from "openclaw/plugin-sdk";
 import plugin from "./index.js";
+import setupEntry from "./setup-entry.js";
 
 const noopLogger = {
   info: vi.fn(),
@@ -64,7 +65,10 @@ type Handler = (ctx: {
   };
 }) => Promise<void>;
 
-function setupHandlers(config: Record<string, unknown> = {}): Map<string, Handler> {
+function setupHandlers(
+  config: Record<string, unknown> = {},
+  registrationMode: "full" | "setup-only" | "setup-runtime" = "full"
+): Map<string, Handler> {
   const methods = new Map<string, Handler>();
   plugin.register({
     id: "simplex",
@@ -72,7 +76,7 @@ function setupHandlers(config: Record<string, unknown> = {}): Map<string, Handle
     description: "test",
     version: "0",
     source: "test",
-    registrationMode: "full",
+    registrationMode,
     config,
     pluginConfig: {},
     runtime: {} as PluginRuntime,
@@ -108,6 +112,25 @@ function setupHandler(method: string, config: Record<string, unknown> = {}): Han
   }
   return handler;
 }
+
+describe("plugin entry registration modes", () => {
+  it("registers gateway methods only in full mode", () => {
+    const full = setupHandlers({ channels: { simplex: {} } }, "full");
+    const setupOnly = setupHandlers({ channels: { simplex: {} } }, "setup-only");
+    const setupRuntime = setupHandlers({ channels: { simplex: {} } }, "setup-runtime");
+
+    expect(full.has("simplex.invite.create")).toBe(true);
+    expect(full.has("simplex.invite.list")).toBe(true);
+    expect(full.has("simplex.invite.revoke")).toBe(true);
+    expect(setupOnly.size).toBe(0);
+    expect(setupRuntime.size).toBe(0);
+  });
+
+  it("exports the setup entry plugin surface", () => {
+    expect(setupEntry).toEqual({ plugin: expect.any(Object) });
+    expect(setupEntry.plugin).toBeTruthy();
+  });
+});
 
 describe("simplex invite gateway", () => {
   afterEach(() => {

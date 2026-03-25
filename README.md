@@ -6,7 +6,7 @@ SimpleX channel plugin for OpenClaw.
 
 SimpleX is a strong fit when you want a messaging channel with privacy-first defaults and self-hostable infrastructure options. This plugin lets OpenClaw use SimpleX as a production message channel without custom glue code.
 
-SimpleX channel here is backed by local `simplex-chat` CLI and supports send/receive (text/media), pairing + allowlist, message actions, invite link + QR generation, onboarding/status, and Control UI config parity.
+SimpleX channel here is backed by local `simplex-chat` CLI and supports send/receive (text/media), pairing + allowlist, message actions, invite link + QR generation, setup/status, and Control UI config parity.
 
 Why this matters:
 
@@ -75,7 +75,8 @@ openclaw plugins enable simplex
 
 ## How It Works
 
-1. OpenClaw loads the plugin and registers the `simplex` channel.
+1. OpenClaw loads the SimpleX plugin entry and registers the `simplex` channel.
+   For disabled or unconfigured channels, OpenClaw can load the lightweight setup entry first.
 2. The channel connects to SimpleX via the SimpleX CLI WebSocket API.
 3. Inbound events are normalized into OpenClaw message context.
 4. OpenClaw runs policy checks (`dmPolicy`, `allowFrom`, group policy).
@@ -186,7 +187,7 @@ Gateway invite methods exposed by this plugin:
 1. Open `Control -> Channels -> SimpleX`.
 2. Click `Create 1-time Link` and scan QR in the SimpleX app.
 3. Send a first message in the SimpleX app and note the pairing approval code.
-4. Run `pnpm openclaw pairing list`, then approve in OpenClaw.
+4. Run `openclaw pairing list`, then approve in OpenClaw.
 5. Send another message and confirm OpenClaw responds.
 
 Full walkthrough with screenshots:

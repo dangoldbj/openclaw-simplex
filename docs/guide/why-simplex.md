@@ -10,7 +10,7 @@ SimpleX messaging channel backed by the local `simplex-chat` CLI. It supports:
 - pairing with allowlist enforcement
 - message actions
 - invite link and QR generation
-- onboarding/status support
+- setup/status support
 - Control UI configuration parity
 
 ## Why teams choose it

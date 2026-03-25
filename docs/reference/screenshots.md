@@ -27,7 +27,7 @@ Pairing request table in OpenClaw:
 4. Approve pairing in OpenClaw:
 
 ```bash
-pnpm openclaw pairing list
+openclaw pairing list
 ```
 
 ```bash

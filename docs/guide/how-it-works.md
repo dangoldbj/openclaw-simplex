@@ -2,7 +2,8 @@
 
 ## Flow
 
-1. OpenClaw loads the plugin and registers channel id `simplex`.
+1. OpenClaw loads the SimpleX channel plugin and registers channel id `simplex`.
+   For disabled or unconfigured channels, OpenClaw can use the lightweight setup entry before loading the full runtime entry.
 2. Channel runtime connects to SimpleX over CLI WebSocket API.
 3. Inbound events are normalized into OpenClaw context.
 4. Policy checks run (`dmPolicy`, `allowFrom`, group policy).
