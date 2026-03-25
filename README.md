@@ -1,6 +1,6 @@
 # @dangoldbj/openclaw-simplex
 
-> **TL;DR:** Run OpenClaw agents over SimpleX with no phone numbers, no hosted bot APIs, and full end-to-end encryption.
+> **TL;DR:** Run OpenClaw agents over SimpleX with no phone numbers, no hosted or unofficial bot APIs, and full end-to-end encryption.
 
 Privacy-first SimpleX messaging channel for OpenClaw.
 
