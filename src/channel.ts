@@ -75,6 +75,28 @@ function extractSimplexWsUrlFromApplication(application: unknown): string | unde
   return trimmed ? trimmed : undefined;
 }
 
+function resolveSimplexHealthState(params: {
+  configured: boolean;
+  running?: boolean;
+  connected?: boolean;
+  lastError?: string | null;
+}): string {
+  const lastError = params.lastError?.trim();
+  if (lastError) {
+    return "error";
+  }
+  if (params.connected) {
+    return "healthy";
+  }
+  if (params.running) {
+    return "starting";
+  }
+  if (params.configured) {
+    return "ready";
+  }
+  return "idle";
+}
+
 function normalizeSimplexMessageId(value: unknown): string | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
     return String(value);
@@ -139,6 +161,9 @@ async function waitForSimplexWs(params: {
     2_000,
     params.account.config.connection?.connectTimeoutMs ?? 2_000
   );
+  params.log?.info?.(
+    `[${params.account.accountId}] SimpleX waiting for WS at ${params.account.wsUrl} (attempts=${attempts}, timeoutMs=${connectTimeoutMs})`
+  );
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     if (params.abortSignal.aborted) {
@@ -146,8 +171,14 @@ async function waitForSimplexWs(params: {
     }
     const client = new SimplexWsClient({ url: params.account.wsUrl, connectTimeoutMs });
     try {
+      params.log?.info?.(
+        `[${params.account.accountId}] SimpleX WS probe attempt ${attempt}/${attempts}: ${params.account.wsUrl}`
+      );
       await client.connect();
       await client.close().catch(() => undefined);
+      params.log?.info?.(
+        `[${params.account.accountId}] SimpleX WS probe succeeded: ${params.account.wsUrl}`
+      );
       return;
     } catch (err) {
       await client.close().catch(() => undefined);
@@ -474,9 +505,18 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     buildChannelSummary: ({ snapshot, account }) => ({
       configured: snapshot.configured ?? false,
       running: snapshot.running ?? false,
+      connected: snapshot.connected ?? false,
       lastStartAt: snapshot.lastStartAt ?? null,
       lastStopAt: snapshot.lastStopAt ?? null,
       lastError: snapshot.lastError ?? null,
+      lastConnectedAt: snapshot.lastConnectedAt ?? null,
+      lastDisconnect: snapshot.lastDisconnect ?? null,
+      healthState: resolveSimplexHealthState({
+        configured: snapshot.configured ?? false,
+        running: snapshot.running ?? false,
+        connected: snapshot.connected ?? false,
+        lastError: snapshot.lastError ?? null,
+      }),
       mode: snapshot.mode ?? null,
       wsUrl: extractSimplexWsUrlFromApplication(snapshot.application) ?? account.wsUrl ?? null,
     }),
@@ -501,9 +541,18 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
         enabled: account.enabled,
         configured: account.configured,
         running: runtime?.running ?? false,
+        connected: runtime?.connected ?? false,
         lastStartAt: runtime?.lastStartAt ?? null,
         lastStopAt: runtime?.lastStopAt ?? null,
+        lastConnectedAt: runtime?.lastConnectedAt ?? null,
+        lastDisconnect: runtime?.lastDisconnect ?? null,
         lastError: runtime?.lastError ?? null,
+        healthState: resolveSimplexHealthState({
+          configured: account.configured,
+          running: runtime?.running ?? false,
+          connected: runtime?.connected ?? false,
+          lastError: runtime?.lastError ?? null,
+        }),
         mode: runtime?.mode ?? account.mode,
         lastInboundAt: runtime?.lastInboundAt ?? null,
         lastOutboundAt: runtime?.lastOutboundAt ?? null,
@@ -517,6 +566,9 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   gateway: {
     startAccount: async (ctx) => {
       const account = ctx.account;
+      ctx.log?.info?.(
+        `[${account.accountId}] SimpleX start requested (mode=${account.mode}, wsUrl=${account.wsUrl}, cliPath=${account.cliPath}, dataDir=${account.dataDir ?? "default"})`
+      );
       ctx.setStatus({
         accountId: account.accountId,
         mode: account.mode,
@@ -525,6 +577,9 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
 
       let cliHandle: ReturnType<typeof startSimplexCli> | null = null;
       if (account.mode === "managed") {
+        ctx.log?.info?.(
+          `[${account.accountId}] Starting SimpleX CLI (cliPath=${account.cliPath}, wsPort=${account.wsPort}, dataDir=${account.dataDir ?? "default"})`
+        );
         cliHandle = startSimplexCli({
           cliPath: account.cliPath,
           wsPort: account.wsPort,
@@ -535,21 +590,29 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
         try {
           await cliHandle.ready;
           cliReady = true;
+          ctx.log?.info?.(
+            `[${account.accountId}] SimpleX CLI spawned; waiting for WS readiness at ${account.wsUrl}`
+          );
           await waitForSimplexWs({ account, abortSignal: ctx.abortSignal, log: ctx.log });
+          ctx.log?.info?.(`[${account.accountId}] SimpleX managed WS is ready: ${account.wsUrl}`);
         } catch (err) {
           const detail = err instanceof Error ? err.message : String(err);
           ctx.setStatus({
             accountId: account.accountId,
+            connected: false,
             running: false,
+            lastDisconnect: { at: Date.now(), error: detail },
             lastError: cliReady
               ? `SimpleX CLI not ready: ${detail}`
               : `SimpleX CLI failed: ${detail}`,
+            healthState: "error",
           });
           await cliHandle.stop().catch(() => undefined);
           throw err;
         }
       }
 
+      ctx.log?.info?.(`[${account.accountId}] Starting SimpleX monitor`);
       const monitor = await startSimplexMonitor({
         account,
         cfg: ctx.cfg,
@@ -557,6 +620,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
         abortSignal: ctx.abortSignal,
         statusSink: (patch) => ctx.setStatus({ accountId: account.accountId, ...patch }),
       });
+      ctx.log?.info?.(`[${account.accountId}] SimpleX monitor started`);
 
       activeClients.set(account.accountId, monitor.client);
 

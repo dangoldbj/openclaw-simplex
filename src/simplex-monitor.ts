@@ -258,10 +258,32 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
     url: account.wsUrl,
     connectTimeoutMs: account.config.connection?.connectTimeoutMs,
     logger: {
-      info: (message) => runtime.log?.(message),
-      warn: (message) => runtime.error?.(message),
-      error: (message) => runtime.error?.(message),
+      info: (message) => runtime?.log?.(message),
+      warn: (message) => runtime?.error?.(message),
+      error: (message) => runtime?.error?.(message),
     },
+  });
+
+  const stopConnectionState = client.onConnectionState((state) => {
+    if (state.connected) {
+      statusSink?.({
+        connected: true,
+        running: true,
+        lastConnectedAt: state.at,
+        lastDisconnect: null,
+        lastError: null,
+        healthState: "healthy",
+      });
+      return;
+    }
+
+    statusSink?.({
+      connected: false,
+      running: state.expected ? false : undefined,
+      lastDisconnect: state.error ? { at: state.at, error: state.error } : { at: state.at },
+      ...(state.error ? { lastError: state.error } : {}),
+      healthState: state.expected ? "stopped" : "disconnected",
+    });
   });
 
   await connectWithRetry({
@@ -282,6 +304,7 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
   params.abortSignal.addEventListener(
     "abort",
     () => {
+      stopConnectionState();
       stopListening();
       client.close().catch((err) => {
         runtime.error?.(`[${account.accountId}] SimpleX close failed: ${String(err)}`);
