@@ -46,6 +46,17 @@ import type { PluginRuntime } from "openclaw/plugin-sdk";
 import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
 
+const simplexConfiguredChannel = {
+  channels: {
+    simplex: {
+      connection: {
+        mode: "managed",
+        cliPath: "simplex-chat",
+      },
+    },
+  },
+};
+
 const noopLogger = {
   info: vi.fn(),
   warn: vi.fn(),
@@ -115,9 +126,9 @@ function setupHandler(method: string, config: Record<string, unknown> = {}): Han
 
 describe("plugin entry registration modes", () => {
   it("registers gateway methods only in full mode", () => {
-    const full = setupHandlers({ channels: { simplex: {} } }, "full");
-    const setupOnly = setupHandlers({ channels: { simplex: {} } }, "setup-only");
-    const setupRuntime = setupHandlers({ channels: { simplex: {} } }, "setup-runtime");
+    const full = setupHandlers(simplexConfiguredChannel, "full");
+    const setupOnly = setupHandlers(simplexConfiguredChannel, "setup-only");
+    const setupRuntime = setupHandlers(simplexConfiguredChannel, "setup-runtime");
 
     expect(full.has("simplex.invite.create")).toBe(true);
     expect(full.has("simplex.invite.list")).toBe(true);
@@ -139,7 +150,7 @@ describe("simplex invite gateway", () => {
   });
 
   it("rejects invalid mode", async () => {
-    const handler = setupHandler("simplex.invite.create", { channels: { simplex: {} } });
+    const handler = setupHandler("simplex.invite.create", simplexConfiguredChannel);
     const respond = vi.fn();
     await handler({
       params: { mode: "bad" },
@@ -166,7 +177,7 @@ describe("simplex invite gateway", () => {
       },
     });
 
-    const handler = setupHandler("simplex.invite.create", { channels: { simplex: {} } });
+    const handler = setupHandler("simplex.invite.create", simplexConfiguredChannel);
     const respond = vi.fn();
     await handler({
       params: { mode: "connect" },
@@ -204,7 +215,7 @@ describe("simplex invite gateway", () => {
       },
     });
 
-    const handler = setupHandler("simplex.invite.create", { channels: { simplex: {} } });
+    const handler = setupHandler("simplex.invite.create", simplexConfiguredChannel);
     const respond = vi.fn();
     await handler({
       params: { mode: "address" },
@@ -248,7 +259,7 @@ describe("simplex invite gateway", () => {
       },
     ]);
 
-    const handler = setupHandler("simplex.invite.list", { channels: { simplex: {} } });
+    const handler = setupHandler("simplex.invite.list", simplexConfiguredChannel);
     const respond = vi.fn();
     await handler({
       params: {},
