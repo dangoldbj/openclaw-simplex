@@ -27,16 +27,16 @@ This plugin adds support for SimpleX, enabling:
 * self-hosted or local-first operation
 * agent communication without third-party dependencies
 
-**This introduces a privacy-first messaging capability that was previously not available in the OpenClaw channel ecosystem.**
+**This adds a privacy-first messaging option to the OpenClaw channel set.**
 
-### Compared to other channels
+### How This Differs From Typical Bot/API Channels
 
 Unlike typical messaging integrations (e.g. bot APIs or phone-based channels), this plugin:
 
-* does not require platform accounts or phone numbers
-* does not depend on hosted bot infrastructure
-* allows fully local or self-hosted operation
-* minimizes external trust assumptions
+* does not require phone numbers
+* does not depend on hosted or unofficial bot APIs
+* uses end-to-end encrypted messaging by default
+* inherits stronger privacy properties from SimpleX, including reduced metadata exposure compared with typical bot-platform channels
 
 ---
 
@@ -49,7 +49,7 @@ SimpleX is uniquely suited for privacy-critical communication:
 * decentralized relay architecture
 * fully supports self-hosting
 
-This plugin integrates SimpleX into OpenClaw as a production-ready channel backed by the official `simplex-chat` CLI.
+This plugin integrates SimpleX into OpenClaw as a dedicated channel backed by the official `simplex-chat` CLI.
 
 ---
 
@@ -62,7 +62,7 @@ This plugin integrates SimpleX into OpenClaw as a production-ready channel backe
 * runtime status and lifecycle management
 * Control UI configuration
 * managed or external runtime modes
-* designed for production use with explicit runtime and policy control
+* explicit runtime and policy control
 
 ---
 
