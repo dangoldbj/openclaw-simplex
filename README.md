@@ -129,14 +129,13 @@ openclaw plugins enable simplex
 Trust plugin:
 
 ```bash
-openclaw config set plugins.allow '["simplex"]' --strict-json
+openclaw config set plugins.allow "$(
+  (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
+  | jq -c '. + ["simplex"] | unique'
+)" --strict-json
 ```
 
-If you already trust other external plugins, include them too. For example:
-
-```bash
-openclaw config set plugins.allow '["duckduckgo","simplex"]' --strict-json
-```
+This appends `simplex` to the existing allowlist instead of replacing it.
 
 Important:
 

@@ -2,6 +2,8 @@
 
 This page shows the SimpleX invite flow in OpenClaw Control UI.
 
+It assumes the SimpleX channel is already configured, for example with a managed `channels.simplex.connection` setup.
+
 ## Control UI invite flow
 
 1. Open `Control -> Channels -> SimpleX`.

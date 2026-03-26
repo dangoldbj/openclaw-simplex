@@ -57,14 +57,13 @@ openclaw plugins enable simplex
 Trust the plugin explicitly:
 
 ```bash
-openclaw config set plugins.allow '["simplex"]' --strict-json
+openclaw config set plugins.allow "$(
+  (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
+  | jq -c '. + ["simplex"] | unique'
+)" --strict-json
 ```
 
-If you already trust other external plugins, include them too. For example:
-
-```bash
-openclaw config set plugins.allow '["duckduckgo","simplex"]' --strict-json
-```
+This appends `simplex` to the existing allowlist instead of replacing it.
 
 `plugins enable simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.simplex.connection` is configured.
 

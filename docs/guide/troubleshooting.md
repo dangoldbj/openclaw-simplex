@@ -3,12 +3,13 @@
 ## Plugin not listed
 
 - Run `openclaw plugins list`
+- Verify `plugins.allow` includes `simplex`
 - Verify package installed in the same runtime environment as OpenClaw
 - Restart OpenClaw
 
 ## Channel fails to start
 
-- Check `channels.simplex.enabled`
+- Check `channels.simplex.connection`
 - Validate `connection` values (`mode`, `cliPath`, `wsUrl`, `wsHost/wsPort`)
 - In managed mode, verify `simplex-chat` is executable from PATH
 
@@ -34,4 +35,5 @@
 ```bash
 openclaw plugins list
 openclaw plugins info simplex
+openclaw channels add --channel simplex --cli-path simplex-chat
 ```

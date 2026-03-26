@@ -56,6 +56,17 @@ Enable plugin:
 openclaw plugins enable simplex
 ```
 
+Trust plugin:
+
+```bash
+openclaw config set plugins.allow "$(
+  (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
+  | jq -c '. + ["simplex"] | unique'
+)" --strict-json
+```
+
+Then configure `channels.simplex.connection` before expecting the channel runtime to start. See [Getting Started](/guide/getting-started) for the full flow.
+
 ## Start Here
 
 - [Why SimpleX](/guide/why-simplex)
