@@ -1,5 +1,5 @@
 {
-  "id": "simplex",
+  "id": "openclaw-simplex",
   "kind": "channel",
   "channels": ["simplex"],
   "name": "SimpleX",

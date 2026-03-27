@@ -363,7 +363,7 @@ function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
 }
 
 export default defineChannelPluginEntry({
-  id: "simplex",
+  id: "openclaw-simplex",
   name: "SimpleX",
   description: "SimpleX Chat channel plugin via CLI",
   plugin: simplexPlugin,
