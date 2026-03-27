@@ -9,13 +9,30 @@ type ServerInfo = {
 
 let server: ServerInfo | null = null;
 
-function startServer(): ServerInfo {
-  const wss = new WebSocketServer({ port: 0 });
-  const address = wss.address();
-  if (!address || typeof address === "string") {
-    throw new Error("Failed to bind websocket server");
-  }
-  return { wss, url: `ws://127.0.0.1:${address.port}` };
+function startServer(): Promise<ServerInfo> {
+  return new Promise((resolve, reject) => {
+    const wss = new WebSocketServer({ host: "127.0.0.1", port: 0 });
+    const cleanup = () => {
+      wss.off("listening", onListening);
+      wss.off("error", onError);
+    };
+    const onListening = () => {
+      cleanup();
+      const address = wss.address();
+      if (!address || typeof address === "string") {
+        reject(new Error("Failed to bind websocket server"));
+        return;
+      }
+      resolve({ wss, url: `ws://127.0.0.1:${address.port}` });
+    };
+    const onError = (err: Error) => {
+      cleanup();
+      reject(err);
+    };
+
+    wss.on("listening", onListening);
+    wss.on("error", onError);
+  });
 }
 
 function stopServer(wss: WebSocketServer): Promise<void> {
@@ -23,8 +40,8 @@ function stopServer(wss: WebSocketServer): Promise<void> {
 }
 
 describe("SimplexWsClient", () => {
-  beforeEach(() => {
-    server = startServer();
+  beforeEach(async () => {
+    server = await startServer();
   });
 
   afterEach(async () => {
@@ -103,6 +120,34 @@ describe("SimplexWsClient", () => {
 
     const second = await client.sendCommand("/second");
     expect(second.resp?.type).toBe("ok");
+
+    await client.close();
+  });
+
+  it("redacts timed out command payloads", async () => {
+    if (!server) {
+      throw new Error("server not initialized");
+    }
+
+    server.wss.on("connection", (socket) => {
+      socket.on("message", () => {
+        // Intentionally do not respond.
+      });
+    });
+
+    const client = new SimplexWsClient({ url: server.url });
+    await expect(
+      client.sendCommand(
+        '/_send @123 json [{"msgContent":{"type":"text","text":"secret body"}}]',
+        25
+      )
+    ).rejects.toThrow("SimpleX command timeout after 25ms (/_send)");
+    await expect(
+      client.sendCommand(
+        '/_send @123 json [{"msgContent":{"type":"text","text":"secret body"}}]',
+        25
+      )
+    ).rejects.not.toThrow("secret body");
 
     await client.close();
   });
