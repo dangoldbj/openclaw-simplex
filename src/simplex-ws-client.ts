@@ -179,7 +179,9 @@ export class SimplexWsClient {
     return await new Promise<SimplexWsResponse>((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(corrId);
-        reject(new Error(`SimpleX command timeout after ${timeoutMs}ms: ${cmd}`));
+        reject(
+          new Error(`SimpleX command timeout after ${timeoutMs}ms (${summarizeCommand(cmd)})`)
+        );
       }, timeoutMs);
       this.pending.set(corrId, { resolve, reject, timeout });
       this.ws?.send(payload, (err) => {
@@ -267,4 +269,13 @@ export class SimplexWsClient {
       handler(state);
     }
   }
+}
+
+function summarizeCommand(cmd: string): string {
+  const trimmed = cmd.trim();
+  if (!trimmed) {
+    return "unknown command";
+  }
+  const firstToken = trimmed.split(/\s+/, 1)[0];
+  return firstToken || "unknown command";
 }

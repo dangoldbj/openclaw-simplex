@@ -12,6 +12,8 @@
 - Check `channels.simplex.connection`
 - Validate `connection` values (`mode`, `cliPath`, `wsUrl`, `wsHost/wsPort`)
 - In managed mode, verify `simplex-chat` is executable from PATH
+- If you need upstream CLI output while debugging managed mode, temporarily set `channels.simplex.connection.logCliOutput: true`
+- Turn `logCliOutput` back off after debugging, because raw CLI output may include sensitive chat details
 
 ## Inbound messages dropped
 

@@ -9,6 +9,7 @@ export type SimplexConnectionConfig = {
   wsPort?: number;
   cliPath?: string;
   dataDir?: string;
+  logCliOutput?: boolean;
   autoAcceptFiles?: boolean;
   connectTimeoutMs?: number;
 };

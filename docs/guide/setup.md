@@ -21,6 +21,24 @@ Use when OpenClaw should start and manage `simplex-chat`.
 }
 ```
 
+Managed mode does not forward raw `simplex-chat` stdout/stderr into OpenClaw logs unless you opt in with:
+
+```json
+{
+  "channels": {
+    "simplex": {
+      "connection": {
+        "mode": "managed",
+        "cliPath": "simplex-chat",
+        "logCliOutput": true
+      }
+    }
+  }
+}
+```
+
+Use this only while debugging. Raw CLI output may include sensitive chat details in runtime logs.
+
 ## External mode
 
 Use when SimpleX WS is already running outside OpenClaw.

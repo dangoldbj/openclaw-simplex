@@ -10,6 +10,7 @@ export function startSimplexCli(params: {
   cliPath: string;
   wsPort: number;
   dataDir?: string;
+  logCliOutput?: boolean;
   log?: {
     info?: (message: string) => void;
     warn?: (message: string) => void;
@@ -41,6 +42,9 @@ export function startSimplexCli(params: {
   });
 
   proc.stdout.on("data", (chunk) => {
+    if (!params.logCliOutput) {
+      return;
+    }
     const text = chunk.toString("utf8").trim();
     if (text) {
       params.log?.info?.(`[simplex] ${text}`);
@@ -48,6 +52,9 @@ export function startSimplexCli(params: {
   });
 
   proc.stderr.on("data", (chunk) => {
+    if (!params.logCliOutput) {
+      return;
+    }
     const text = chunk.toString("utf8").trim();
     if (text) {
       params.log?.warn?.(`[simplex] ${text}`);

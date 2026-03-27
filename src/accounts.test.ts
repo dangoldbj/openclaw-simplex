@@ -89,6 +89,30 @@ describe("simplex accounts", () => {
     expect(account.enabled).toBe(true);
   });
 
+  it("inherits logCliOutput from connection config", () => {
+    const cfg = {
+      channels: {
+        simplex: {
+          connection: {
+            mode: "managed",
+            cliPath: "simplex-chat",
+            logCliOutput: true,
+          },
+          accounts: {
+            alpha: {
+              connection: {
+                wsPort: 5225,
+              },
+            },
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    const account = resolveSimplexAccount({ cfg, accountId: "alpha" });
+    expect(account.config.connection?.logCliOutput).toBe(true);
+  });
+
   it("honors disabled flags", () => {
     const cfg = {
       channels: {

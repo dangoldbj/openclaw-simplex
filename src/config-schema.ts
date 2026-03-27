@@ -24,6 +24,7 @@ const SimplexConnectionSchema = z
     wsPort: z.number().int().positive().optional(),
     cliPath: z.string().optional(),
     dataDir: z.string().optional(),
+    logCliOutput: z.boolean().optional(),
     autoAcceptFiles: z.boolean().optional(),
     connectTimeoutMs: z.number().int().positive().optional(),
   })

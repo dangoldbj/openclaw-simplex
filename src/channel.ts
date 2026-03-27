@@ -584,6 +584,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
           cliPath: account.cliPath,
           wsPort: account.wsPort,
           dataDir: account.dataDir,
+          logCliOutput: account.config.connection?.logCliOutput,
           log: ctx.log,
         });
         let cliReady = false;
