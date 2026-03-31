@@ -1,18 +1,13 @@
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../config/accounts.js";
+import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
+import { executeSimplexAction } from "../actions/execute.js";
 import {
-  type SimplexInviteMode,
-  INVITE_COMMANDS,
-  resolveInviteMode,
-} from "../simplex/simplex-invite.js";
-import {
-  extractSimplexLink,
-  extractSimplexLinks,
-  extractSimplexPendingHints,
-} from "../simplex/simplex-links.js";
-import { sendSimplexCommand } from "../simplex/simplex-transport.js";
-import { executeSimplexAction } from "../actions/actions.js";
+  createSimplexInvite,
+  listSimplexInvites,
+  revokeSimplexInvite,
+} from "../simplex/simplex-invite-service.js";
+import { resolveInviteMode } from "../simplex/simplex-invite.js";
 
 type ToolResult = {
   content: Array<{ type: "text"; text: string }>;
@@ -68,66 +63,17 @@ const LeaveGroupToolSchema = Type.Object({
   to: Type.Optional(Type.String({ description: "Alias for group target." })),
 });
 
-async function runInviteCreateTool(params: {
-  api: OpenClawPluginApi;
-  accountId?: string | null;
-  mode: SimplexInviteMode;
-}): Promise<ToolResult> {
-  const accountId = resolveToolAccountId(params.api, params.accountId, null);
-  const account = resolveSimplexAccount({ cfg: params.api.config, accountId });
-  if (!account.enabled) {
-    throw new Error(`SimpleX account "${accountId}" is disabled`);
-  }
-  if (!account.configured) {
-    throw new Error(`SimpleX account "${accountId}" is not configured`);
-  }
-  const response = await sendSimplexCommand({
-    account,
-    command: INVITE_COMMANDS[params.mode],
-    logger: params.api.logger,
-  });
-  return jsonResult({
-    accountId,
-    mode: params.mode,
-    link: extractSimplexLink(response),
-    response,
-  });
-}
-
 async function runInviteListTool(params: {
   api: OpenClawPluginApi;
   accountId?: string | null;
 }): Promise<ToolResult> {
-  const accountId = resolveToolAccountId(params.api, params.accountId, null);
-  const account = resolveSimplexAccount({ cfg: params.api.config, accountId });
-  if (!account.enabled) {
-    throw new Error(`SimpleX account "${accountId}" is disabled`);
-  }
-  if (!account.configured) {
-    throw new Error(`SimpleX account "${accountId}" is not configured`);
-  }
-  const [addressResponse, contactsResponse] = await Promise.all([
-    sendSimplexCommand({
-      account,
-      command: "/show_address",
+  return jsonResult(
+    await listSimplexInvites({
+      cfg: params.api.config,
+      accountId: resolveToolAccountId(params.api, params.accountId, null),
       logger: params.api.logger,
-    }),
-    sendSimplexCommand({
-      account,
-      command: "/contacts",
-      logger: params.api.logger,
-    }),
-  ]);
-  return jsonResult({
-    accountId,
-    addressLink: extractSimplexLink(addressResponse),
-    links: [
-      ...new Set([...extractSimplexLinks(addressResponse), ...extractSimplexLinks(contactsResponse)]),
-    ],
-    pendingHints: extractSimplexPendingHints(contactsResponse),
-    addressResponse,
-    contactsResponse,
-  });
+    })
+  );
 }
 
 function buildApprovalDescription(toolName: string, params: Record<string, unknown>): string {
@@ -161,11 +107,14 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
     parameters: InviteToolSchema,
     async execute(_toolCallId, rawParams) {
       const mode = resolveInviteMode(rawParams?.mode) ?? "connect";
-      return await runInviteCreateTool({
-        api,
-        accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
-        mode,
-      });
+      return jsonResult(
+        await createSimplexInvite({
+          cfg: api.config,
+          accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
+          mode,
+          logger: api.logger,
+        })
+      );
     },
   }), { name: "simplex_invite_create" });
 
@@ -196,20 +145,12 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       ),
     }),
     async execute(_toolCallId, rawParams) {
-      const accountId = resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId);
-      const account = resolveSimplexAccount({ cfg: api.config, accountId });
-      if (!account.enabled) {
-        throw new Error(`SimpleX account "${accountId}" is disabled`);
-      }
-      if (!account.configured) {
-        throw new Error(`SimpleX account "${accountId}" is not configured`);
-      }
-      const response = await sendSimplexCommand({
-        account,
-        command: "/delete_address",
+      const result = await revokeSimplexInvite({
+        cfg: api.config,
+        accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
         logger: api.logger,
       });
-      return jsonResult({ accountId, revoked: true, response });
+      return jsonResult({ ...result, revoked: true });
     },
   }), { name: "simplex_invite_revoke" });
 
