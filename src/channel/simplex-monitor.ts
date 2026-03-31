@@ -8,12 +8,12 @@ import {
   buildReceiveFileCommand,
   buildSendMessagesCommand,
   formatChatRef,
-} from "./simplex-commands.js";
-import { resolveSimplexCommandError } from "./simplex-errors.js";
+} from "../simplex/simplex-commands.js";
+import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
 import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "./simplex-media.js";
 import { isSimplexAllowlisted } from "./simplex-security.js";
-import { SimplexWsClient, type SimplexWsEvent } from "./simplex-ws-client.js";
-import type { ResolvedSimplexAccount } from "./types.js";
+import { SimplexWsClient, type SimplexWsEvent } from "../simplex/simplex-ws-client.js";
+import type { ResolvedSimplexAccount } from "../config/types.js";
 
 export type SimplexMonitorOpts = {
   account: ResolvedSimplexAccount;

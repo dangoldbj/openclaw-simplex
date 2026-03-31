@@ -7,12 +7,12 @@ import {
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
   resolveSimplexAccount,
-} from "./accounts.js";
-import { simplexMessageActions } from "./actions.js";
-import { SimplexChannelConfigSchema } from "./config-schema.js";
+} from "../config/accounts.js";
+import { simplexMessageActions } from "../actions/actions.js";
+import { SimplexChannelConfigSchema } from "../config/config-schema.js";
 import { simplexSetupAdapter } from "./setup.js";
 import { startSimplexCli } from "./simplex-cli.js";
-import { type SimplexComposedMessage, buildSendMessagesCommand } from "./simplex-commands.js";
+import { type SimplexComposedMessage, buildSendMessagesCommand } from "../simplex/simplex-commands.js";
 import {
   listSimplexDirectoryGroups,
   listSimplexDirectoryPeers,
@@ -20,13 +20,13 @@ import {
   resolveSimplexSelf,
   resolveSimplexTargets,
 } from "./simplex-directory.js";
-import { resolveSimplexCommandError } from "./simplex-errors.js";
-import { extractSimplexLink } from "./simplex-links.js";
+import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
+import { extractSimplexLink } from "../simplex/simplex-links.js";
 import { buildComposedMessages } from "./simplex-media.js";
 import { startSimplexMonitor } from "./simplex-monitor.js";
 import { formatSimplexAllowFrom, resolveSimplexAllowFrom } from "./simplex-security.js";
-import { SimplexWsClient } from "./simplex-ws-client.js";
-import type { ResolvedSimplexAccount } from "./types.js";
+import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+import type { ResolvedSimplexAccount } from "../config/types.js";
 
 const activeClients = new Map<string, SimplexWsClient>();
 

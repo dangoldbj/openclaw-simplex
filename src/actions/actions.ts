@@ -4,7 +4,7 @@ import type {
   ChannelMessageActionAdapter,
   ChannelMessageActionName,
 } from "openclaw/plugin-sdk/channel-contract";
-import { listEnabledSimplexAccounts, resolveSimplexAccount } from "./accounts.js";
+import { listEnabledSimplexAccounts, resolveSimplexAccount } from "../config/accounts.js";
 import {
   type SimplexComposedMessage,
   buildAddGroupMemberCommand,
@@ -15,11 +15,11 @@ import {
   buildSendMessagesCommand,
   buildUpdateChatItemCommand,
   buildUpdateGroupProfileCommand,
-} from "./simplex-commands.js";
-import { resolveSimplexCommandError } from "./simplex-errors.js";
-import { buildComposedMessages } from "./simplex-media.js";
-import { SimplexWsClient } from "./simplex-ws-client.js";
-import type { ResolvedSimplexAccount } from "./types.js";
+} from "../simplex/simplex-commands.js";
+import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
+import { buildComposedMessages } from "../channel/simplex-media.js";
+import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+import type { ResolvedSimplexAccount } from "../config/types.js";
 
 type ToolResult = {
   content: Array<{ type: "text"; text: string }>;

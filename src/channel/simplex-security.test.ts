@@ -7,7 +7,7 @@ import {
   resolveSimplexAllowFrom,
   resolveSimplexDmPolicy,
 } from "./simplex-security.js";
-import type { ResolvedSimplexAccount } from "./types.js";
+import type { ResolvedSimplexAccount } from "../config/types.js";
 
 describe("simplex allowlist", () => {
   it("parses wildcard allowlist entries", () => {

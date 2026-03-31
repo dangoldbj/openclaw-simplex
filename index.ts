@@ -1,17 +1,17 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import { toDataURL as toQrDataUrl } from "qrcode";
-import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "./src/accounts.js";
-import { simplexPlugin } from "./src/channel.js";
-import { INVITE_COMMANDS, resolveInviteMode } from "./src/simplex-invite.js";
+import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "./src/config/accounts.js";
+import { simplexPlugin } from "./src/channel/channel.js";
+import { INVITE_COMMANDS, resolveInviteMode } from "./src/simplex/simplex-invite.js";
 import {
   extractSimplexLink,
   extractSimplexLinks,
   extractSimplexPendingHints,
-} from "./src/simplex-links.js";
-import { setSimplexRuntime } from "./src/runtime.js";
-import { registerSimplexToolHooks, registerSimplexTools } from "./src/simplex-tools.js";
-import { sendSimplexCommandWithRetry } from "./src/simplex-transport.js";
+} from "./src/simplex/simplex-links.js";
+import { setSimplexRuntime } from "./src/channel/runtime.js";
+import { registerSimplexToolHooks, registerSimplexTools } from "./src/tools/simplex-tools.js";
+import { sendSimplexCommandWithRetry } from "./src/simplex/simplex-transport.js";
 
 const INVALID_REQUEST = "INVALID_REQUEST";
 const UNAVAILABLE = "UNAVAILABLE";

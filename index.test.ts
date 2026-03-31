@@ -26,7 +26,7 @@ const qrMocks = vi.hoisted(() => ({
   toDataURL: vi.fn(async () => "data:image/png;base64,mock-base64"),
 }));
 
-vi.mock("./src/simplex-ws-client.js", () => ({
+vi.mock("./src/simplex/simplex-ws-client.js", () => ({
   SimplexWsClient: class {
     async connect() {}
     async sendCommand(cmd: string) {

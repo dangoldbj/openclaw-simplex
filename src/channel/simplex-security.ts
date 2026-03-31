@@ -1,5 +1,5 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
-import type { ResolvedSimplexAccount } from "./types.js";
+import type { ResolvedSimplexAccount } from "../config/types.js";
 
 export type SimplexAllowlistEntry = {
   kind: "any" | "sender" | "group";
