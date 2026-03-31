@@ -106,19 +106,20 @@ openclaw plugins info simplex
 
 In Control UI, open `Control -> Channels -> SimpleX`:
 
-Note: the current SimpleX card is a config editor. For this external plugin, the interactive `openclaw channels add` picker may not list SimpleX yet.
-
-![SimpleX channel card before invite generation](/images/control-ui.png)
+Note: the current SimpleX card is a config editor. OpenClaw does not currently expose plugin-defined custom invite buttons on the channel card for this plugin.
 
 ## 7. Create a 1-time link
 
-Click `Create 1-time Link`, then copy the link or scan the QR.
+Generate the link through the SimpleX gateway methods instead:
 
-![SimpleX one-time link generated in Control UI](/images/1-time-link-generation.png)
+- `simplex.invite.create`
+- `simplex.invite.list`
+
+See [Gateway Methods](/reference/gateway-methods) for the request shapes.
 
 ## 8. Pair in the SimpleX app
 
-Open the SimpleX app and scan the QR (or open the copied link).
+Open the SimpleX app and scan the QR or open the returned link.
 
 ## 9. Send first message and receive pairing code
 

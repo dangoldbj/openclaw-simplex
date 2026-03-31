@@ -21,6 +21,7 @@ import {
   resolveSimplexTargets,
 } from "./simplex-directory.js";
 import { resolveSimplexCommandError } from "./simplex-errors.js";
+import { extractSimplexLink } from "./simplex-links.js";
 import { buildComposedMessages } from "./simplex-media.js";
 import { startSimplexMonitor } from "./simplex-monitor.js";
 import { formatSimplexAllowFrom, resolveSimplexAllowFrom } from "./simplex-security.js";
@@ -28,40 +29,6 @@ import { SimplexWsClient } from "./simplex-ws-client.js";
 import type { ResolvedSimplexAccount } from "./types.js";
 
 const activeClients = new Map<string, SimplexWsClient>();
-const SIMPLEX_LINK_REGEX = /\b(simplex:\/\/[^\s"'<>]+|https?:\/\/[^\s"'<>]+)/gi;
-
-function collectStrings(value: unknown, out: string[]): void {
-  if (typeof value === "string") {
-    out.push(value);
-    return;
-  }
-  if (Array.isArray(value)) {
-    for (const entry of value) {
-      collectStrings(entry, out);
-    }
-    return;
-  }
-  if (value && typeof value === "object") {
-    for (const entry of Object.values(value as Record<string, unknown>)) {
-      collectStrings(entry, out);
-    }
-  }
-}
-
-function extractSimplexAddressLink(resp: unknown): string | null {
-  const strings: string[] = [];
-  collectStrings(resp, strings);
-  const matches: string[] = [];
-  for (const str of strings) {
-    for (const match of str.matchAll(SIMPLEX_LINK_REGEX)) {
-      const raw = match[0];
-      const cleaned = raw.replace(/[),.\]]+$/g, "");
-      matches.push(cleaned);
-    }
-  }
-  const preferred = matches.find((entry) => /simplex/i.test(entry));
-  return preferred ?? matches[0] ?? null;
-}
 
 function extractSimplexWsUrlFromApplication(application: unknown): string | undefined {
   if (!application || typeof application !== "object") {
@@ -529,7 +496,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
           const response = await withSimplexClient(account, (client) =>
             client.sendCommand("/show_address")
           );
-          addressLink = extractSimplexAddressLink(response);
+          addressLink = extractSimplexLink(response);
         } catch {
           // Keep status snapshot resilient when CLI/WebSocket is unavailable.
         }

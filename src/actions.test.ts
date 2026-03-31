@@ -24,6 +24,7 @@ describe("simplex message tool discovery", () => {
     expect(result?.actions).toEqual(
       expect.arrayContaining([
         "send",
+        "upload-file",
         "react",
         "edit",
         "delete",
@@ -40,6 +41,9 @@ describe("simplex message tool discovery", () => {
         groupId: expect.any(Object),
         messageId: expect.any(Object),
         messageIds: expect.any(Object),
+        mediaUrl: expect.any(Object),
+        filePath: expect.any(Object),
+        caption: expect.any(Object),
         emoji: expect.any(Object),
         displayName: expect.any(Object),
         participant: expect.any(Object),

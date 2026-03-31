@@ -12,9 +12,11 @@ import {
   buildLeaveGroupCommand,
   buildReactionCommand,
   buildRemoveGroupMemberCommand,
+  buildSendMessagesCommand,
   buildUpdateChatItemCommand,
   buildUpdateGroupProfileCommand,
 } from "./simplex-commands.js";
+import { resolveSimplexCommandError } from "./simplex-errors.js";
 import { buildComposedMessages } from "./simplex-media.js";
 import { SimplexWsClient } from "./simplex-ws-client.js";
 import type { ResolvedSimplexAccount } from "./types.js";
@@ -29,6 +31,7 @@ type SimplexActionParams = Record<string, unknown>;
 type DeleteMode = "broadcast" | "internal" | "internalMark";
 
 const SUPPORTED_ACTIONS = new Set<ChannelMessageActionName>([
+  "upload-file",
   "react",
   "edit",
   "delete",
@@ -67,7 +70,7 @@ function buildSimplexMessageToolSchema() {
       chatType: Type.Optional(
         Type.Union([Type.Literal("direct"), Type.Literal("group")], {
           description: "Disambiguates the target when only an ID is provided."
-        })
+        }),
       ),
       groupId: Type.Optional(
         Type.String({
@@ -87,7 +90,7 @@ function buildSimplexMessageToolSchema() {
       messageIds: Type.Optional(
         Type.Array(Type.Union([Type.String(), Type.Number()]), {
           description: "Multiple message/chat item IDs for delete or unsend actions."
-        })
+        }),
       ),
       deleteMode: Type.Optional(
         Type.Union(
@@ -97,37 +100,72 @@ function buildSimplexMessageToolSchema() {
       ),
       emoji: Type.Optional(
         Type.String({
-          description: "Emoji shorthand for the react action."
-        })
+          description: "Emoji shorthand for the react action.",
+        }),
       ),
       reaction: Type.Optional(
         Type.Object(
           {},
           {
             additionalProperties: true,
-            description: "Raw SimpleX reaction payload for advanced react actions."
-          }
-        )
+            description: "Raw SimpleX reaction payload for advanced react actions.",
+          },
+        ),
       ),
       remove: Type.Optional(
         Type.Boolean({
           description: "When true, remove an existing reaction instead of adding one."
-        })
+        }),
       ),
       text: Type.Optional(
         Type.String({
-          description: "Replacement message text for edit actions."
-        })
+          description: "Replacement message text or upload caption.",
+        }),
       ),
       message: Type.Optional(
         Type.String({
-          description: "Alias for text."
-        })
+          description: "Alias for text.",
+        }),
+      ),
+      caption: Type.Optional(
+        Type.String({
+          description: "Alias for text when uploading a file.",
+        }),
+      ),
+      mediaUrl: Type.Optional(
+        Type.String({
+          description: "File path or URL to upload via SimpleX.",
+        }),
+      ),
+      media: Type.Optional(
+        Type.String({
+          description: "Alias for mediaUrl.",
+        }),
+      ),
+      path: Type.Optional(
+        Type.String({
+          description: "Alias for mediaUrl when providing a local file path.",
+        }),
+      ),
+      filePath: Type.Optional(
+        Type.String({
+          description: "Alias for mediaUrl when providing a local file path.",
+        }),
+      ),
+      audioAsVoice: Type.Optional(
+        Type.Boolean({
+          description: "Send uploaded audio as a voice message when compatible.",
+        }),
+      ),
+      asVoice: Type.Optional(
+        Type.Boolean({
+          description: "Alias for audioAsVoice.",
+        }),
       ),
       displayName: Type.Optional(
         Type.String({
-          description: "New SimpleX group display name."
-        })
+          description: "New SimpleX group display name.",
+        }),
       ),
       name: Type.Optional(
         Type.String({
@@ -152,19 +190,19 @@ function buildSimplexMessageToolSchema() {
       participant: Type.Optional(
         Type.String({
           description: "Participant identifier for addParticipant or removeParticipant."
-        })
+        }),
       ),
       contactId: Type.Optional(
         Type.String({
           description: "Alias for participant when adding a group member."
-        })
+        }),
       ),
       memberId: Type.Optional(
         Type.String({
-          description: "Alias for participant when removing a group member."
-        })
-      )
-    }
+          description: "Alias for participant when removing a group member.",
+        }),
+      ),
+    },
   };
 }
 
@@ -334,6 +372,281 @@ async function resolveEditMessage(params: {
   return first;
 }
 
+async function sendActionComposedMessages(params: {
+  account: ResolvedSimplexAccount;
+  chatRef: string;
+  composedMessages: SimplexComposedMessage[];
+}): Promise<{ messageId?: string }> {
+  if (params.composedMessages.length === 0) {
+    return {};
+  }
+  const cmd = buildSendMessagesCommand({
+    chatRef: params.chatRef,
+    composedMessages: params.composedMessages,
+  });
+  const response = await withSimplexClient(params.account, (client) => client.sendCommand(cmd));
+  const resp = response.resp as {
+    type?: string;
+    chatError?: { errorType?: { type?: string; message?: string } };
+    chatItems?: Array<{ chatItem?: { meta?: { itemId?: unknown } } }>;
+    itemId?: unknown;
+    messageId?: unknown;
+  };
+  const commandError = resolveSimplexCommandError(resp);
+  if (commandError) {
+    throw new Error(commandError);
+  }
+  const rawMessageId =
+    resp.chatItems?.[0]?.chatItem?.meta?.itemId ?? resp.messageId ?? resp.itemId;
+  if (typeof rawMessageId === "number" && Number.isFinite(rawMessageId)) {
+    return { messageId: String(rawMessageId) };
+  }
+  if (typeof rawMessageId === "string" && rawMessageId.trim()) {
+    return { messageId: rawMessageId.trim() };
+  }
+  return {};
+}
+
+function readUploadMediaUrl(params: SimplexActionParams): string | undefined {
+  return (
+    readStringParam(params, "mediaUrl") ??
+    readStringParam(params, "media") ??
+    readStringParam(params, "filePath") ??
+    readStringParam(params, "path")
+  );
+}
+
+export async function executeSimplexAction(params: {
+  action: ChannelMessageActionName;
+  cfg: OpenClawConfig;
+  accountId?: string | null;
+  actionParams: SimplexActionParams;
+}): Promise<ToolResult> {
+  const { action, cfg, accountId } = params;
+  const toolParams = params.actionParams;
+
+  if (action === "send") {
+    throw new Error("Send should be handled by outbound, not actions handler.");
+  }
+
+  if (!SUPPORTED_ACTIONS.has(action)) {
+    throw new Error(`Action ${action} not supported for simplex.`);
+  }
+
+  const account = resolveSimplexAccount({ cfg, accountId });
+  if (!account.enabled) {
+    throw new Error("SimpleX account disabled.");
+  }
+  if (!account.configured) {
+    throw new Error("SimpleX account not configured.");
+  }
+
+  const chatRef = readChatRef(toolParams);
+
+  if (action === "upload-file") {
+    const mediaUrl = readUploadMediaUrl(toolParams);
+    if (!mediaUrl) {
+      throw new Error("mediaUrl, media, filePath, or path required");
+    }
+    const text =
+      readStringParam(toolParams, "text", { allowEmpty: true }) ??
+      readStringParam(toolParams, "message", { allowEmpty: true }) ??
+      readStringParam(toolParams, "caption", { allowEmpty: true }) ??
+      "";
+    const audioAsVoice =
+      typeof toolParams.audioAsVoice === "boolean"
+        ? toolParams.audioAsVoice
+        : typeof toolParams.asVoice === "boolean"
+          ? toolParams.asVoice
+          : undefined;
+    const composedMessages = await buildComposedMessages({
+      cfg,
+      accountId: account.accountId,
+      text,
+      mediaUrl,
+      audioAsVoice,
+    });
+    const result = await sendActionComposedMessages({ account, chatRef, composedMessages });
+    return jsonResult({
+      ok: true,
+      uploaded: true,
+      to: chatRef,
+      mediaUrl,
+      messageId: result.messageId ?? null,
+    });
+  }
+
+  if (action === "react") {
+    const messageId =
+      readNumberParam(toolParams, "messageId", { integer: true }) ??
+      readNumberParam(toolParams, "chatItemId", { integer: true });
+    if (messageId === undefined) {
+      throw new Error("messageId required");
+    }
+    const emoji = readStringParam(toolParams, "emoji", { allowEmpty: true });
+    const remove = typeof toolParams.remove === "boolean" ? toolParams.remove : false;
+    const reaction =
+      typeof toolParams.reaction === "object" && toolParams.reaction !== null
+        ? (toolParams.reaction as Record<string, unknown>)
+        : emoji
+          ? { emoji }
+          : null;
+    if (!reaction) {
+      throw new Error("reaction or emoji required");
+    }
+    const cmd = buildReactionCommand({
+      chatRef,
+      chatItemId: messageId,
+      add: !remove,
+      reaction,
+    });
+    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    return jsonResult({ ok: true, action: remove ? "removed" : "added", emoji });
+  }
+
+  if (action === "edit") {
+    const messageId =
+      readNumberParam(toolParams, "messageId", { integer: true }) ??
+      readNumberParam(toolParams, "chatItemId", { integer: true });
+    if (messageId === undefined) {
+      throw new Error("messageId required");
+    }
+    const text =
+      readStringParam(toolParams, "text", { allowEmpty: false }) ??
+      readStringParam(toolParams, "message", { allowEmpty: false });
+    if (!text) {
+      throw new Error("text required");
+    }
+    const updatedMessage = await resolveEditMessage({ cfg, account, text });
+    const cmd = buildUpdateChatItemCommand({
+      chatRef,
+      chatItemId: messageId,
+      updatedMessage,
+    });
+    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    return jsonResult({ ok: true, updated: messageId });
+  }
+
+  if (action === "delete" || action === "unsend") {
+    const messageIds = readMessageIds(toolParams);
+    const deleteModeRaw = readStringParam(toolParams, "deleteMode");
+    const deleteMode =
+      deleteModeRaw &&
+      (deleteModeRaw === "broadcast" ||
+        deleteModeRaw === "internal" ||
+        deleteModeRaw === "internalMark")
+        ? (deleteModeRaw as DeleteMode)
+        : undefined;
+    const cmd = buildDeleteChatItemCommand({
+      chatRef,
+      chatItemIds: messageIds,
+      deleteMode,
+    });
+    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    return jsonResult({ ok: true, deleted: messageIds });
+  }
+
+  if (action === "renameGroup") {
+    const target =
+      readStringParam(toolParams, "to") ??
+      readStringParam(toolParams, "chatRef") ??
+      readStringParam(toolParams, "groupId");
+    if (!target) {
+      throw new Error("groupId or to required");
+    }
+    const rawProfile =
+      readStringParam(toolParams, "profile") ?? readStringParam(toolParams, "groupProfile");
+    if (rawProfile) {
+      let profile: Record<string, unknown>;
+      try {
+        profile = JSON.parse(rawProfile) as Record<string, unknown>;
+      } catch (err) {
+        throw new Error(`Invalid profile JSON: ${String(err)}`, { cause: err });
+      }
+      const cmd = buildUpdateGroupProfileCommand({
+        groupId: normalizeSimplexGroupRef(target),
+        profile,
+      });
+      await withSimplexClient(account, (client) => client.sendCommand(cmd));
+      return jsonResult({ ok: true, group: target, profile });
+    }
+    const displayName =
+      readStringParam(toolParams, "displayName") ??
+      readStringParam(toolParams, "name") ??
+      readStringParam(toolParams, "title");
+    if (!displayName) {
+      throw new Error("displayName or name required");
+    }
+    const cmd = buildUpdateGroupProfileCommand({
+      groupId: normalizeSimplexGroupRef(target),
+      profile: { displayName },
+    });
+    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    return jsonResult({ ok: true, group: target, displayName });
+  }
+
+  if (action === "addParticipant") {
+    const target =
+      readStringParam(toolParams, "to") ??
+      readStringParam(toolParams, "chatRef") ??
+      readStringParam(toolParams, "groupId");
+    if (!target) {
+      throw new Error("groupId or to required");
+    }
+    const participant =
+      readStringParam(toolParams, "participant") ??
+      readStringParam(toolParams, "contactId") ??
+      readStringParam(toolParams, "memberId");
+    if (!participant) {
+      throw new Error("participant or contactId required");
+    }
+    const cmd = buildAddGroupMemberCommand({
+      groupId: normalizeSimplexGroupRef(target),
+      contactId: participant,
+    });
+    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    return jsonResult({ ok: true, group: target, added: participant });
+  }
+
+  if (action === "removeParticipant") {
+    const target =
+      readStringParam(toolParams, "to") ??
+      readStringParam(toolParams, "chatRef") ??
+      readStringParam(toolParams, "groupId");
+    if (!target) {
+      throw new Error("groupId or to required");
+    }
+    const participant =
+      readStringParam(toolParams, "participant") ??
+      readStringParam(toolParams, "memberId") ??
+      readStringParam(toolParams, "contactId");
+    if (!participant) {
+      throw new Error("participant or memberId required");
+    }
+    const cmd = buildRemoveGroupMemberCommand({
+      groupId: normalizeSimplexGroupRef(target),
+      memberId: participant,
+    });
+    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    return jsonResult({ ok: true, group: target, removed: participant });
+  }
+
+  if (action === "leaveGroup") {
+    const target =
+      readStringParam(toolParams, "to") ??
+      readStringParam(toolParams, "chatRef") ??
+      readStringParam(toolParams, "groupId");
+    if (!target) {
+      throw new Error("groupId or to required");
+    }
+    const cmd = buildLeaveGroupCommand(normalizeSimplexGroupRef(target));
+    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    return jsonResult({ ok: true, group: target, left: true });
+  }
+
+  throw new Error(`Action ${action} not supported for simplex.`);
+}
+
 export const simplexMessageActions: ChannelMessageActionAdapter = {
   describeMessageTool: ({ cfg }) => {
     const actions = listEnabledSimplexAccounts(cfg).filter((account) => account.configured);
@@ -343,6 +656,7 @@ export const simplexMessageActions: ChannelMessageActionAdapter = {
     return {
       actions: [
         "send",
+        "upload-file",
         "react",
         "edit",
         "delete",
@@ -357,193 +671,6 @@ export const simplexMessageActions: ChannelMessageActionAdapter = {
     };
   },
   supportsAction: ({ action }) => SUPPORTED_ACTIONS.has(action),
-  handleAction: async ({ action, params, cfg, accountId }) => {
-    if (action === "send") {
-      throw new Error("Send should be handled by outbound, not actions handler.");
-    }
-
-    if (!SUPPORTED_ACTIONS.has(action)) {
-      throw new Error(`Action ${action} not supported for simplex.`);
-    }
-
-    const account = resolveSimplexAccount({ cfg, accountId });
-    if (!account.enabled) {
-      throw new Error("SimpleX account disabled.");
-    }
-    if (!account.configured) {
-      throw new Error("SimpleX account not configured.");
-    }
-
-    const chatRef = readChatRef(params);
-
-    if (action === "react") {
-      const messageId =
-        readNumberParam(params, "messageId", { integer: true }) ??
-        readNumberParam(params, "chatItemId", { integer: true });
-      if (messageId === undefined) {
-        throw new Error("messageId required");
-      }
-      const emoji = readStringParam(params, "emoji", { allowEmpty: true });
-      const remove = typeof params.remove === "boolean" ? params.remove : false;
-      const reaction =
-        typeof params.reaction === "object" && params.reaction !== null
-          ? (params.reaction as Record<string, unknown>)
-          : emoji
-            ? { emoji }
-            : null;
-      if (!reaction) {
-        throw new Error("reaction or emoji required");
-      }
-      const cmd = buildReactionCommand({
-        chatRef,
-        chatItemId: messageId,
-        add: !remove,
-        reaction,
-      });
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
-      return jsonResult({ ok: true, action: remove ? "removed" : "added", emoji });
-    }
-
-    if (action === "edit") {
-      const messageId =
-        readNumberParam(params, "messageId", { integer: true }) ??
-        readNumberParam(params, "chatItemId", { integer: true });
-      if (messageId === undefined) {
-        throw new Error("messageId required");
-      }
-      const text =
-        readStringParam(params, "text", { allowEmpty: false }) ??
-        readStringParam(params, "message", { allowEmpty: false });
-      if (!text) {
-        throw new Error("text required");
-      }
-      const updatedMessage = await resolveEditMessage({ cfg, account, text });
-      const cmd = buildUpdateChatItemCommand({
-        chatRef,
-        chatItemId: messageId,
-        updatedMessage,
-      });
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
-      return jsonResult({ ok: true, updated: messageId });
-    }
-
-    if (action === "delete" || action === "unsend") {
-      const messageIds = readMessageIds(params);
-      const deleteModeRaw = readStringParam(params, "deleteMode");
-      const deleteMode =
-        deleteModeRaw &&
-        (deleteModeRaw === "broadcast" ||
-          deleteModeRaw === "internal" ||
-          deleteModeRaw === "internalMark")
-          ? (deleteModeRaw as DeleteMode)
-          : undefined;
-      const cmd = buildDeleteChatItemCommand({
-        chatRef,
-        chatItemIds: messageIds,
-        deleteMode,
-      });
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
-      return jsonResult({ ok: true, deleted: messageIds });
-    }
-
-    if (action === "renameGroup") {
-      const target =
-        readStringParam(params, "to") ??
-        readStringParam(params, "chatRef") ??
-        readStringParam(params, "groupId");
-      if (!target) {
-        throw new Error("groupId or to required");
-      }
-      const rawProfile =
-        readStringParam(params, "profile") ?? readStringParam(params, "groupProfile");
-      if (rawProfile) {
-        let profile: Record<string, unknown>;
-        try {
-          profile = JSON.parse(rawProfile) as Record<string, unknown>;
-        } catch (err) {
-          throw new Error(`Invalid profile JSON: ${String(err)}`, { cause: err });
-        }
-        const cmd = buildUpdateGroupProfileCommand({
-          groupId: normalizeSimplexGroupRef(target),
-          profile,
-        });
-        await withSimplexClient(account, (client) => client.sendCommand(cmd));
-        return jsonResult({ ok: true, group: target, profile });
-      }
-      const displayName =
-        readStringParam(params, "displayName") ??
-        readStringParam(params, "name") ??
-        readStringParam(params, "title");
-      if (!displayName) {
-        throw new Error("displayName or name required");
-      }
-      const cmd = buildUpdateGroupProfileCommand({
-        groupId: normalizeSimplexGroupRef(target),
-        profile: { displayName },
-      });
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
-      return jsonResult({ ok: true, group: target, displayName });
-    }
-
-    if (action === "addParticipant") {
-      const target =
-        readStringParam(params, "to") ??
-        readStringParam(params, "chatRef") ??
-        readStringParam(params, "groupId");
-      if (!target) {
-        throw new Error("groupId or to required");
-      }
-      const participant =
-        readStringParam(params, "participant") ??
-        readStringParam(params, "contactId") ??
-        readStringParam(params, "memberId");
-      if (!participant) {
-        throw new Error("participant or contactId required");
-      }
-      const cmd = buildAddGroupMemberCommand({
-        groupId: normalizeSimplexGroupRef(target),
-        contactId: participant,
-      });
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
-      return jsonResult({ ok: true, group: target, added: participant });
-    }
-
-    if (action === "removeParticipant") {
-      const target =
-        readStringParam(params, "to") ??
-        readStringParam(params, "chatRef") ??
-        readStringParam(params, "groupId");
-      if (!target) {
-        throw new Error("groupId or to required");
-      }
-      const participant =
-        readStringParam(params, "participant") ??
-        readStringParam(params, "memberId") ??
-        readStringParam(params, "contactId");
-      if (!participant) {
-        throw new Error("participant or memberId required");
-      }
-      const cmd = buildRemoveGroupMemberCommand({
-        groupId: normalizeSimplexGroupRef(target),
-        memberId: participant,
-      });
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
-      return jsonResult({ ok: true, group: target, removed: participant });
-    }
-
-    if (action === "leaveGroup") {
-      const target =
-        readStringParam(params, "to") ??
-        readStringParam(params, "chatRef") ??
-        readStringParam(params, "groupId");
-      if (!target) {
-        throw new Error("groupId or to required");
-      }
-      const cmd = buildLeaveGroupCommand(normalizeSimplexGroupRef(target));
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
-      return jsonResult({ ok: true, group: target, left: true });
-    }
-
-    throw new Error(`Action ${action} not supported for simplex.`);
-  },
+  handleAction: async ({ action, params, cfg, accountId }) =>
+    await executeSimplexAction({ action, cfg, accountId, actionParams: params }),
 };

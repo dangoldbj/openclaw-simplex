@@ -77,11 +77,19 @@ type Handler = (ctx: {
   };
 }) => Promise<void>;
 
-function setupHandlers(
+type HookHandler = (event: { toolName: string; params: Record<string, unknown> }) => unknown;
+
+function setupRegistration(
   config: Record<string, unknown> = {},
   registrationMode: "full" | "setup-only" | "setup-runtime" = "full"
-): Map<string, Handler> {
+): {
+  methods: Map<string, Handler>;
+  tools: string[];
+  hooks: Array<{ events: string | string[]; handler: HookHandler }>;
+} {
   const methods = new Map<string, Handler>();
+  const tools: string[] = [];
+  const hooks: Array<{ events: string | string[]; handler: HookHandler }> = [];
   const api: OpenClawPluginApi = {
     id: "simplex",
     name: "SimpleX",
@@ -95,8 +103,15 @@ function setupHandlers(
     logger: noopLogger,
     registerChannel: () => {},
     registerGatewayMethod: (method, handler) => methods.set(method, handler as Handler),
-    registerTool: () => {},
-    registerHook: () => {},
+    registerTool: (_tool, opts) => {
+      const registeredName = opts?.name;
+      if (registeredName) {
+        tools.push(registeredName);
+      }
+    },
+    registerHook: (events, handler) => {
+      hooks.push({ events, handler: handler as unknown as HookHandler });
+    },
     registerHttpRoute: () => {},
     registerCli: () => {},
     registerService: () => {},
@@ -114,11 +129,20 @@ function setupHandlers(
     registerMemoryEmbeddingProvider: () => {},
     registerMemoryPromptSection: () => {},
     registerCommand: () => {},
-    on: () => {},
+    on: (hookName, handler) => {
+      hooks.push({ events: hookName, handler: handler as unknown as HookHandler });
+    },
     resolvePath: (value: string) => value,
   };
   plugin.register(api);
-  return methods;
+  return { methods, tools, hooks };
+}
+
+function setupHandlers(
+  config: Record<string, unknown> = {},
+  registrationMode: "full" | "setup-only" | "setup-runtime" = "full"
+): Map<string, Handler> {
+  return setupRegistration(config, registrationMode).methods;
 }
 
 function setupHandler(method: string, config: Record<string, unknown> = {}): Handler {
@@ -146,6 +170,60 @@ describe("plugin entry registration modes", () => {
   it("exports the setup entry plugin surface", () => {
     expect(setupEntry).toEqual({ plugin: expect.any(Object) });
     expect(setupEntry.plugin).toBeTruthy();
+  });
+
+  it("registers simplex tools and approval hook in full mode", () => {
+    const full = setupRegistration(simplexConfiguredChannel, "full");
+
+    expect(full.tools).toEqual(
+      expect.arrayContaining([
+        "simplex_invite_create",
+        "simplex_invite_list",
+        "simplex_invite_revoke",
+        "simplex_group_add_participant",
+        "simplex_group_remove_participant",
+        "simplex_group_leave",
+      ])
+    );
+    expect(full.hooks.some((entry) => entry.events === "before_tool_call")).toBe(true);
+  });
+});
+
+describe("simplex approval hook", () => {
+  it("requires approval for destructive simplex tools", () => {
+    const full = setupRegistration(simplexConfiguredChannel, "full");
+    const beforeToolCall = full.hooks.find((entry) => entry.events === "before_tool_call");
+    expect(beforeToolCall).toBeDefined();
+    if (!beforeToolCall) {
+      throw new Error("before_tool_call hook not registered");
+    }
+
+    expect(
+      beforeToolCall.handler({
+        toolName: "simplex_group_remove_participant",
+        params: {
+          accountId: "default",
+          groupId: "group-1",
+          memberId: "123",
+        },
+      })
+    ).toMatchObject({
+      requireApproval: {
+        title: "Approve SimpleX admin action",
+        severity: "warning",
+      },
+    });
+
+    expect(
+      beforeToolCall.handler({
+        toolName: "simplex_group_add_participant",
+        params: {
+          accountId: "default",
+          groupId: "group-1",
+          contactId: "123",
+        },
+      })
+    ).toBeUndefined();
   });
 });
 

@@ -141,7 +141,7 @@ Important:
 
 * `openclaw plugins enable simplex` only enables the plugin
 * OpenClaw will not start the SimpleX channel until `channels.simplex.connection` is configured
-* The current Control UI SimpleX card is a config editor, not a guided setup wizard
+* The current Control UI SimpleX card is a config editor; invite generation is exposed through SimpleX gateway methods and plugin tools, not custom channel-card buttons
 * `openclaw channels add --channel simplex --cli-path simplex-chat` works
 * The interactive `openclaw channels add` picker may not list this external plugin yet
 
@@ -291,11 +291,7 @@ Full walkthrough:
 
 ## Screenshots
 
-Control UI channel view:
-
-![SimpleX channel card before invite generation](./docs/public/images/control-ui.png)
-
-More screenshots:
+Pairing and approval flow screenshots:
 
 * https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
 

@@ -3,17 +3,16 @@ import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import { toDataURL as toQrDataUrl } from "qrcode";
 import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "./src/accounts.js";
 import { simplexPlugin } from "./src/channel.js";
+import { INVITE_COMMANDS, resolveInviteMode } from "./src/simplex-invite.js";
+import {
+  extractSimplexLink,
+  extractSimplexLinks,
+  extractSimplexPendingHints,
+} from "./src/simplex-links.js";
 import { setSimplexRuntime } from "./src/runtime.js";
-import { SimplexWsClient, type SimplexWsResponse } from "./src/simplex-ws-client.js";
+import { registerSimplexToolHooks, registerSimplexTools } from "./src/simplex-tools.js";
+import { sendSimplexCommandWithRetry } from "./src/simplex-transport.js";
 
-type SimplexInviteMode = "connect" | "address";
-
-const INVITE_COMMANDS: Record<SimplexInviteMode, string> = {
-  connect: "/c",
-  address: "/ad",
-};
-
-const LINK_REGEX = /\b(simplex:\/\/[^\s"'<>]+|https?:\/\/[^\s"'<>]+)/gi;
 const INVALID_REQUEST = "INVALID_REQUEST";
 const UNAVAILABLE = "UNAVAILABLE";
 
@@ -28,151 +27,6 @@ function createError(code: string, message: string): GatewayError {
 
 async function renderQrDataUrl(value: string): Promise<string> {
   return await toQrDataUrl(value, { errorCorrectionLevel: "M", margin: 1, scale: 8 });
-}
-
-function resolveInviteMode(value: unknown): SimplexInviteMode | null {
-  if (value === "connect" || value === "address") {
-    return value;
-  }
-  return null;
-}
-
-function collectStrings(value: unknown, out: string[]): void {
-  if (typeof value === "string") {
-    out.push(value);
-    return;
-  }
-  if (Array.isArray(value)) {
-    for (const entry of value) {
-      collectStrings(entry, out);
-    }
-    return;
-  }
-  if (value && typeof value === "object") {
-    for (const entry of Object.values(value as Record<string, unknown>)) {
-      collectStrings(entry, out);
-    }
-  }
-}
-
-function extractSimplexLink(resp: SimplexWsResponse): string | null {
-  const strings: string[] = [];
-  collectStrings(resp, strings);
-  const matches: string[] = [];
-  for (const str of strings) {
-    for (const match of str.matchAll(LINK_REGEX)) {
-      const raw = match[0];
-      const cleaned = raw.replace(/[),.\]]+$/g, "");
-      matches.push(cleaned);
-    }
-  }
-  const preferred = matches.find((entry) => /simplex/i.test(entry));
-  return preferred ?? matches[0] ?? null;
-}
-
-function extractSimplexLinks(resp: SimplexWsResponse): string[] {
-  const strings: string[] = [];
-  collectStrings(resp, strings);
-  const matches = new Set<string>();
-  for (const str of strings) {
-    for (const match of str.matchAll(LINK_REGEX)) {
-      const raw = match[0];
-      const cleaned = raw.replace(/[),.\]]+$/g, "");
-      if (cleaned) {
-        matches.add(cleaned);
-      }
-    }
-  }
-  return [...matches];
-}
-
-function extractSimplexPendingHints(resp: SimplexWsResponse): string[] {
-  const strings: string[] = [];
-  collectStrings(resp, strings);
-  const hints = new Set<string>();
-  for (const value of strings) {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      continue;
-    }
-    const lowered = trimmed.toLowerCase();
-    if (lowered.includes("request") || lowered.includes("pending")) {
-      hints.add(trimmed);
-    }
-  }
-  return [...hints];
-}
-
-type SharedSimplexClientKey = `${string}|${number}`;
-const sharedSimplexClients = new Map<SharedSimplexClientKey, SimplexWsClient>();
-
-function getSharedSimplexClient(params: {
-  account: ReturnType<typeof resolveSimplexAccount>;
-  logger?: {
-    info?: (message: string) => void;
-    warn?: (message: string) => void;
-    error?: (message: string) => void;
-  };
-}): SimplexWsClient {
-  const timeoutMs = params.account.config.connection?.connectTimeoutMs ?? 15_000;
-  const key: SharedSimplexClientKey = `${params.account.wsUrl}|${timeoutMs}`;
-  const existing = sharedSimplexClients.get(key);
-  if (existing) {
-    return existing;
-  }
-  const created = new SimplexWsClient({
-    url: params.account.wsUrl,
-    connectTimeoutMs: timeoutMs,
-    logger: params.logger,
-  });
-  sharedSimplexClients.set(key, created);
-  return created;
-}
-
-async function sendSimplexCommand(params: {
-  account: ReturnType<typeof resolveSimplexAccount>;
-  command: string;
-  logger?: {
-    info?: (message: string) => void;
-    warn?: (message: string) => void;
-    error?: (message: string) => void;
-  };
-}): Promise<SimplexWsResponse> {
-  const client = getSharedSimplexClient(params);
-  await client.connect();
-  return await client.sendCommand(params.command);
-}
-
-async function sendSimplexCommandWithRetry(params: {
-  account: ReturnType<typeof resolveSimplexAccount>;
-  command: string;
-  logger?: {
-    info?: (message: string) => void;
-    warn?: (message: string) => void;
-    error?: (message: string) => void;
-  };
-  startChannel?: () => Promise<void>;
-  isRunning?: () => boolean;
-}): Promise<SimplexWsResponse> {
-  const maxAttempts = 6;
-  let started = false;
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    try {
-      return await sendSimplexCommand(params);
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      const running = params.isRunning?.() ?? false;
-      if (!started && !running && params.startChannel) {
-        started = true;
-        await params.startChannel();
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500 + attempt * 400));
-    }
-  }
-
-  throw lastError ?? new Error("SimpleX command failed");
 }
 
 function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
@@ -368,5 +222,9 @@ export default defineChannelPluginEntry({
   description: "SimpleX Chat channel plugin via CLI",
   plugin: simplexPlugin,
   setRuntime: setSimplexRuntime,
-  registerFull: registerSimplexGatewayMethods,
+  registerFull: (api) => {
+    registerSimplexGatewayMethods(api);
+    registerSimplexTools(api);
+    registerSimplexToolHooks(api);
+  },
 });
