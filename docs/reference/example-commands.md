@@ -58,9 +58,20 @@ openclaw plugins list
 openclaw plugins info simplex
 ```
 
+## SimpleX CLI invite commands
+
+Run these inside the `simplex-chat` console:
+
+```text
+/c
+/ad
+/show_address
+/delete_address
+```
+
 ## Gateway method examples
 
-Use your normal gateway client to call:
+Use your normal gateway client when you want the same invite flow programmatically:
 
 - `simplex.invite.create`
 - `simplex.invite.list`

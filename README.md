@@ -142,9 +142,33 @@ Important:
 
 * `openclaw plugins enable simplex` only enables the plugin
 * OpenClaw will not start the SimpleX channel until `channels.simplex.connection` is configured
-* The current Control UI SimpleX card is a config editor; invite generation is exposed through SimpleX gateway methods and plugin tools, not custom channel-card buttons
+* The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
 * `openclaw channels add --channel simplex --cli-path simplex-chat` works
 * The interactive `openclaw channels add` picker may not list this external plugin yet
+
+## Invite Link Generation
+
+For day-to-day use, the simplest way to create or inspect SimpleX invite links is the `simplex-chat` CLI itself:
+
+```text
+/c
+/ad
+/show_address
+/delete_address
+```
+
+These correspond to:
+
+* `/c`: create a one-time connect link
+* `/ad`: create or return the account address link
+* `/show_address`: show the current address link
+* `/delete_address`: revoke the current address link
+
+OpenClaw also exposes the same flows through gateway methods and plugin tools for automation:
+
+* `simplex.invite.create`
+* `simplex.invite.list`
+* `simplex.invite.revoke`
 
 ---
 

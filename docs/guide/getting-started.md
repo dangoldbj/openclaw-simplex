@@ -110,16 +110,31 @@ Note: the current SimpleX card is a config editor. OpenClaw does not currently e
 
 ## 7. Create a 1-time link
 
-Generate the link through the SimpleX gateway methods instead:
+The simplest user-facing path is to create the link directly in `simplex-chat`:
+
+```text
+/c
+```
+
+To work with the account address link instead:
+
+```text
+/ad
+/show_address
+/delete_address
+```
+
+OpenClaw also exposes the same flows for automation through:
 
 - `simplex.invite.create`
 - `simplex.invite.list`
+- `simplex.invite.revoke`
 
 See [Gateway Methods](/reference/gateway-methods) for the request shapes.
 
 ## 8. Pair in the SimpleX app
 
-Open the SimpleX app and scan the QR or open the returned link.
+Open the SimpleX app with the returned link. If you need a QR code, OpenClaw's gateway/tool path can return QR data for the same invite link.
 
 ## 9. Send first message and receive pairing code
 

@@ -2,7 +2,9 @@
 
 This page shows the supported SimpleX pairing and approval flow.
 
-Generate or retrieve the invite/address link through `simplex.invite.create` or `simplex.invite.list`, then continue with the pairing flow below.
+Generate or retrieve the invite/address link in `simplex-chat` with `/c`, `/ad`, or `/show_address`, then continue with the pairing flow below.
+
+If you need automation instead, OpenClaw also exposes `simplex.invite.create` and `simplex.invite.list`.
 
 It assumes the SimpleX channel is already configured, for example with a managed `channels.simplex.connection` setup.
 

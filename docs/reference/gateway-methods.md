@@ -1,6 +1,13 @@
 # Gateway Methods
 
-The plugin registers these methods:
+The plugin registers these methods for automation and programmatic access.
+
+For manual user workflows, the simpler path is usually the `simplex-chat` CLI commands:
+
+- `/c`
+- `/ad`
+- `/show_address`
+- `/delete_address`
 
 ## `simplex.invite.create`
 
