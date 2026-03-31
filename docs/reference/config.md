@@ -34,6 +34,7 @@
 - `allowFrom`: DM allowlist entries
 - `groupPolicy`: `open` | `allowlist` | `disabled`
 - `groupAllowFrom`: group allowlist entries
+- `mediaMaxMb`: maximum accepted/uploaded media size in MB
 - `connection.mode`: `managed` or `external`
 - `connection.cliPath`: command path for managed mode
 - `connection.wsUrl`: websocket URL for external mode

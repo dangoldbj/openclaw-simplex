@@ -8,7 +8,8 @@ SimpleX messaging channel backed by the local `simplex-chat` CLI. It supports:
 
 - send/receive (text and media)
 - pairing with allowlist enforcement
-- message actions
+- shared `message` actions, including `upload-file`, reactions, edits, deletes, and group actions
+- plugin tools for invite generation/list/revoke and group administration
 - invite link and QR generation
 - runtime status support
 - Control UI configuration

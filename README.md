@@ -58,7 +58,8 @@ This plugin integrates SimpleX into OpenClaw as a dedicated channel backed by th
 * send and receive messages reliably, including text and media
 * pairing and allowlist support
 * invite link and QR generation
-* message actions and responses
+* shared `message` actions including `upload-file`, reactions, edits, deletes, and group actions
+* plugin tools for invite and group administration
 * runtime status and lifecycle management
 * Control UI configuration
 * managed or external runtime modes
@@ -259,6 +260,15 @@ Invite APIs:
 * `simplex.invite.create`
 * `simplex.invite.list`
 * `simplex.invite.revoke`
+
+Plugin tools:
+
+* `simplex_invite_create`
+* `simplex_invite_list`
+* `simplex_invite_revoke`
+* `simplex_group_add_participant`
+* `simplex_group_remove_participant`
+* `simplex_group_leave`
 
 ---
 
