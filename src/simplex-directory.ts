@@ -1,4 +1,5 @@
-import type { OpenClawConfig, RuntimeEnv } from "openclaw/plugin-sdk";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
+import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import type { ChannelDirectoryEntry } from "openclaw/plugin-sdk/directory-runtime";
 import { resolveSimplexAccount } from "./accounts.js";
 import {

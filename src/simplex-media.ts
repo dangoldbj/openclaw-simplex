@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { OpenClawConfig } from "openclaw/plugin-sdk";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import { resolveChannelMediaMaxBytes } from "openclaw/plugin-sdk/media-runtime";
 import { getSimplexRuntime } from "./runtime.js";
 import type { SimplexComposedMessage, SimplexMsgContent } from "./simplex-commands.js";

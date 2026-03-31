@@ -1,5 +1,6 @@
-import type { ChannelSetupAdapter, ChannelSetupInput, OpenClawConfig } from "openclaw/plugin-sdk";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/core";
+import type { ChannelSetupAdapter, ChannelSetupInput } from "openclaw/plugin-sdk/channel-setup";
 
 function resolveSetupAccountId(params: {
   cfg: OpenClawConfig;

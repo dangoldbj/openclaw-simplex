@@ -42,7 +42,8 @@ vi.mock("qrcode", () => ({
   toDataURL: qrMocks.toDataURL,
 }));
 
-import type { PluginRuntime } from "openclaw/plugin-sdk";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import type { PluginRuntime } from "openclaw/plugin-sdk/core";
 import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
 
@@ -81,7 +82,7 @@ function setupHandlers(
   registrationMode: "full" | "setup-only" | "setup-runtime" = "full"
 ): Map<string, Handler> {
   const methods = new Map<string, Handler>();
-  plugin.register({
+  const api: OpenClawPluginApi = {
     id: "simplex",
     name: "SimpleX",
     description: "test",
@@ -107,11 +108,16 @@ function setupHandlers(
     registerInteractiveHandler: () => {},
     onConversationBindingResolved: () => {},
     registerContextEngine: () => {},
+    registerCliBackend: () => {},
+    registerMemoryFlushPlan: () => {},
+    registerMemoryRuntime: () => {},
+    registerMemoryEmbeddingProvider: () => {},
     registerMemoryPromptSection: () => {},
     registerCommand: () => {},
     on: () => {},
     resolvePath: (value: string) => value,
-  });
+  };
+  plugin.register(api);
   return methods;
 }
 

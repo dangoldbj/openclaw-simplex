@@ -1,4 +1,5 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk";
+import { Type } from "@sinclair/typebox";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import type {
   ChannelMessageActionAdapter,
   ChannelMessageActionName,
@@ -42,6 +43,128 @@ function jsonResult(payload: unknown): ToolResult {
   return {
     content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
     details: payload,
+  };
+}
+
+function buildSimplexMessageToolSchema() {
+  return {
+    properties: {
+      to: Type.Optional(
+        Type.String({
+          description: "SimpleX target chat reference. Accepts contact or group targets."
+        })
+      ),
+      chatRef: Type.Optional(
+        Type.String({
+          description: "Explicit SimpleX chat reference such as @contact or #group."
+        })
+      ),
+      chatId: Type.Optional(
+        Type.String({
+          description: "Alias for the target chat reference."
+        })
+      ),
+      chatType: Type.Optional(
+        Type.Union([Type.Literal("direct"), Type.Literal("group")], {
+          description: "Disambiguates the target when only an ID is provided."
+        })
+      ),
+      groupId: Type.Optional(
+        Type.String({
+          description: "SimpleX group identifier for group actions."
+        })
+      ),
+      messageId: Type.Optional(
+        Type.Union([Type.String(), Type.Number()], {
+          description: "Single message/chat item ID for react or edit actions."
+        })
+      ),
+      chatItemId: Type.Optional(
+        Type.Union([Type.String(), Type.Number()], {
+          description: "Alias for messageId."
+        })
+      ),
+      messageIds: Type.Optional(
+        Type.Array(Type.Union([Type.String(), Type.Number()]), {
+          description: "Multiple message/chat item IDs for delete or unsend actions."
+        })
+      ),
+      deleteMode: Type.Optional(
+        Type.Union(
+          [Type.Literal("broadcast"), Type.Literal("internal"), Type.Literal("internalMark")],
+          { description: "SimpleX deletion mode." }
+        )
+      ),
+      emoji: Type.Optional(
+        Type.String({
+          description: "Emoji shorthand for the react action."
+        })
+      ),
+      reaction: Type.Optional(
+        Type.Object(
+          {},
+          {
+            additionalProperties: true,
+            description: "Raw SimpleX reaction payload for advanced react actions."
+          }
+        )
+      ),
+      remove: Type.Optional(
+        Type.Boolean({
+          description: "When true, remove an existing reaction instead of adding one."
+        })
+      ),
+      text: Type.Optional(
+        Type.String({
+          description: "Replacement message text for edit actions."
+        })
+      ),
+      message: Type.Optional(
+        Type.String({
+          description: "Alias for text."
+        })
+      ),
+      displayName: Type.Optional(
+        Type.String({
+          description: "New SimpleX group display name."
+        })
+      ),
+      name: Type.Optional(
+        Type.String({
+          description: "Alias for displayName."
+        })
+      ),
+      title: Type.Optional(
+        Type.String({
+          description: "Alias for displayName."
+        })
+      ),
+      profile: Type.Optional(
+        Type.String({
+          description: "JSON-encoded SimpleX group profile for renameGroup."
+        })
+      ),
+      groupProfile: Type.Optional(
+        Type.String({
+          description: "Alias for profile."
+        })
+      ),
+      participant: Type.Optional(
+        Type.String({
+          description: "Participant identifier for addParticipant or removeParticipant."
+        })
+      ),
+      contactId: Type.Optional(
+        Type.String({
+          description: "Alias for participant when adding a group member."
+        })
+      ),
+      memberId: Type.Optional(
+        Type.String({
+          description: "Alias for participant when removing a group member."
+        })
+      )
+    }
   };
 }
 
@@ -230,6 +353,7 @@ export const simplexMessageActions: ChannelMessageActionAdapter = {
         "leaveGroup",
       ] as const satisfies readonly ChannelMessageActionName[],
       capabilities: [],
+      schema: buildSimplexMessageToolSchema(),
     };
   },
   supportsAction: ({ action }) => SUPPORTED_ACTIONS.has(action),

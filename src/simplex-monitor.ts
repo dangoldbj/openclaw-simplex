@@ -1,4 +1,6 @@
-import type { ChannelAccountSnapshot, OpenClawConfig, RuntimeEnv } from "openclaw/plugin-sdk";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
+import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
+import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveMentionGatingWithBypass } from "openclaw/plugin-sdk/channel-inbound";
 import { getSimplexRuntime } from "./runtime.js";
 import {
