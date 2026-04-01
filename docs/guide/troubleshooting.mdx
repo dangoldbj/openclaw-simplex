@@ -5,6 +5,10 @@ description: Common issues when connecting OpenClaw to SimpleX and how to resolv
 
 # Troubleshooting
 
+<Note>
+  When the runtime is down, OpenClaw will not start it for you. The channel stays disconnected until <code>simplex-chat</code> is running at the configured endpoint.
+</Note>
+
 ## Plugin not listed
 
 - Run `openclaw plugins list`
@@ -45,3 +49,5 @@ openclaw plugins list
 openclaw plugins info openclaw-simplex
 openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
+
+If you need persistent runtime startup, see [Setup](/guide/setup).

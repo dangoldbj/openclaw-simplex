@@ -5,6 +5,10 @@ description: Upgrade existing simplex installs to the renamed openclaw-simplex p
 
 # Migration to `openclaw-simplex`
 
+<Warning>
+  <code>1.0.0</code> is a breaking release. It renames both the plugin id and the channel id, and it removes managed mode.
+</Warning>
+
 `1.0.0` renames both the plugin id and the channel id:
 
 - plugin id: `simplex` -> `openclaw-simplex`
@@ -18,47 +22,51 @@ Gateway method names remain unchanged in this release:
 - `simplex.invite.list`
 - `simplex.invite.revoke`
 
-## Run the migration helper
+<Steps>
+  <Step title="Run the migration helper">
+    ```bash
+    openclaw simplex migrate
+    ```
 
-```bash
-openclaw simplex migrate
-```
+    Dry run:
 
-Dry run:
+    ```bash
+    openclaw simplex migrate --dry-run
+    ```
+  </Step>
 
-```bash
-openclaw simplex migrate --dry-run
-```
+  <Step title="Update commands and config">
+    Use the new ids in commands:
 
-The helper updates:
+    ```bash
+    openclaw plugins enable openclaw-simplex
+    openclaw plugins info openclaw-simplex
+    openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+    openclaw pairing approve openclaw-simplex <code>
+    ```
+  </Step>
+
+  <Step title="Run the external runtime">
+    Configure the runtime under:
+
+    ```json
+    {
+      "channels": {
+        "openclaw-simplex": {
+          "connection": {
+            "wsUrl": "ws://127.0.0.1:5225"
+          }
+        }
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## What the migration helper updates
 
 - `plugins.entries.simplex` -> `plugins.entries.openclaw-simplex`
 - `plugins.installs.simplex` -> `plugins.installs.openclaw-simplex`
 - `plugins.allow` / `plugins.deny`
 - `channels.simplex` -> `channels.openclaw-simplex`
 - OpenClaw pairing and allowlist state files under the OpenClaw state directory
-
-## After migration
-
-Use the new ids in commands:
-
-```bash
-openclaw plugins enable openclaw-simplex
-openclaw plugins info openclaw-simplex
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
-openclaw pairing approve openclaw-simplex <code>
-```
-
-Configure the runtime under:
-
-```json
-{
-  "channels": {
-    "openclaw-simplex": {
-      "connection": {
-        "wsUrl": "ws://127.0.0.1:5225"
-      }
-    }
-  }
-}
-```

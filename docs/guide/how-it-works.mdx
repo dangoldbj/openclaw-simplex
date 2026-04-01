@@ -5,20 +5,44 @@ description: Understand the OpenClaw-to-SimpleX request and response flow.
 
 # How It Works
 
-## Flow
+<Steps>
+  <Step title="OpenClaw loads the plugin">
+    OpenClaw registers the <code>openclaw-simplex</code> channel. For disabled or unconfigured channels, it can use the lightweight setup entry before loading the full runtime entry.
+  </Step>
 
-1. OpenClaw loads the SimpleX channel plugin and registers channel id `simplex`.
-   For disabled or unconfigured channels, OpenClaw can use the lightweight setup entry before loading the full runtime entry.
-2. OpenClaw only starts the channel runtime after explicit `channels.openclaw-simplex.connection` config exists.
-3. Channel runtime connects to SimpleX over CLI WebSocket API.
-4. Inbound events are normalized into OpenClaw context.
-5. Policy checks run (`dmPolicy`, `allowFrom`, group policy).
-6. OpenClaw sends replies/actions back through SimpleX.
+  <Step title="The runtime connects over WebSocket">
+    OpenClaw only starts the channel after explicit <code>channels.openclaw-simplex.connection</code> config exists. The channel then connects to the separately running <code>simplex-chat</code> WebSocket API.
+  </Step>
+
+  <Step title="Inbound events are normalized">
+    Incoming SimpleX events are parsed into OpenClaw context, including peer/group routing information, message bodies, media handling, and runtime status updates.
+  </Step>
+
+  <Step title="Policies are applied">
+    OpenClaw evaluates DM policy, allowlists, group policy, pairing state, and command authorization before forwarding work to the agent.
+  </Step>
+
+  <Step title="Replies go back through SimpleX">
+    Message actions, media sends, edits, deletes, reactions, and group operations are translated back into SimpleX commands and sent through the same WebSocket connection.
+  </Step>
+</Steps>
 
 ## Runtime features
 
-- Channel status snapshots and runtime health.
-- Account-level resolution and default-account behavior.
-- Message actions (send, react, edit, delete, group operations).
-- Directory/resolver support for peers/groups/members.
-- Gateway invite helper methods for operational setup.
+<Columns cols={2}>
+  <Card title="Runtime status" icon="activity">
+    Channel status snapshots, health state, disconnect tracking, and runtime error surfaces.
+  </Card>
+  <Card title="Account resolution" icon="users">
+    Default-account behavior and per-account routing with shared channel config overrides.
+  </Card>
+</Columns>
+
+<Columns cols={2}>
+  <Card title="Message actions" icon="send">
+    Send, react, edit, delete, upload-file, and group management actions.
+  </Card>
+  <Card title="Operational helpers" icon="bolt">
+    Directory lookups, resolver support, and gateway invite helper methods for setup flows.
+  </Card>
+</Columns>

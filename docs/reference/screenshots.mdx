@@ -13,25 +13,27 @@ If you need automation instead, OpenClaw also exposes `simplex.invite.create` an
 
 It assumes the SimpleX channel is already configured with a reachable `channels.openclaw-simplex.connection.wsUrl`.
 
-## Pairing flow
+<Steps>
+  <Step title="Send the first message">
+    Send the first message from the SimpleX app and capture the pairing request.
 
-1. Send the first message from the SimpleX app and capture the pairing request.
+    <img src="/images/pairing-request.png" alt="Pairing code shown in SimpleX app" width="720" />
+  </Step>
 
-<img src="/images/pairing-request.png" alt="Pairing code shown in SimpleX app" width="720" />
+  <Step title="Review the pairing request in OpenClaw">
+    <img src="/images/pairing-list.png" alt="OpenClaw pairing requests table" width="900" />
+  </Step>
 
-2. Review the pairing request in OpenClaw.
+  <Step title="Approve the pairing request">
+    ```bash
+    openclaw pairing list
+    openclaw pairing approve openclaw-simplex <code>
+    ```
+  </Step>
 
-<img src="/images/pairing-list.png" alt="OpenClaw pairing requests table" width="900" />
+  <Step title="Confirm approval and successful chat">
+    <img src="/images/approved.png" alt="SimpleX access approved message" width="720" />
 
-3. Approve pairing in OpenClaw.
-
-```bash
-openclaw pairing list
-openclaw pairing approve openclaw-simplex <code>
-```
-
-4. Confirm the approval and test the first successful chat.
-
-<img src="/images/approved.png" alt="SimpleX access approved message" width="720" />
-
-<img src="/images/chat.png" alt="SimpleX chat after approval" width="720" />
+    <img src="/images/chat.png" alt="SimpleX chat after approval" width="720" />
+  </Step>
+</Steps>

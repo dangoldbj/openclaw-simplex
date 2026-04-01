@@ -7,11 +7,13 @@ description: Runtime configuration examples for external and multi-account Simpl
 
 Prerequisite: install `simplex-chat` first (see [Getting Started](/guide/getting-started)).
 
+<Info>
+  OpenClaw does not supervise <code>simplex-chat</code> for external plugins. The supported model is: you run the runtime, OpenClaw connects to it over WebSocket.
+</Info>
+
 ## Runtime
 
 Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint.
-
-OpenClaw does not supervise `simplex-chat` for external plugins. If you want it to start automatically, run it as a host-managed user service such as `systemd --user` or `launchd`.
 
 Start the runtime:
 
@@ -19,7 +21,9 @@ Start the runtime:
 simplex-chat -p 5225
 ```
 
-For persistent startup, use one of the service options below.
+<Tip>
+  For persistent startup, use one of the service options below.
+</Tip>
 
 ```json
 {
@@ -75,6 +79,10 @@ systemctl --user enable --now simplex-chat.service
 systemctl --user status simplex-chat.service
 ```
 
+<Note>
+  Adjust the <code>ExecStart</code> path if <code>simplex-chat</code> is installed somewhere other than <code>%h/.local/bin/simplex-chat</code>.
+</Note>
+
 ### macOS (`launchd`)
 
 Create the launch agent:
@@ -110,6 +118,10 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.openclaw.simplex-chat
 launchctl kickstart -k gui/$(id -u)/ai.openclaw.simplex-chat
 launchctl print gui/$(id -u)/ai.openclaw.simplex-chat
 ```
+
+<Note>
+  Adjust <code>/usr/local/bin/simplex-chat</code> if the binary is installed elsewhere on your system.
+</Note>
 
 ## Per-account config
 

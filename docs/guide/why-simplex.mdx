@@ -7,7 +7,25 @@ description: Why this plugin uses SimpleX for privacy-first OpenClaw messaging.
 
 SimpleX is useful when you want a messaging channel with strong privacy posture and flexible deployment choices.
 
-## What this plugin provides
+<Columns cols={2}>
+  <Card title="Privacy-first" icon="shield">
+    No phone number requirement, end-to-end encryption by default, and lower metadata exposure than typical bot-platform channels.
+  </Card>
+  <Card title="Operator control" icon="settings">
+    Run the runtime yourself, choose the network boundary, and keep policy controls inside OpenClaw.
+  </Card>
+</Columns>
+
+<Columns cols={2}>
+  <Card title="Usable in practice" icon="message-circle">
+    Pairing, allowlists, invite helpers, media support, and status reporting are built into the channel.
+  </Card>
+  <Card title="Fits self-hosting" icon="server">
+    Works well for local-first or self-hosted OpenClaw deployments that avoid hosted chat providers.
+  </Card>
+</Columns>
+
+## What the plugin provides
 
 SimpleX messaging channel backed by the local `simplex-chat` CLI. It supports:
 
@@ -36,6 +54,6 @@ It also addresses practical gaps in the current channel mix:
 - no third-party bot API dependency
 - avoids reliance on unofficial CLIs
 
-## Risk profile
-
-Low risk to existing channels: implementation is isolated and only active when `openclaw-simplex` is configured/enabled.
+<Note>
+  Low risk to existing OpenClaw channels: the implementation stays isolated and is only active when <code>openclaw-simplex</code> is configured and enabled.
+</Note>

@@ -7,6 +7,10 @@ description: How OpenClaw and the SimpleX plugin interact at runtime.
 
 This page explains how OpenClaw and SimpleX integrate through this plugin.
 
+<Info>
+  The plugin no longer manages the <code>simplex-chat</code> process. The runtime boundary is an external WebSocket connection to a separately running SimpleX process.
+</Info>
+
 ## High-level diagram
 
 ```text
@@ -40,20 +44,29 @@ This page explains how OpenClaw and SimpleX integrate through this plugin.
             +-------------------------+
 ```
 
+## Boundaries
+
+<Columns cols={2}>
+  <Card title="Policy boundary" icon="shield">
+    Access checks happen in OpenClaw through <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, and <code>groupAllowFrom</code>.
+  </Card>
+  <Card title="Runtime boundary" icon="server">
+    The plugin talks to a separately running <code>simplex-chat</code> instance over WebSocket rather than spawning local processes itself.
+  </Card>
+</Columns>
+
+<Columns cols={2}>
+  <Card title="Account boundary" icon="users">
+    Account-specific overrides live under <code>channels.openclaw-simplex.accounts</code>.
+  </Card>
+  <Card title="Failure isolation" icon="triangle-alert">
+    If SimpleX WS is unavailable, the plugin reports channel runtime errors without affecting other OpenClaw channels.
+  </Card>
+</Columns>
+
 ## Data flow
 
-1. SimpleX emits events through CLI WebSocket API.
-2. Plugin monitor parses and normalizes events.
+1. SimpleX emits events through the CLI WebSocket API.
+2. The plugin monitor parses and normalizes inbound events.
 3. OpenClaw applies policy checks and agent logic.
-4. Plugin sends replies/actions through SimpleX command API.
-
-## Control points
-
-- Access control: `dmPolicy`, `allowFrom`, `groupPolicy`, `groupAllowFrom`.
-- Runtime model: external WebSocket connection to a separately running `simplex-chat`.
-- Account-level config through `channels.openclaw-simplex.accounts`.
-
-## Failure boundaries
-
-- If SimpleX WS is unavailable, plugin reports runtime status errors.
-- Outbound/inbound are isolated at channel boundary, so other OpenClaw channels keep working.
+4. The plugin sends replies and actions back through the SimpleX command API.

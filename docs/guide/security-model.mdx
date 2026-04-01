@@ -7,13 +7,29 @@ description: Privacy and policy boundaries for the OpenClaw SimpleX plugin.
 
 This plugin enforces channel-side controls before handing requests to the agent.
 
+<Warning>
+  Start conservative: use <code>dmPolicy: "pairing"</code> and <code>groupPolicy: "allowlist"</code> until you have a reason to widen access.
+</Warning>
+
 ## Access controls
 
-- `dmPolicy`: controls DM behavior (`open`, `allowlist`, `pairing`, `disabled`).
-- `allowFrom`: explicit sender allowlist.
-- `groupPolicy`: group behavior (`open`, `allowlist`, `disabled`).
-- `groupAllowFrom`: group sender allowlist.
-- Pairing support: explicit approval flow for unknown senders.
+<Columns cols={2}>
+  <Card title="DM policy" icon="message-square">
+    <code>open</code>, <code>allowlist</code>, <code>pairing</code>, or <code>disabled</code>.
+  </Card>
+  <Card title="Allowlist" icon="list-checks">
+    Explicit sender allowlist through <code>allowFrom</code>.
+  </Card>
+</Columns>
+
+<Columns cols={2}>
+  <Card title="Group policy" icon="users">
+    <code>open</code>, <code>allowlist</code>, or <code>disabled</code> for group traffic.
+  </Card>
+  <Card title="Pairing" icon="key-round">
+    Explicit approval flow for unknown senders before granting access.
+  </Card>
+</Columns>
 
 ## Operational boundaries
 
