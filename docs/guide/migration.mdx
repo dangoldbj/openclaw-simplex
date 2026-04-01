@@ -9,6 +9,8 @@ description: Upgrade existing simplex installs to the renamed openclaw-simplex p
   <code>1.0.0</code> is a breaking release. It renames both the plugin id and the channel id, and it removes managed mode.
 </Warning>
 
+Use this guide if you previously configured or paired the plugin under the old `simplex` ids.
+
 `1.0.0` renames both the plugin id and the channel id:
 
 - plugin id: `simplex` -> `openclaw-simplex`
@@ -21,6 +23,10 @@ Gateway method names remain unchanged in this release:
 - `simplex.invite.create`
 - `simplex.invite.list`
 - `simplex.invite.revoke`
+
+<Info>
+  The migration helper updates both config keys and stored pairing/allowlist state so existing approvals can carry forward.
+</Info>
 
 <Steps>
   <Step title="Run the migration helper">
