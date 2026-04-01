@@ -1,16 +1,15 @@
-import { buildChannelConfigSchema } from "openclaw/plugin-sdk/channel-config-schema";
+import {
+  BlockStreamingCoalesceSchema,
+  buildChannelConfigSchema,
+  DmConfigSchema,
+  DmPolicySchema,
+  GroupPolicySchema,
+  MarkdownConfigSchema,
+  ToolPolicySchema,
+} from "openclaw/plugin-sdk/channel-config-schema";
 import { z } from "zod";
 
 const allowFromEntry = z.union([z.string(), z.number()]);
-const ToolPolicySchema = z.object({}).catchall(z.unknown());
-const MarkdownConfigSchema = z.object({}).passthrough().default({});
-const DmPolicySchema = z.enum(["pairing", "open", "allowlist"]);
-const DmConfigSchema = z
-  .object({
-    historyLimit: z.number().int().min(0).optional(),
-  })
-  .strict();
-const BlockStreamingCoalesceSchema = z.object({}).passthrough();
 const groupConfigSchema = z.object({
   requireMention: z.boolean().optional(),
   tools: ToolPolicySchema.optional(),
@@ -39,7 +38,7 @@ export const SimplexAccountConfigSchema = z
     allowFrom: z.array(allowFromEntry).optional(),
     blockStreaming: z.boolean().optional(),
     blockStreamingCoalesce: BlockStreamingCoalesceSchema.optional(),
-    groupPolicy: z.enum(["open", "disabled", "allowlist"]).optional(),
+    groupPolicy: GroupPolicySchema.optional(),
     groupAllowFrom: z.array(allowFromEntry).optional(),
     groups: z.object({}).catchall(groupConfigSchema).optional(),
     connection: SimplexConnectionSchema.optional(),
