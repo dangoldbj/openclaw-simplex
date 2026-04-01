@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2026-04-01
+
+### Fixed
+
+- Narrowed the plugin-facing `allowFrom` and `groupAllowFrom` config schema to `string[]` for current OpenClaw Control UI compatibility.
+- Kept the schema derived from OpenClaw's exported `AllowFromListSchema`, while adding a plugin-side narrowing step for safer rendering on OpenClaw `2026.3.31`.
+
 ## [1.1.0] - 2026-04-01
 
 ### Changed
