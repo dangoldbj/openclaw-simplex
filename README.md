@@ -58,7 +58,8 @@ This plugin integrates SimpleX into OpenClaw as a dedicated channel backed by th
 * send and receive messages reliably, including text and media
 * pairing and allowlist support
 * invite link and QR generation
-* message actions and responses
+* shared `message` actions including `upload-file`, reactions, edits, deletes, and group actions
+* plugin tools for invite and group administration
 * runtime status and lifecycle management
 * Control UI configuration
 * managed or external runtime modes
@@ -141,9 +142,33 @@ Important:
 
 * `openclaw plugins enable simplex` only enables the plugin
 * OpenClaw will not start the SimpleX channel until `channels.simplex.connection` is configured
-* The current Control UI SimpleX card is a config editor, not a guided setup wizard
+* The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
 * `openclaw channels add --channel simplex --cli-path simplex-chat` works
 * The interactive `openclaw channels add` picker may not list this external plugin yet
+
+## Invite Link Generation
+
+For day-to-day use, the simplest way to create or inspect SimpleX invite links is the `simplex-chat` CLI itself:
+
+```text
+/c
+/ad
+/show_address
+/delete_address
+```
+
+These correspond to:
+
+* `/c`: create a one-time connect link
+* `/ad`: create or return the account address link
+* `/show_address`: show the current address link
+* `/delete_address`: revoke the current address link
+
+OpenClaw also exposes the same flows through gateway methods and plugin tools for automation:
+
+* `simplex.invite.create`
+* `simplex.invite.list`
+* `simplex.invite.revoke`
 
 ---
 
@@ -260,6 +285,15 @@ Invite APIs:
 * `simplex.invite.list`
 * `simplex.invite.revoke`
 
+Plugin tools:
+
+* `simplex_invite_create`
+* `simplex_invite_list`
+* `simplex_invite_revoke`
+* `simplex_group_add_participant`
+* `simplex_group_remove_participant`
+* `simplex_group_leave`
+
 ---
 
 ## Troubleshooting
@@ -291,11 +325,7 @@ Full walkthrough:
 
 ## Screenshots
 
-Control UI channel view:
-
-![SimpleX channel card before invite generation](./docs/public/images/control-ui.png)
-
-More screenshots:
+Pairing and approval flow screenshots:
 
 * https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
 

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "OpenClaw SimpleX",
+  "description": "SimpleX channel plugin for OpenClaw.",
+  "colors": {
+    "primary": "#ff5a36",
+    "light": "#ff8a6b",
+    "dark": "#ff5a36"
+  },
+  "navigation": [
+    {
+      "group": "Overview",
+      "pages": ["index"]
+    },
+    {
+      "group": "Guide",
+      "pages": [
+        "guide/why-simplex",
+        "guide/getting-started",
+        "guide/how-it-works",
+        "guide/architecture",
+        "guide/setup",
+        "guide/external-vs-managed",
+        "guide/security-model",
+        "guide/troubleshooting"
+      ]
+    },
+    {
+      "group": "Reference",
+      "pages": [
+        "reference/config",
+        "reference/gateway-methods",
+        "reference/example-commands",
+        "reference/screenshots"
+      ]
+    }
+  ],
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/dangoldbj/openclaw-simplex"
+      },
+      {
+        "label": "npm",
+        "href": "https://www.npmjs.com/package/@dangoldbj/openclaw-simplex"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/dangoldbj/openclaw-simplex"
+    }
+  }
+}

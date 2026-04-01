@@ -1,0 +1,316 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to main content" [ref=e3] [cursor=pointer]:
+      - /url: "#content-area"
+    - generic [ref=e5]:
+      - generic [ref=e9]:
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - link "OpenClaw home page light logo" [ref=e14] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e15]: OpenClaw home page
+              - img "light logo" [ref=e16]
+            - button "US English" [ref=e18] [cursor=pointer]:
+              - img "US" [ref=e20]
+              - generic [ref=e22]: English
+              - img [ref=e23]
+          - button "Open search" [ref=e26] [cursor=pointer]:
+            - generic [ref=e27]:
+              - img [ref=e28]
+              - generic [ref=e31]: Search...
+            - generic [ref=e32]: ⌘K
+          - generic [ref=e33]:
+            - navigation [ref=e34]:
+              - list [ref=e35]:
+                - listitem [ref=e36]:
+                  - link "GitHub" [ref=e37] [cursor=pointer]:
+                    - /url: https://github.com/openclaw/openclaw
+                    - img [ref=e38]
+                    - text: GitHub
+                - listitem [ref=e39]:
+                  - link "Releases" [ref=e40] [cursor=pointer]:
+                    - /url: https://github.com/openclaw/openclaw/releases
+                    - img [ref=e41]
+                    - text: Releases
+                - listitem [ref=e42]:
+                  - link "Discord" [ref=e43] [cursor=pointer]:
+                    - /url: https://discord.com/invite/clawd
+                    - img [ref=e44]
+                    - text: Discord
+            - button "Toggle dark mode" [ref=e46] [cursor=pointer]:
+              - img [ref=e47]
+        - generic [ref=e55]:
+          - link "Get started" [ref=e56] [cursor=pointer]:
+            - /url: /
+            - text: Get started
+          - link "Install" [ref=e58] [cursor=pointer]:
+            - /url: /install
+            - text: Install
+          - link "Channels" [ref=e60] [cursor=pointer]:
+            - /url: /channels
+            - text: Channels
+          - link "Agents" [ref=e62] [cursor=pointer]:
+            - /url: /concepts/architecture
+            - text: Agents
+          - link "Tools & Plugins" [ref=e64] [cursor=pointer]:
+            - /url: /tools
+            - text: Tools & Plugins
+          - link "Models" [ref=e66] [cursor=pointer]:
+            - /url: /providers
+            - text: Models
+          - link "Platforms" [ref=e68] [cursor=pointer]:
+            - /url: /platforms
+            - text: Platforms
+          - link "Gateway & Ops" [ref=e70] [cursor=pointer]:
+            - /url: /gateway
+            - text: Gateway & Ops
+          - link "Reference" [ref=e72] [cursor=pointer]:
+            - /url: /cli
+            - text: Reference
+          - link "Help" [ref=e74] [cursor=pointer]:
+            - /url: /help
+            - text: Help
+      - generic [ref=e76]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - heading "Overview" [level=5] [ref=e83]
+            - list [ref=e84]:
+              - listitem [ref=e85]:
+                - link "OpenClaw" [ref=e86] [cursor=pointer]:
+                  - /url: /
+                  - generic [ref=e89]: OpenClaw
+              - listitem [ref=e90]:
+                - link "Showcase" [ref=e91] [cursor=pointer]:
+                  - /url: /start/showcase
+                  - generic [ref=e94]: Showcase
+              - listitem [ref=e95]:
+                - link "Features" [ref=e96] [cursor=pointer]:
+                  - /url: /concepts/features
+                  - generic [ref=e99]: Features
+          - generic [ref=e100]:
+            - heading "First steps" [level=5] [ref=e102]
+            - list [ref=e103]:
+              - listitem [ref=e104]:
+                - link "Getting Started" [ref=e105] [cursor=pointer]:
+                  - /url: /start/getting-started
+                  - generic [ref=e108]: Getting Started
+              - listitem [ref=e109]:
+                - link "Onboarding Overview" [ref=e110] [cursor=pointer]:
+                  - /url: /start/onboarding-overview
+                  - generic [ref=e113]: Onboarding Overview
+              - listitem [ref=e114]:
+                - 'link "Onboarding: CLI" [ref=e115] [cursor=pointer]':
+                  - /url: /start/wizard
+                  - generic [ref=e118]: "Onboarding: CLI"
+              - listitem [ref=e119]:
+                - 'link "Onboarding: macOS App" [ref=e120] [cursor=pointer]':
+                  - /url: /start/onboarding
+                  - generic [ref=e123]: "Onboarding: macOS App"
+          - generic [ref=e124]:
+            - heading "Guides" [level=5] [ref=e126]
+            - list [ref=e127]:
+              - listitem [ref=e128]:
+                - link "Personal Assistant Setup" [ref=e129] [cursor=pointer]:
+                  - /url: /start/openclaw
+                  - generic [ref=e132]: Personal Assistant Setup
+              - listitem [ref=e133]:
+                - link "CLI reference" [ref=e134] [cursor=pointer]:
+                  - /url: /start/wizard-cli-reference
+                  - generic [ref=e137]: CLI reference
+              - listitem [ref=e138]:
+                - link "CLI automation" [ref=e139] [cursor=pointer]:
+                  - /url: /start/wizard-cli-automation
+                  - generic [ref=e142]: CLI automation
+        - generic [ref=e145]:
+          - banner [ref=e146]:
+            - generic [ref=e147]:
+              - generic [ref=e148]: First steps
+              - heading "Getting Started" [level=1] [ref=e150]
+          - generic [ref=e151]:
+            - generic [ref=e152]: Install OpenClaw, run onboarding, and chat with your AI assistant — all in about 5 minutes. By the end you will have a running Gateway, configured auth, and a working chat session.
+            - heading "Navigate to header What you need" [level=2] [ref=e153]:
+              - link "Navigate to header" [ref=e154] [cursor=pointer]:
+                - /url: "#what-you-need"
+                - img [ref=e156]
+              - generic [ref=e158] [cursor=pointer]: What you need
+            - list [ref=e159]:
+              - listitem [ref=e160]:
+                - strong [ref=e161]: Node.js
+                - text: — Node 24 recommended (Node 22.14+ also supported)
+              - listitem [ref=e162]:
+                - strong [ref=e163]: An API key
+                - text: from a model provider (Anthropic, OpenAI, Google, etc.) — onboarding will prompt you
+            - generic [ref=e164]:
+              - img "Tip" [ref=e166]
+              - generic [ref=e169]:
+                - text: Check your Node version with
+                - code [ref=e170]: node --version
+                - text: .
+                - strong [ref=e171]: "Windows users:"
+                - text: both native Windows and WSL2 are supported. WSL2 is more stable and recommended for the full experience. See
+                - link "Windows" [ref=e172] [cursor=pointer]:
+                  - /url: /platforms/windows
+                - text: . Need to install Node? See
+                - link "Node setup" [ref=e173] [cursor=pointer]:
+                  - /url: /install/node
+                - text: .
+            - heading "Navigate to header Quick setup" [level=2] [ref=e174]:
+              - link "Navigate to header" [ref=e175] [cursor=pointer]:
+                - /url: "#quick-setup"
+                - img [ref=e177]
+              - generic [ref=e179] [cursor=pointer]: Quick setup
+            - list [ref=e180]:
+              - listitem [ref=e181]:
+                - generic [ref=e184]:
+                  - generic [ref=e185]: "1"
+                  - link "Navigate to header" [ref=e187] [cursor=pointer]:
+                    - /url: "#"
+                    - img [ref=e189]
+                - generic [ref=e191]:
+                  - paragraph [ref=e192]: Install OpenClaw
+                  - generic [ref=e193]:
+                    - generic [ref=e194]:
+                      - tablist [ref=e195]:
+                        - tab "macOS / Linux" [selected] [ref=e196] [cursor=pointer]:
+                          - generic [ref=e197]: macOS / Linux
+                        - tab "Windows (PowerShell)" [ref=e198] [cursor=pointer]:
+                          - generic [ref=e199]: Windows (PowerShell)
+                      - 'tabpanel "macOS / Linux Windows (PowerShell) Copy the contents from the code block curl -fsSL https://openclaw.ai/install.sh | bash Install Script Process Expand image: Install Script Process" [ref=e201]':
+                        - generic [ref=e202]:
+                          - button "Copy the contents from the code block" [ref=e205] [cursor=pointer]:
+                            - img [ref=e206]
+                          - code [ref=e212]:
+                            - generic [ref=e213]: curl -fsSL https://openclaw.ai/install.sh | bash
+                        - generic [ref=e214]:
+                          - img "Install Script Process" [ref=e217]
+                          - generic:
+                            - 'button "Expand image: Install Script Process"'
+                    - generic [ref=e218]:
+                      - img "Note" [ref=e220]
+                      - generic [ref=e223]:
+                        - text: "Other install methods (Docker, Nix, npm):"
+                        - link "Install" [ref=e224] [cursor=pointer]:
+                          - /url: /install
+                        - text: .
+              - listitem [ref=e225]:
+                - generic [ref=e228]:
+                  - generic [ref=e229]: "2"
+                  - link "Navigate to header" [ref=e231] [cursor=pointer]:
+                    - /url: "#"
+                    - img [ref=e233]
+                - generic [ref=e235]:
+                  - paragraph [ref=e236]: Run onboarding
+                  - generic [ref=e237]:
+                    - generic [ref=e238]:
+                      - button "Copy the contents from the code block" [ref=e241] [cursor=pointer]:
+                        - img [ref=e242]
+                      - code [ref=e248]:
+                        - generic [ref=e249]: openclaw onboard --install-daemon
+                    - generic [ref=e250]: The wizard walks you through choosing a model provider, setting an API key, and configuring the Gateway. It takes about 2 minutes.
+                    - generic [ref=e251]:
+                      - text: See
+                      - link "Onboarding (CLI)" [ref=e252] [cursor=pointer]:
+                        - /url: /start/wizard
+                      - text: for the full reference.
+              - listitem [ref=e253]:
+                - generic [ref=e256]:
+                  - generic [ref=e257]: "3"
+                  - link "Navigate to header" [ref=e259] [cursor=pointer]:
+                    - /url: "#"
+                    - img [ref=e261]
+                - generic [ref=e263]:
+                  - paragraph [ref=e264]: Verify the Gateway is running
+                  - generic [ref=e265]:
+                    - generic [ref=e266]:
+                      - button "Copy the contents from the code block" [ref=e269] [cursor=pointer]:
+                        - img [ref=e270]
+                      - code [ref=e276]:
+                        - generic [ref=e277]: openclaw gateway status
+                    - generic [ref=e278]: You should see the Gateway listening on port 18789.
+              - listitem [ref=e279]:
+                - generic [ref=e282]:
+                  - generic [ref=e283]: "4"
+                  - link "Navigate to header" [ref=e285] [cursor=pointer]:
+                    - /url: "#"
+                    - img [ref=e287]
+                - generic [ref=e289]:
+                  - paragraph [ref=e290]: Open the dashboard
+                  - generic [ref=e291]:
+                    - generic [ref=e292]:
+                      - button "Copy the contents from the code block" [ref=e295] [cursor=pointer]:
+                        - img [ref=e296]
+                      - code [ref=e302]:
+                        - generic [ref=e303]: openclaw dashboard
+                    - generic [ref=e304]: This opens the Control UI in your browser. If it loads, everything is working.
+              - listitem [ref=e305]:
+                - generic [ref=e308]:
+                  - generic [ref=e309]: "5"
+                  - link "Navigate to header" [ref=e311] [cursor=pointer]:
+                    - /url: "#"
+                    - img [ref=e313]
+                - generic [ref=e315]:
+                  - paragraph [ref=e316]: Send your first message
+                  - generic [ref=e317]:
+                    - generic [ref=e318]: Type a message in the Control UI chat and you should get an AI reply.
+                    - generic [ref=e319]:
+                      - text: Want to chat from your phone instead? The fastest channel to set up is
+                      - link "Telegram" [ref=e320] [cursor=pointer]:
+                        - /url: /channels/telegram
+                      - text: (just a bot token). See
+                      - link "Channels" [ref=e321] [cursor=pointer]:
+                        - /url: /channels
+                      - text: for all options.
+            - heading "Navigate to header What to do next" [level=2] [ref=e322]:
+              - link "Navigate to header" [ref=e323] [cursor=pointer]:
+                - /url: "#what-to-do-next"
+                - img [ref=e325]
+              - generic [ref=e327] [cursor=pointer]: What to do next
+            - generic [ref=e328]:
+              - link [ref=e329] [cursor=pointer]:
+                - link [ref=e331]:
+                  - /url: /channels
+                  - img [ref=e333]
+                  - generic [ref=e334]:
+                    - heading [level=2] [ref=e335]: Connect a channel
+                    - generic [ref=e337]: WhatsApp, Telegram, Discord, iMessage, and more.
+              - link [ref=e338] [cursor=pointer]:
+                - link [ref=e340]:
+                  - /url: /channels/pairing
+                  - img [ref=e342]
+                  - generic [ref=e343]:
+                    - heading [level=2] [ref=e344]: Pairing and safety
+                    - generic [ref=e346]: Control who can message your agent.
+              - link [ref=e347] [cursor=pointer]:
+                - link [ref=e349]:
+                  - /url: /gateway/configuration
+                  - img [ref=e351]
+                  - generic [ref=e352]:
+                    - heading [level=2] [ref=e353]: Configure the Gateway
+                    - generic [ref=e355]: Models, tools, sandbox, and advanced settings.
+              - link [ref=e356] [cursor=pointer]:
+                - link [ref=e358]:
+                  - /url: /tools
+                  - img [ref=e360]
+                  - generic [ref=e361]:
+                    - heading [level=2] [ref=e362]: Browse tools
+                    - generic [ref=e364]: Browser, exec, web search, skills, and plugins.
+            - group [ref=e365]:
+              - 'generic "Advanced: environment variables" [ref=e366] [cursor=pointer]':
+                - img [ref=e368]
+                - paragraph [ref=e370]: "Advanced: environment variables"
+          - generic [ref=e371]:
+            - link "Features" [ref=e372] [cursor=pointer]:
+              - /url: /concepts/features
+              - img [ref=e373]
+              - generic [ref=e375]: Features
+            - link "Onboarding Overview" [ref=e376] [cursor=pointer]:
+              - /url: /start/onboarding-overview
+              - generic [ref=e377]: Onboarding Overview
+              - img [ref=e378]
+          - contentinfo [ref=e380]:
+            - link "Powered by This documentation is built and hosted on Mintlify, a developer documentation platform" [ref=e383] [cursor=pointer]:
+              - /url: https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=clawdhub
+              - generic [ref=e384]: Powered by
+              - img [ref=e385]
+              - generic [ref=e394]: This documentation is built and hosted on Mintlify, a developer documentation platform
+  - alert [ref=e395]
