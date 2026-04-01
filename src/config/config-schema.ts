@@ -11,6 +11,8 @@ import {
 } from "openclaw/plugin-sdk/channel-config-schema";
 import { z } from "zod";
 
+const SimplexAllowFromListSchema = AllowFromListSchema.pipe(z.array(z.string()).optional());
+
 const groupConfigSchema = z.object({
   requireMention: z.boolean().optional(),
   tools: ToolPolicySchema.optional(),
@@ -36,11 +38,11 @@ export const SimplexAccountConfigSchema = z
     dmPolicy: DmPolicySchema.optional().default("pairing"),
     dmHistoryLimit: z.number().int().min(0).optional(),
     dms: z.record(z.string(), DmConfigSchema.optional()).optional(),
-    allowFrom: AllowFromListSchema,
+    allowFrom: SimplexAllowFromListSchema,
     blockStreaming: z.boolean().optional(),
     blockStreamingCoalesce: BlockStreamingCoalesceSchema.optional(),
     groupPolicy: GroupPolicySchema.optional(),
-    groupAllowFrom: AllowFromListSchema,
+    groupAllowFrom: SimplexAllowFromListSchema,
     groups: z.object({}).catchall(groupConfigSchema).optional(),
     connection: SimplexConnectionSchema.optional(),
   })
