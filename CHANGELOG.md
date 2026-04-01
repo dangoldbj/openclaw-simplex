@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-04-01
+
+### Added
+
+- Added first-class shared `message` support for `upload-file`.
+- Added plugin tools for invite and group administration:
+  - `simplex_invite_create`
+  - `simplex_invite_list`
+  - `simplex_invite_revoke`
+  - `simplex_group_add_participant`
+  - `simplex_group_remove_participant`
+  - `simplex_group_leave`
+
+### Changed
+
+- Migrated the plugin to the current OpenClaw `2026.3.28` SDK surface and raised the minimum supported OpenClaw version to `2026.3.28`.
+- Expanded shared `message` action discovery so SimpleX-owned actions are declared with explicit schemas.
+- Refactored the codebase into clearer domain boundaries for actions, channel runtime, gateway methods, tools, config, and SimpleX transport/services.
+- Updated the operator docs to reflect the current supported invite flow:
+  - direct `simplex-chat` commands for manual invite/address management
+  - gateway methods and plugin tools for automation
+
+### Fixed
+
+- Removed duplicated SimpleX link parsing and command transport logic by centralizing shared helpers.
+- Corrected stale documentation that previously implied unsupported native Control UI invite buttons.
+
 ## [0.2.1] - 2026-03-25
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "name": "@dangoldbj/openclaw-simplex",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "SimpleX channel plugin for OpenClaw",
   "homepage": "https://dangoldbj.github.io/openclaw-simplex/",
   "repository": {
@@ -27,7 +27,12 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup index.ts setup-entry.ts --format esm --dts --clean",
     "docs:dev": "cd docs && mint dev",
@@ -63,7 +68,9 @@
     "vitest": "^3.2.4"
   },
   "openclaw": {
-    "extensions": ["./dist/index.js"],
+    "extensions": [
+      "./dist/index.js"
+    ],
     "setupEntry": "./dist/setup-entry.js",
     "channel": {
       "id": "simplex",
