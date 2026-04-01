@@ -29,6 +29,9 @@ simplex-chat -p 5225
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
+```
+
+```bash
 openclaw plugins enable openclaw-simplex
 ```
 
@@ -359,9 +362,21 @@ For full persistent runtime examples, see:
 
 ```bash
 openclaw plugins list
+```
+
+```bash
 openclaw plugins info openclaw-simplex
+```
+
+```bash
 openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+```
+
+```bash
 openclaw simplex migrate --dry-run
+```
+
+```bash
 openclaw pairing list
 ```
 
