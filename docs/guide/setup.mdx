@@ -7,9 +7,15 @@ description: Runtime configuration examples for external and multi-account Simpl
 
 Prerequisite: install `simplex-chat` first (see [Getting Started](/guide/getting-started)).
 
-## External runtime
+## Runtime
 
 Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint.
+
+Start the runtime:
+
+```bash
+simplex-chat -p 5225
+```
 
 ```json
 {
@@ -21,6 +27,17 @@ Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint.
     }
   }
 }
+```
+
+If `simplex-chat` is not running, OpenClaw will keep the channel disconnected and surface the connection error in channel status.
+
+Manual invite and address management still happens in the `simplex-chat` console:
+
+```text
+/c
+/ad
+/show_address
+/delete_address
 ```
 
 ## Per-account config

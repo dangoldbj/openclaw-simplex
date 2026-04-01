@@ -14,6 +14,44 @@ Designed for real-world OpenClaw deployments where privacy, local control, and m
 
 ---
 
+## Quick Start
+
+Fresh install:
+
+1. Install `simplex-chat`.
+2. Start the WebSocket runtime:
+
+```bash
+simplex-chat -p 5225
+```
+
+3. Install and enable the plugin:
+
+```bash
+openclaw plugins install @dangoldbj/openclaw-simplex
+openclaw plugins enable openclaw-simplex
+```
+
+4. Configure the channel:
+
+```bash
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+```
+
+Upgrade from older `simplex` ids:
+
+```bash
+openclaw simplex migrate
+```
+
+Full docs:
+
+* Getting started: https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
+* Migration: https://dangoldbj.github.io/openclaw-simplex/guide/migration
+* Full documentation: https://dangoldbj.github.io/openclaw-simplex/
+
+---
+
 ## Why this plugin exists
 
 OpenClaw supports multiple messaging channels, but most rely on:
@@ -103,6 +141,12 @@ Verify:
 simplex-chat -h
 ```
 
+Start the long-running WebSocket process:
+
+```bash
+simplex-chat -p 5225
+```
+
 ---
 
 ### 2. Install in OpenClaw
@@ -136,6 +180,7 @@ Important:
 * OpenClaw will not start the SimpleX channel until `channels.openclaw-simplex.connection` is configured
 * The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
 * configure `channels.openclaw-simplex.connection.wsUrl` to the running SimpleX WebSocket endpoint
+* if `simplex-chat` is not running at that endpoint, OpenClaw will mark the channel disconnected and store the connection error in channel status
 * The interactive `openclaw channels add` picker may not list this external plugin yet
 
 ## Migration from `simplex`
@@ -243,9 +288,13 @@ OpenClaw also exposes the same flows through gateway methods and plugin tools fo
 
 ---
 
-## Runtime Connection
+## Setup
 
 Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint:
+
+```bash
+simplex-chat -p 5225
+```
 
 ```json
 {
@@ -321,16 +370,6 @@ Plugin tools:
 Full walkthrough:
 
 * https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
-
----
-
-## Screenshots
-
-Pairing and approval flow screenshots:
-
-* https://dangoldbj.github.io/openclaw-simplex/guide/getting-started
-
----
 
 ## Full Docs
 

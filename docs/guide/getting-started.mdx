@@ -27,6 +27,12 @@ Verify CLI is available:
 simplex-chat -h
 ```
 
+Start the long-running WebSocket process:
+
+```bash
+simplex-chat -p 5225
+```
+
 ## 2. Register with OpenClaw
 
 Install plugin in OpenClaw:
@@ -55,18 +61,15 @@ openclaw config set plugins.allow "$(
 This appends `openclaw-simplex` to the existing allowlist instead of replacing it.
 
 `plugins enable openclaw-simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.openclaw-simplex.connection` is configured.
+If `simplex-chat` is not running at the configured endpoint, OpenClaw will mark the channel disconnected and record the connection error in channel status.
 
-If you are upgrading an older `0.x` install that used `simplex` as the plugin/channel id, migrate config and saved pairing state first:
+If you are upgrading an older `0.x` install that used `simplex` as the plugin/channel id, run:
 
 ```bash
 openclaw simplex migrate
 ```
 
-Preview only:
-
-```bash
-openclaw simplex migrate --dry-run
-```
+Use `--dry-run` to preview changes. Full upgrade notes are in [Migration](/guide/migration).
 
 ## 3. Configure channel
 
@@ -141,7 +144,7 @@ Open the SimpleX app with the returned link. If you need a QR code, OpenClaw's g
 Send a message from the SimpleX app to the OpenClaw contact.  
 OpenClaw creates a pairing request and returns an approval code.
 
-![Pairing code shown in SimpleX app](/images/pairing-request.png)
+Screenshot walkthrough: [Screenshots](/reference/screenshots)
 
 ## 9. Approve in OpenClaw
 
@@ -151,25 +154,13 @@ List pairing requests and get the code:
 openclaw pairing list
 ```
 
-Pairing request table in OpenClaw:
-
-![OpenClaw pairing requests table](/images/pairing-list.png)
-
 Approve the pairing request:
 
 ```bash
 openclaw pairing approve openclaw-simplex <code>
 ```
 
-SimpleX app shows approval confirmation:
-
-![SimpleX access approved message](/images/approved.png)
-
 ## 10. Confirm and chat
 
 After approval, send a new message from the SimpleX app.  
 OpenClaw should now accept and process messages from that contact.
-
-![SimpleX chat after approval](/images/chat.png)
-
-More screenshots: [Screenshots](/reference/screenshots)

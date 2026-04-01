@@ -9,52 +9,41 @@ SimpleX channel plugin for OpenClaw.
 
 > Breaking in `1.0.0`: the plugin id and channel id are now `openclaw-simplex`, managed mode was removed, and existing users should run `openclaw simplex migrate`. See [Migration](/guide/migration).
 
-## Why this plugin
-
 This plugin brings OpenClaw to SimpleX with clear policy controls, multi-account support, and an external WebSocket runtime model.
 
-## Install
+## Quick Start
 
-Required runtime (`simplex-chat` CLI):
+Fresh install:
 
-Official installer:
-
-```bash
-curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
-```
-
-If the official installer resolves the wrong Darwin/Linux target on your host, use this temporary arch-matrix installer:
+1. Install `simplex-chat`.
+2. Start the WebSocket runtime:
 
 ```bash
-curl -o- https://raw.githubusercontent.com/dangoldbj/simplex-chat/install-arch-matrix/install.sh | bash
+simplex-chat -p 5225
 ```
 
-OpenClaw plugin setup:
-
-Install plugin in OpenClaw:
+3. Install and enable the plugin:
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
-```
-
-Enable plugin:
-
-```bash
 openclaw plugins enable openclaw-simplex
 ```
 
-Trust plugin:
+4. Configure the channel:
 
 ```bash
-openclaw config set plugins.allow "$(
-  (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
-  | jq -c '. + ["openclaw-simplex"] | unique'
-)" --strict-json
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
-Then configure `channels.openclaw-simplex.connection` before expecting the channel runtime to start. See [Getting Started](/guide/getting-started) for the full flow.
+For the full setup flow, trust configuration, pairing, and invite generation, see [Getting Started](/guide/getting-started).
 
-Upgrading from the older `simplex` ids? Run `openclaw simplex migrate` first. See [Migration](/guide/migration).
+Upgrading from the older `simplex` ids?
+
+```bash
+openclaw simplex migrate
+```
+
+See [Migration](/guide/migration) for the full breaking-change checklist.
 
 ## Start Here
 
@@ -64,7 +53,6 @@ Upgrading from the older `simplex` ids? Run `openclaw simplex migrate` first. Se
 - [How It Works](/guide/how-it-works)
 - [Architecture](/guide/architecture)
 - [Setup](/guide/setup)
-- [Runtime Connection](/guide/external-vs-managed)
 - [Security Model](/guide/security-model)
 - [Troubleshooting](/guide/troubleshooting)
 

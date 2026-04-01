@@ -15,26 +15,23 @@ It assumes the SimpleX channel is already configured with a reachable `channels.
 
 ## Pairing flow
 
-1. Send first message from the SimpleX app and capture pairing request:
+1. Send the first message from the SimpleX app and capture the pairing request.
 
-![Pairing code shown in SimpleX app](/images/pairing-request.png)
+<img src="/images/pairing-request.png" alt="Pairing code shown in SimpleX app" width="720" />
 
-Pairing request table in OpenClaw:
+2. Review the pairing request in OpenClaw.
 
-![OpenClaw pairing requests table](/images/pairing-list.png)
+<img src="/images/pairing-list.png" alt="OpenClaw pairing requests table" width="900" />
 
-2. Approve pairing in OpenClaw:
+3. Approve pairing in OpenClaw.
 
 ```bash
 openclaw pairing list
-```
-
-```bash
 openclaw pairing approve openclaw-simplex <code>
 ```
 
-3. Confirm approved + first successful chat:
+4. Confirm the approval and test the first successful chat.
 
-![SimpleX access approved message](/images/approved.png)
+<img src="/images/approved.png" alt="SimpleX access approved message" width="720" />
 
-![SimpleX chat after approval](/images/chat.png)
+<img src="/images/chat.png" alt="SimpleX chat after approval" width="720" />
