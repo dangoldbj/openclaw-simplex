@@ -310,6 +310,12 @@ simplex-chat -p 5225
 }
 ```
 
+OpenClaw does not supervise `simplex-chat` for external plugins. If you want it to start automatically, run it as a host-managed user service such as `systemd --user` or `launchd`.
+
+For full persistent runtime examples, see:
+
+* https://dangoldbj.github.io/openclaw-simplex/guide/setup
+
 ---
 
 ## Security Model
