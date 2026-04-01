@@ -2,6 +2,8 @@
 
 > **TL;DR:** Run OpenClaw agents over SimpleX with no phone numbers, no hosted or unofficial bot APIs, and full end-to-end encryption.
 
+> **Breaking in `1.0.0`:** the plugin id and channel id are now `openclaw-simplex`, managed mode was removed, and existing users should run `openclaw simplex migrate`. See the [migration guide](https://dangoldbj.github.io/openclaw-simplex/guide/migration).
+
 Privacy-first SimpleX messaging channel for OpenClaw.
 
 This plugin enables OpenClaw agents to communicate over SimpleX, a decentralized, end-to-end encrypted messaging network, without requiring phone numbers, hosted bot APIs, or third-party infrastructure.
