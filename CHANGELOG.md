@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-04-01
+
+### Fixed
+
+- Replaced placeholder channel-config schema objects with OpenClaw's typed config primitives so the Control UI can render the SimpleX config surface without falling back to `Unsupported type: . Use Raw mode.`
+- Preserved the `openclaw-simplex` `1.0.0` runtime and migration behavior while improving config editor compatibility.
+
 ## [1.0.0] - 2026-04-01
 
 ### Breaking Changes
