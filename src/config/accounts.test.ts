@@ -17,7 +17,7 @@ describe("simplex accounts", () => {
   it("sorts configured account ids", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           accounts: {
             beta: {},
             alpha: {},
@@ -31,7 +31,7 @@ describe("simplex accounts", () => {
   it("resolves default account id when present", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           accounts: {
             default: {},
             alpha: {},
@@ -45,7 +45,7 @@ describe("simplex accounts", () => {
   it("falls back to first configured account id when default missing", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           accounts: {
             gamma: {},
             beta: {},
@@ -59,7 +59,7 @@ describe("simplex accounts", () => {
   it("merges connection config across base and account", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           enabled: true,
           connection: {
             wsHost: "base-host",
@@ -87,7 +87,7 @@ describe("simplex accounts", () => {
   it("honors disabled flags", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           enabled: false,
           accounts: {
             alpha: {},
@@ -99,7 +99,7 @@ describe("simplex accounts", () => {
 
     const cfg2 = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           enabled: true,
           accounts: {
             alpha: {
@@ -115,7 +115,7 @@ describe("simplex accounts", () => {
   it("uses explicit wsUrl for external mode configuration", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           accounts: {
             alpha: {
               connection: {
@@ -152,7 +152,7 @@ describe("simplex accounts", () => {
   it("treats explicit ws connection config as configured", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           connection: {
             wsHost: "127.0.0.1",
             wsPort: 5225,

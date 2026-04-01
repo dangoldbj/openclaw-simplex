@@ -26,16 +26,16 @@ function resolveRawSimplexAccountConfig(
   accountId: string
 ): SimplexAccountConfig {
   if (accountId === DEFAULT_ACCOUNT_ID) {
-    const { accounts: _ignored, ...base } = (cfg.channels?.simplex ?? {}) as SimplexConfig & {
+    const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ?? {}) as SimplexConfig & {
       accounts?: unknown;
     };
     return base;
   }
-  return (cfg.channels?.simplex?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
+  return (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
 }
 
 function listConfiguredAccountIds(cfg: OpenClawConfig): string[] {
-  const accounts = cfg.channels?.simplex?.accounts;
+  const accounts = cfg.channels?.["openclaw-simplex"]?.accounts;
   if (!accounts || typeof accounts !== "object") {
     return [];
   }
@@ -78,10 +78,10 @@ function mergeConnection(
 }
 
 function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): SimplexAccountConfig {
-  const { accounts: _ignored, ...base } = (cfg.channels?.simplex ?? {}) as SimplexConfig & {
+  const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ?? {}) as SimplexConfig & {
     accounts?: unknown;
   };
-  const account = (cfg.channels?.simplex?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
+  const account = (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
   return {
     ...base,
     ...account,
@@ -113,7 +113,7 @@ export function resolveSimplexAccount(params: {
   const accountId = normalizeAccountId(params.accountId);
   const merged = mergeSimplexAccountConfig(params.cfg, accountId);
   const hasMeaningfulConfig = hasMeaningfulSimplexConfig({ cfg: params.cfg, accountId });
-  const baseEnabled = params.cfg.channels?.simplex?.enabled !== false;
+  const baseEnabled = params.cfg.channels?.["openclaw-simplex"]?.enabled !== false;
   const enabled = baseEnabled && merged.enabled !== false;
   const connection = merged.connection ?? {};
   const mode: SimplexConnectionMode = "external";

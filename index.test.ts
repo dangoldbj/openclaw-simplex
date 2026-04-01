@@ -49,7 +49,7 @@ import setupEntry from "./setup-entry.js";
 
 const simplexConfiguredChannel = {
   channels: {
-    simplex: {
+    "openclaw-simplex": {
       connection: {
         wsUrl: "ws://127.0.0.1:5225",
       },
@@ -90,7 +90,7 @@ function setupRegistration(
   const tools: string[] = [];
   const hooks: Array<{ events: string | string[]; handler: HookHandler }> = [];
   const api: OpenClawPluginApi = {
-    id: "simplex",
+    id: "openclaw-simplex",
     name: "SimpleX",
     description: "test",
     version: "0",
@@ -268,7 +268,7 @@ describe("simplex invite gateway", () => {
       context: {
         startChannel: async () => {},
         getRuntimeSnapshot: () => ({
-          channels: { simplex: { running: false } },
+          channels: { "openclaw-simplex": { running: false } },
           channelAccounts: {},
         }),
       },
@@ -306,7 +306,7 @@ describe("simplex invite gateway", () => {
       context: {
         startChannel: async () => {},
         getRuntimeSnapshot: () => ({
-          channels: { simplex: { running: true } },
+          channels: { "openclaw-simplex": { running: true } },
           channelAccounts: {},
         }),
       },
@@ -350,7 +350,7 @@ describe("simplex invite gateway", () => {
       context: {
         startChannel: async () => {},
         getRuntimeSnapshot: () => ({
-          channels: { simplex: { running: true } },
+          channels: { "openclaw-simplex": { running: true } },
           channelAccounts: {},
         }),
       },
@@ -377,7 +377,7 @@ describe("simplex invite gateway", () => {
   it("revokes address link for selected account", async () => {
     const handler = setupHandler("simplex.invite.revoke", {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           accounts: {
             ops: {
               connection: { wsUrl: "ws://127.0.0.1:7777", mode: "external" },
@@ -393,8 +393,8 @@ describe("simplex invite gateway", () => {
       context: {
         startChannel: async () => {},
         getRuntimeSnapshot: () => ({
-          channels: { simplex: { running: true } },
-          channelAccounts: { simplex: { ops: { running: true } } },
+          channels: { "openclaw-simplex": { running: true } },
+          channelAccounts: { "openclaw-simplex": { ops: { running: true } } },
         }),
       },
     });

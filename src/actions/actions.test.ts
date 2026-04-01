@@ -6,7 +6,7 @@ describe("simplex message tool discovery", () => {
   it("returns action schema for configured accounts", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           connection: {
             wsUrl: "ws://127.0.0.1:5225",
           },
@@ -16,7 +16,7 @@ describe("simplex message tool discovery", () => {
 
     const result = simplexMessageActions.describeMessageTool({
       cfg,
-      currentChannelId: "simplex",
+      currentChannelId: "openclaw-simplex",
     });
 
     expect(result).toBeTruthy();
@@ -56,7 +56,7 @@ describe("simplex message tool discovery", () => {
     expect(
       simplexMessageActions.describeMessageTool({
         cfg,
-        currentChannelId: "simplex",
+        currentChannelId: "openclaw-simplex",
       })
     ).toBeNull();
   });

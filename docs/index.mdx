@@ -58,7 +58,7 @@ openclaw plugins install @dangoldbj/openclaw-simplex
 Enable plugin:
 
 ```bash
-openclaw plugins enable simplex
+openclaw plugins enable openclaw-simplex
 ```
 
 Trust plugin:
@@ -66,16 +66,19 @@ Trust plugin:
 ```bash
 openclaw config set plugins.allow "$(
   (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
-  | jq -c '. + ["simplex"] | unique'
+  | jq -c '. + ["openclaw-simplex"] | unique'
 )" --strict-json
 ```
 
-Then configure `channels.simplex.connection` before expecting the channel runtime to start. See [Getting Started](/guide/getting-started) for the full flow.
+Then configure `channels.openclaw-simplex.connection` before expecting the channel runtime to start. See [Getting Started](/guide/getting-started) for the full flow.
+
+Upgrading from the older `simplex` ids? Run `openclaw simplex migrate` first. See [Migration](/guide/migration).
 
 ## Start Here
 
 - [Why SimpleX](/guide/why-simplex)
 - [Getting Started](/guide/getting-started)
+- [Migration](/guide/migration)
 - [How It Works](/guide/how-it-works)
 - [Architecture](/guide/architecture)
 - [Setup](/guide/setup)

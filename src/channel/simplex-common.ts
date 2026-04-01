@@ -53,9 +53,11 @@ export function normalizeSimplexMessageId(value: unknown): string | undefined {
 
 export function stripSimplexPrefix(value: string): string {
   const trimmed = value.trim();
-  return trimmed.toLowerCase().startsWith("simplex:")
-    ? trimmed.slice("simplex:".length).trim()
-    : trimmed;
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("openclaw-simplex:")) {
+    return trimmed.slice("openclaw-simplex:".length).trim();
+  }
+  return lower.startsWith("simplex:") ? trimmed.slice("simplex:".length).trim() : trimmed;
 }
 
 export function stripLeadingAt(value: string): string {
@@ -76,7 +78,8 @@ export function normalizeSimplexContactRef(value: string): string {
     lowered.startsWith("contact:") ||
     lowered.startsWith("user:") ||
     lowered.startsWith("member:") ||
-    lowered.startsWith("simplex:")
+    lowered.startsWith("simplex:") ||
+    lowered.startsWith("openclaw-simplex:")
   ) {
     return `@${trimmed.slice(trimmed.indexOf(":") + 1).trim()}`;
   }

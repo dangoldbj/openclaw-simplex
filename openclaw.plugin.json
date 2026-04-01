@@ -1,7 +1,7 @@
 {
-  "id": "simplex",
+  "id": "openclaw-simplex",
   "kind": "channel",
-  "channels": ["simplex"],
+  "channels": ["openclaw-simplex"],
   "name": "SimpleX",
   "description": "SimpleX Chat channel plugin via external WebSocket API",
   "configSchema": {

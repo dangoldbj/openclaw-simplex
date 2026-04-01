@@ -1,0 +1,64 @@
+---
+title: Migration to openclaw-simplex
+description: Upgrade existing simplex installs to the renamed openclaw-simplex plugin and channel ids.
+---
+
+# Migration to `openclaw-simplex`
+
+`1.0.0` renames both the plugin id and the channel id:
+
+- plugin id: `simplex` -> `openclaw-simplex`
+- channel id: `simplex` -> `openclaw-simplex`
+
+It also removes managed mode. OpenClaw no longer starts `simplex-chat` for you; run it separately and connect over WebSocket.
+
+Gateway method names remain unchanged in this release:
+
+- `simplex.invite.create`
+- `simplex.invite.list`
+- `simplex.invite.revoke`
+
+## Run the migration helper
+
+```bash
+openclaw simplex migrate
+```
+
+Dry run:
+
+```bash
+openclaw simplex migrate --dry-run
+```
+
+The helper updates:
+
+- `plugins.entries.simplex` -> `plugins.entries.openclaw-simplex`
+- `plugins.installs.simplex` -> `plugins.installs.openclaw-simplex`
+- `plugins.allow` / `plugins.deny`
+- `channels.simplex` -> `channels.openclaw-simplex`
+- OpenClaw pairing and allowlist state files under the OpenClaw state directory
+
+## After migration
+
+Use the new ids in commands:
+
+```bash
+openclaw plugins enable openclaw-simplex
+openclaw plugins info openclaw-simplex
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw pairing approve openclaw-simplex <code>
+```
+
+Configure the runtime under:
+
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "connection": {
+        "wsUrl": "ws://127.0.0.1:5225"
+      }
+    }
+  }
+}
+```

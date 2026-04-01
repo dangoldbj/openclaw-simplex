@@ -56,7 +56,7 @@ openclaw plugins install @dangoldbj/openclaw-simplex
 Enable plugin:
 
 ```bash
-openclaw plugins enable simplex
+openclaw plugins enable openclaw-simplex
 ```
 
 Trust the plugin explicitly:
@@ -64,20 +64,32 @@ Trust the plugin explicitly:
 ```bash
 openclaw config set plugins.allow "$(
   (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
-  | jq -c '. + ["simplex"] | unique'
+  | jq -c '. + ["openclaw-simplex"] | unique'
 )" --strict-json
 ```
 
-This appends `simplex` to the existing allowlist instead of replacing it.
+This appends `openclaw-simplex` to the existing allowlist instead of replacing it.
 
-`plugins enable simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.simplex.connection` is configured.
+`plugins enable openclaw-simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.openclaw-simplex.connection` is configured.
+
+If you are upgrading an older `0.x` install that used `simplex` as the plugin/channel id, migrate config and saved pairing state first:
+
+```bash
+openclaw simplex migrate
+```
+
+Preview only:
+
+```bash
+openclaw simplex migrate --dry-run
+```
 
 ## 4. Configure channel
 
 Configure the WebSocket endpoint via CLI:
 
 ```bash
-openclaw channels add --channel simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
 Or write config directly:
@@ -85,7 +97,7 @@ Or write config directly:
 ```json
 {
   "channels": {
-    "simplex": {
+    "openclaw-simplex": {
       "enabled": true,
       "connection": {
         "wsUrl": "ws://127.0.0.1:5225"
@@ -105,7 +117,7 @@ Restart OpenClaw so plugin/channel registry reloads.
 
 ```bash
 openclaw plugins list
-openclaw plugins info simplex
+openclaw plugins info openclaw-simplex
 ```
 
 In Control UI, open `Control -> Channels -> SimpleX`:
@@ -162,7 +174,7 @@ Pairing request table in OpenClaw:
 Approve the pairing request:
 
 ```bash
-openclaw pairing approve simplex <code>
+openclaw pairing approve openclaw-simplex <code>
 ```
 
 SimpleX app shows approval confirmation:

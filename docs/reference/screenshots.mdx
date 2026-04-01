@@ -11,7 +11,7 @@ Generate or retrieve the invite/address link in `simplex-chat` with `/c`, `/ad`,
 
 If you need automation instead, OpenClaw also exposes `simplex.invite.create` and `simplex.invite.list`.
 
-It assumes the SimpleX channel is already configured with a reachable `channels.simplex.connection.wsUrl`.
+It assumes the SimpleX channel is already configured with a reachable `channels.openclaw-simplex.connection.wsUrl`.
 
 ## Pairing flow
 
@@ -30,7 +30,7 @@ openclaw pairing list
 ```
 
 ```bash
-openclaw pairing approve simplex <code>
+openclaw pairing approve openclaw-simplex <code>
 ```
 
 3. Confirm approved + first successful chat:

@@ -12,7 +12,7 @@ OpenClaw no longer starts `simplex-chat` itself. Run the SimpleX runtime separat
 ```json
 {
   "channels": {
-    "simplex": {
+    "openclaw-simplex": {
       "connection": {
         "wsUrl": "ws://127.0.0.1:5225"
       }
@@ -25,5 +25,5 @@ OpenClaw no longer starts `simplex-chat` itself. Run the SimpleX runtime separat
 
 - Install `simplex-chat` on the host.
 - Start the SimpleX runtime yourself.
-- Point `channels.simplex.connection.wsUrl` at the running endpoint.
+- Point `channels.openclaw-simplex.connection.wsUrl` at the running endpoint.
 - Invite/address creation can still be done directly in the `simplex-chat` console with `/c`, `/ad`, `/show_address`, and `/delete_address`.

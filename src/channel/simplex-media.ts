@@ -14,8 +14,8 @@ export function resolveSimplexMediaMaxBytes(params: {
     resolveChannelMediaMaxBytes({
       cfg: params.cfg,
       resolveChannelLimitMb: ({ cfg, accountId }) =>
-        cfg.channels?.simplex?.accounts?.[accountId]?.mediaMaxMb ??
-        cfg.channels?.simplex?.mediaMaxMb,
+        cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId]?.mediaMaxMb ??
+        cfg.channels?.["openclaw-simplex"]?.mediaMaxMb,
       accountId: params.accountId,
     }) ?? DEFAULT_MAX_BYTES
   );
@@ -36,7 +36,7 @@ export async function resolveMediaPath(params: {
     const saved = await core.channel.media.saveMediaBuffer(
       fetched.buffer,
       fetched.contentType,
-      "simplex",
+      "openclaw-simplex",
       params.maxBytes,
       fetched.fileName
     );

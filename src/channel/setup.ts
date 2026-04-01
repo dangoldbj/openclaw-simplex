@@ -25,8 +25,8 @@ function setSimplexAccountConfig(params: {
       ...params.cfg,
       channels: {
         ...params.cfg.channels,
-        simplex: {
-          ...params.cfg.channels?.simplex,
+        "openclaw-simplex": {
+          ...params.cfg.channels?.["openclaw-simplex"],
           ...params.patch,
         },
       },
@@ -37,12 +37,12 @@ function setSimplexAccountConfig(params: {
     ...params.cfg,
     channels: {
       ...params.cfg.channels,
-      simplex: {
-        ...params.cfg.channels?.simplex,
+      "openclaw-simplex": {
+        ...params.cfg.channels?.["openclaw-simplex"],
         accounts: {
-          ...params.cfg.channels?.simplex?.accounts,
+          ...params.cfg.channels?.["openclaw-simplex"]?.accounts,
           [params.accountId]: {
-            ...params.cfg.channels?.simplex?.accounts?.[params.accountId],
+            ...params.cfg.channels?.["openclaw-simplex"]?.accounts?.[params.accountId],
             ...params.patch,
           },
         },
@@ -61,10 +61,10 @@ function setSimplexConnectionConfig(params: {
       ...params.cfg,
       channels: {
         ...params.cfg.channels,
-        simplex: {
-          ...params.cfg.channels?.simplex,
+        "openclaw-simplex": {
+          ...params.cfg.channels?.["openclaw-simplex"],
           connection: {
-            ...params.cfg.channels?.simplex?.connection,
+            ...params.cfg.channels?.["openclaw-simplex"]?.connection,
             ...params.patch,
           },
         },
@@ -76,14 +76,14 @@ function setSimplexConnectionConfig(params: {
     ...params.cfg,
     channels: {
       ...params.cfg.channels,
-      simplex: {
-        ...params.cfg.channels?.simplex,
+      "openclaw-simplex": {
+        ...params.cfg.channels?.["openclaw-simplex"],
         accounts: {
-          ...params.cfg.channels?.simplex?.accounts,
+          ...params.cfg.channels?.["openclaw-simplex"]?.accounts,
           [params.accountId]: {
-            ...params.cfg.channels?.simplex?.accounts?.[params.accountId],
+            ...params.cfg.channels?.["openclaw-simplex"]?.accounts?.[params.accountId],
             connection: {
-              ...params.cfg.channels?.simplex?.accounts?.[params.accountId]?.connection,
+              ...params.cfg.channels?.["openclaw-simplex"]?.accounts?.[params.accountId]?.connection,
               ...params.patch,
             },
           },

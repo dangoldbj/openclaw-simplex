@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-04-01
+
+### Breaking Changes
+
+- Renamed the plugin id from `simplex` to `openclaw-simplex`.
+- Renamed the channel id from `simplex` to `openclaw-simplex`.
+- Removed managed mode. The plugin no longer starts `simplex-chat`; operators must run `simplex-chat` separately and configure `channels.openclaw-simplex.connection.wsUrl`.
+- Added a migration CLI helper: `openclaw simplex migrate`.
+
+### Changed
+
+- Updated all documented plugin, channel, config, and pairing commands to the new `openclaw-simplex` ids.
+- Kept gateway method names stable as `simplex.invite.*` for compatibility.
+
 ## [0.3.0] - 2026-04-01
 
 ### Added

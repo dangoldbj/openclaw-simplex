@@ -79,7 +79,9 @@ function normalizeSimplexSenderId(value?: string | null): string | undefined {
     return undefined;
   }
   const lower = trimmed.toLowerCase();
-  if (lower.startsWith("simplex:")) {
+  if (lower.startsWith("openclaw-simplex:")) {
+    trimmed = trimmed.slice("openclaw-simplex:".length).trim();
+  } else if (lower.startsWith("simplex:")) {
     trimmed = trimmed.slice("simplex:".length).trim();
   }
   if (!trimmed) {
@@ -448,7 +450,7 @@ async function handleSimplexEvent(params: {
 
     const route = core.channel.routing.resolveAgentRoute({
       cfg,
-      channel: "simplex",
+      channel: "openclaw-simplex",
       accountId: account.accountId,
       peer: {
         kind: context.chatType === "group" ? "group" : "direct",
@@ -471,7 +473,7 @@ async function handleSimplexEvent(params: {
     const storeAllowFrom = shouldLoadAllowFromStore
       ? await core.channel.pairing
           .readAllowFromStore({
-            channel: "simplex",
+            channel: "openclaw-simplex",
             accountId: account.accountId,
           })
           .catch(() => [])
@@ -536,7 +538,7 @@ async function handleSimplexEvent(params: {
           if (dmPolicy === "pairing") {
             const senderId = normalizedSenderId ?? String(context.chatId);
             const { code, created } = await core.channel.pairing.upsertPairingRequest({
-              channel: "simplex",
+              channel: "openclaw-simplex",
               id: senderId,
               accountId: account.accountId,
               meta: { name: context.senderName },
@@ -551,7 +553,7 @@ async function handleSimplexEvent(params: {
                   accountId: account.accountId,
                   payload: {
                     text: core.channel.pairing.buildPairingReply({
-                      channel: "simplex",
+                      channel: "openclaw-simplex",
                       idLine: `Your SimpleX contact id: ${senderId}`,
                       code,
                     }),
@@ -584,7 +586,7 @@ async function handleSimplexEvent(params: {
       const wasMentioned = core.channel.mentions.matchesMentionPatterns(rawBody, mentionRegexes);
       const allowTextCommands = core.channel.commands.shouldHandleTextCommands({
         cfg,
-        surface: "simplex",
+        surface: "openclaw-simplex",
       });
       const mentionGate = resolveMentionGatingWithBypass({
         isGroup: true,
@@ -641,8 +643,13 @@ async function handleSimplexEvent(params: {
       RawBody: rawBody,
       CommandBody: rawBody,
       From:
-        context.chatType === "group" ? `simplex:group:${context.chatId}` : `simplex:${dmPeerId}`,
-      To: context.chatType === "group" ? `simplex:group:${context.chatId}` : `simplex:${dmPeerId}`,
+        context.chatType === "group"
+          ? `openclaw-simplex:group:${context.chatId}`
+          : `openclaw-simplex:${dmPeerId}`,
+      To:
+        context.chatType === "group"
+          ? `openclaw-simplex:group:${context.chatId}`
+          : `openclaw-simplex:${dmPeerId}`,
       SessionKey: route.sessionKey,
       AccountId: route.accountId,
       ChatType: context.chatType === "group" ? "group" : "direct",
@@ -650,17 +657,19 @@ async function handleSimplexEvent(params: {
       GroupSubject: context.chatType === "group" ? context.chatLabel : undefined,
       SenderName: context.senderName,
       SenderId: context.senderId,
-      Provider: "simplex" as const,
-      Surface: "simplex" as const,
+      Provider: "openclaw-simplex" as const,
+      Surface: "openclaw-simplex" as const,
       MessageSid:
         typeof item.chatItem?.meta?.itemId === "number"
           ? String(item.chatItem.meta.itemId)
           : undefined,
       WasMentioned: context.chatType === "group" ? effectiveWasMentioned : undefined,
       CommandAuthorized: commandAuthorized,
-      OriginatingChannel: "simplex" as const,
+      OriginatingChannel: "openclaw-simplex" as const,
       OriginatingTo:
-        context.chatType === "group" ? `simplex:group:${context.chatId}` : `simplex:${dmPeerId}`,
+        context.chatType === "group"
+          ? `openclaw-simplex:group:${context.chatId}`
+          : `openclaw-simplex:${dmPeerId}`,
     });
 
     const fileId = item.chatItem?.file?.fileId;

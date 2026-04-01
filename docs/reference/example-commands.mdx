@@ -38,7 +38,7 @@ openclaw plugins install @dangoldbj/openclaw-simplex
 Enable plugin:
 
 ```bash
-openclaw plugins enable simplex
+openclaw plugins enable openclaw-simplex
 ```
 
 Trust plugin:
@@ -46,21 +46,33 @@ Trust plugin:
 ```bash
 openclaw config set plugins.allow "$(
   (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
-  | jq -c '. + ["simplex"] | unique'
+  | jq -c '. + ["openclaw-simplex"] | unique'
 )" --strict-json
 ```
 
 Configure the WebSocket endpoint:
 
 ```bash
-openclaw channels add --channel simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
 Verify:
 
 ```bash
 openclaw plugins list
-openclaw plugins info simplex
+openclaw plugins info openclaw-simplex
+```
+
+Migrate older `simplex` installs:
+
+```bash
+openclaw simplex migrate
+```
+
+Preview migration only:
+
+```bash
+openclaw simplex migrate --dry-run
 ```
 
 ## SimpleX CLI invite commands

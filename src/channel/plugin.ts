@@ -35,12 +35,12 @@ import type { ResolvedSimplexAccount } from "../config/types.js";
 const activeClients = new Map<string, SimplexWsClient>();
 
 export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
-  id: "simplex",
+  id: "openclaw-simplex",
   meta: {
-    id: "simplex",
+    id: "openclaw-simplex",
     label: "SimpleX",
     selectionLabel: "SimpleX (WebSocket)",
-    docsPath: "/channels/simplex",
+    docsPath: "/channels/openclaw-simplex",
     blurb: "SimpleX Chat via external WebSocket API",
     order: 95,
     quickstartAllowFrom: true,
@@ -55,7 +55,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     reply: true,
     groupManagement: true,
   },
-  reload: { configPrefixes: ["channels.simplex"] },
+  reload: { configPrefixes: ["channels.openclaw-simplex"] },
   setup: simplexSetupAdapter,
   configSchema: SimplexChannelConfigSchema,
   config: {
@@ -98,16 +98,16 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   security: {
     resolveDmPolicy: ({ cfg, accountId, account }) => {
       const resolvedAccountId = accountId ?? account.accountId ?? DEFAULT_ACCOUNT_ID;
-      const useAccountPath = Boolean(cfg.channels?.simplex?.accounts?.[resolvedAccountId]);
+      const useAccountPath = Boolean(cfg.channels?.["openclaw-simplex"]?.accounts?.[resolvedAccountId]);
       const basePath = useAccountPath
-        ? `channels.simplex.accounts.${resolvedAccountId}.`
-        : "channels.simplex.";
+        ? `channels.openclaw-simplex.accounts.${resolvedAccountId}.`
+        : "channels.openclaw-simplex.";
       return {
         policy: account.config.dmPolicy ?? "pairing",
         allowFrom: account.config.allowFrom ?? [],
         policyPath: `${basePath}dmPolicy`,
         allowFromPath: basePath,
-        approveHint: formatPairingApproveHint("simplex"),
+        approveHint: formatPairingApproveHint("openclaw-simplex"),
         normalizeEntry: (raw) => stripLeadingAt(stripSimplexPrefix(raw)),
       };
     },
@@ -118,7 +118,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
         return [];
       }
       return [
-        `- SimpleX groups: groupPolicy="open" allows any member to trigger the bot. Set channels.simplex.groupPolicy="allowlist" + channels.simplex.groupAllowFrom to restrict senders.`,
+        `- SimpleX groups: groupPolicy="open" allows any member to trigger the bot. Set channels.openclaw-simplex.groupPolicy="allowlist" + channels.openclaw-simplex.groupAllowFrom to restrict senders.`,
       ];
     },
   },

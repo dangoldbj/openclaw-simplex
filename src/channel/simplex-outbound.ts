@@ -25,7 +25,7 @@ export function buildSimplexOutbound(
         audioAsVoice: payload.audioAsVoice,
       });
       return {
-        channel: "simplex",
+        channel: "openclaw-simplex",
         messageId: result.messageId ?? "unknown",
         chatId: to,
       };
@@ -41,14 +41,14 @@ export function buildSimplexOutbound(
         text,
       });
       return {
-        channel: "simplex",
+        channel: "openclaw-simplex",
         messageId: result.messageId ?? "unknown",
         chatId: to,
       };
     },
     sendMedia: async ({ cfg, to, text, mediaUrl, accountId }) => {
       if (!mediaUrl) {
-        return { channel: "simplex", messageId: "empty", chatId: to };
+        return { channel: "openclaw-simplex", messageId: "empty", chatId: to };
       }
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
@@ -61,7 +61,7 @@ export function buildSimplexOutbound(
         mediaUrl,
       });
       return {
-        channel: "simplex",
+        channel: "openclaw-simplex",
         messageId: result.messageId ?? "unknown",
         chatId: to,
         meta: { mediaUrl },

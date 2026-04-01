@@ -50,7 +50,7 @@ describe("simplex allowlist", () => {
   it("resolves allowlist per-account first", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           allowFrom: ["base"],
           accounts: {
             alpha: {
@@ -72,7 +72,7 @@ describe("simplex allowlist", () => {
   it("resolves dm policy with account override", () => {
     const cfg = {
       channels: {
-        simplex: {
+        "openclaw-simplex": {
           dmPolicy: "allowlist",
           accounts: {
             alpha: {

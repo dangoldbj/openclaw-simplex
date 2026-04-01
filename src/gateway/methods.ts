@@ -34,8 +34,8 @@ function createRuntimeChecker(
 ): () => boolean {
   return () => {
     const runtime = context.getRuntimeSnapshot();
-    const accountRuntime = runtime.channelAccounts?.simplex?.[accountId];
-    return Boolean(accountRuntime?.running ?? runtime.channels?.simplex?.running);
+    const accountRuntime = runtime.channelAccounts?.["openclaw-simplex"]?.[accountId];
+    return Boolean(accountRuntime?.running ?? runtime.channels?.["openclaw-simplex"]?.running);
   };
 }
 
@@ -58,7 +58,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
         accountId,
         mode,
         logger: api.logger,
-        startChannel: () => context.startChannel("simplex", accountId ?? undefined),
+        startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
         isRunning: createRuntimeChecker(context, accountId ?? "default"),
       });
       const qrDataUrl = result.link ? await renderQrDataUrl(result.link) : null;
@@ -82,7 +82,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
         cfg: api.config,
         accountId,
         logger: api.logger,
-        startChannel: () => context.startChannel("simplex", accountId ?? undefined),
+        startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
         isRunning: createRuntimeChecker(context, accountId ?? "default"),
       });
       const addressQrDataUrl = result.addressLink ? await renderQrDataUrl(result.addressLink) : null;
@@ -109,7 +109,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
         cfg: api.config,
         accountId,
         logger: api.logger,
-        startChannel: () => context.startChannel("simplex", accountId ?? undefined),
+        startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
         isRunning: createRuntimeChecker(context, accountId ?? "default"),
       });
       respond(true, result);

@@ -8,13 +8,13 @@ description: Common issues when connecting OpenClaw to SimpleX and how to resolv
 ## Plugin not listed
 
 - Run `openclaw plugins list`
-- Verify `plugins.allow` includes `simplex`
+- Verify `plugins.allow` includes `openclaw-simplex`
 - Verify package installed in the same runtime environment as OpenClaw
 - Restart OpenClaw
 
 ## Channel fails to start
 
-- Check `channels.simplex.connection`
+- Check `channels.openclaw-simplex.connection`
 - Validate `connection` values (`wsUrl`, `wsHost`, `wsPort`)
 - Verify `simplex-chat` is running and exposing the expected WebSocket endpoint
 
@@ -39,6 +39,6 @@ description: Common issues when connecting OpenClaw to SimpleX and how to resolv
 
 ```bash
 openclaw plugins list
-openclaw plugins info simplex
-openclaw channels add --channel simplex --url ws://127.0.0.1:5225
+openclaw plugins info openclaw-simplex
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```

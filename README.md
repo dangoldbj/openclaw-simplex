@@ -124,7 +124,7 @@ openclaw plugins install @dangoldbj/openclaw-simplex
 Enable:
 
 ```bash
-openclaw plugins enable simplex
+openclaw plugins enable openclaw-simplex
 ```
 
 Trust plugin:
@@ -132,19 +132,51 @@ Trust plugin:
 ```bash
 openclaw config set plugins.allow "$(
   (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
-  | jq -c '. + ["simplex"] | unique'
+  | jq -c '. + ["openclaw-simplex"] | unique'
 )" --strict-json
 ```
 
-This appends `simplex` to the existing allowlist instead of replacing it.
+This appends `openclaw-simplex` to the existing allowlist instead of replacing it.
 
 Important:
 
-* `openclaw plugins enable simplex` only enables the plugin
-* OpenClaw will not start the SimpleX channel until `channels.simplex.connection` is configured
+* `openclaw plugins enable openclaw-simplex` only enables the plugin
+* OpenClaw will not start the SimpleX channel until `channels.openclaw-simplex.connection` is configured
 * The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
-* configure `channels.simplex.connection.wsUrl` to the running SimpleX WebSocket endpoint
+* configure `channels.openclaw-simplex.connection.wsUrl` to the running SimpleX WebSocket endpoint
 * The interactive `openclaw channels add` picker may not list this external plugin yet
+
+## Migration from `simplex`
+
+`1.0.0` renames both the plugin id and the channel id from `simplex` to `openclaw-simplex`.
+
+If you are upgrading from `0.x`, run:
+
+```bash
+openclaw simplex migrate
+```
+
+This migrates:
+
+* `plugins.entries.simplex` -> `plugins.entries.openclaw-simplex`
+* `plugins.installs.simplex` -> `plugins.installs.openclaw-simplex`
+* `plugins.allow` / `plugins.deny` entries from `simplex` -> `openclaw-simplex`
+* `channels.simplex` -> `channels.openclaw-simplex`
+* OpenClaw pairing and allowlist state files under the OpenClaw state directory
+
+You can preview the changes first:
+
+```bash
+openclaw simplex migrate --dry-run
+```
+
+Breaking changes in `1.0.0`:
+
+* managed mode was removed; run `simplex-chat` separately and configure `wsUrl`
+* the plugin id is now `openclaw-simplex`
+* the channel id is now `openclaw-simplex`
+* pairing approval commands now use `openclaw-simplex`
+* gateway method names remain `simplex.invite.*`; they were not renamed in this release
 
 ## Invite Link Generation
 
@@ -174,9 +206,9 @@ OpenClaw also exposes the same flows through gateway methods and plugin tools fo
 
 ## How It Works
 
-1. OpenClaw loads the plugin and registers the `simplex` channel
+1. OpenClaw loads the plugin and registers the `openclaw-simplex` channel
 2. OpenClaw can load the lightweight setup entry before the full runtime entry for disabled or unconfigured channels
-3. The channel only becomes startup-capable after `channels.simplex.connection` is configured
+3. The channel only becomes startup-capable after `channels.openclaw-simplex.connection` is configured
 4. The plugin connects to SimpleX via the CLI WebSocket API
 5. Incoming messages are normalized into OpenClaw context
 6. OpenClaw applies policies such as `dmPolicy` and `allowFrom`
@@ -226,7 +258,7 @@ Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint:
 ```json
 {
   "channels": {
-    "simplex": {
+    "openclaw-simplex": {
       "enabled": true,
       "connection": {
         "wsUrl": "ws://127.0.0.1:5225"
@@ -252,8 +284,9 @@ Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint:
 
 ```bash
 openclaw plugins list
-openclaw plugins info simplex
-openclaw channels add --channel simplex --url ws://127.0.0.1:5225
+openclaw plugins info openclaw-simplex
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw simplex migrate --dry-run
 openclaw pairing list
 ```
 
@@ -277,8 +310,8 @@ Plugin tools:
 ## Troubleshooting
 
 * plugin not visible: check `plugins.allow` and `openclaw plugins list`
-* channel not starting: verify `channels.simplex.connection` exists and points to a working SimpleX runtime
-* `Configured No`: add explicit `channels.simplex.connection` config; plugin defaults alone are not enough for OpenClaw startup
+* channel not starting: verify `channels.openclaw-simplex.connection` exists and points to a working SimpleX runtime
+* `Configured No`: add explicit `channels.openclaw-simplex.connection` config; plugin defaults alone are not enough for OpenClaw startup
 * inbound issues: review policies such as `allowFrom`, `dmPolicy`, and group policy
 * media issues: validate URLs and size limits
 

@@ -1,6 +1,6 @@
 {
   "name": "@dangoldbj/openclaw-simplex",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "SimpleX channel plugin for OpenClaw",
   "homepage": "https://dangoldbj.github.io/openclaw-simplex/",
   "repository": {
@@ -73,11 +73,11 @@
     ],
     "setupEntry": "./dist/setup-entry.js",
     "channel": {
-      "id": "simplex",
+      "id": "openclaw-simplex",
       "label": "SimpleX",
       "selectionLabel": "SimpleX (WebSocket)",
-      "docsPath": "/channels/simplex",
-      "docsLabel": "simplex",
+      "docsPath": "/channels/openclaw-simplex",
+      "docsLabel": "openclaw-simplex",
       "blurb": "SimpleX Chat over an external WebSocket runtime.",
       "order": 95,
       "quickstartAllowFrom": true
