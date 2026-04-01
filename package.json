@@ -30,9 +30,8 @@
   "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsup index.ts setup-entry.ts --format esm --dts --clean",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
+    "docs:dev": "cd docs && mint dev",
+    "docs:check": "cd docs && mint broken-links",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check .",
@@ -54,13 +53,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@mintlify/cli": "^4.0.580",
     "@types/node": "^24.3.0",
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
     "openclaw": "^2026.3.28",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
-    "vitepress": "^1.6.4",
     "vitest": "^3.2.4"
   },
   "openclaw": {

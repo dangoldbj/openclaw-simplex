@@ -26,5 +26,8 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: Check docs links
+        run: pnpm run docs:check
+
       - name: Build
         run: pnpm run build
