@@ -73,9 +73,21 @@ EOF
 
 Then enable and start it:
 
+Reload user units:
+
 ```bash
 systemctl --user daemon-reload
+```
+
+Enable and start the service:
+
+```bash
 systemctl --user enable --now simplex-chat.service
+```
+
+Check status:
+
+```bash
 systemctl --user status simplex-chat.service
 ```
 
@@ -113,9 +125,21 @@ EOF
 
 Then load it:
 
+Load the launch agent:
+
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.openclaw.simplex-chat.plist
+```
+
+Restart it explicitly:
+
+```bash
 launchctl kickstart -k gui/$(id -u)/ai.openclaw.simplex-chat
+```
+
+Inspect status:
+
+```bash
 launchctl print gui/$(id -u)/ai.openclaw.simplex-chat
 ```
 
