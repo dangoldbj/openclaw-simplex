@@ -8,35 +8,42 @@
     "light": "#ff8a6b",
     "dark": "#ff5a36"
   },
-  "navigation": [
-    {
-      "group": "Overview",
-      "pages": ["index"]
-    },
-    {
-      "group": "Guide",
-      "pages": [
-        "guide/why-simplex",
-        "guide/getting-started",
-        "guide/migration",
-        "guide/how-it-works",
-        "guide/architecture",
-        "guide/setup",
-        "guide/external-vs-managed",
-        "guide/security-model",
-        "guide/troubleshooting"
-      ]
-    },
-    {
-      "group": "Reference",
-      "pages": [
-        "reference/config",
-        "reference/gateway-methods",
-        "reference/example-commands",
-        "reference/screenshots"
-      ]
-    }
-  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["index"]
+          },
+          {
+            "group": "Guide",
+            "pages": [
+              "guide/why-simplex",
+              "guide/getting-started",
+              "guide/migration",
+              "guide/how-it-works",
+              "guide/architecture",
+              "guide/setup",
+              "guide/external-vs-managed",
+              "guide/security-model",
+              "guide/troubleshooting"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/config",
+              "reference/gateway-methods",
+              "reference/example-commands",
+              "reference/screenshots"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "navbar": {
     "links": [
       {
