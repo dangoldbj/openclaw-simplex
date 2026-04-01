@@ -65,7 +65,39 @@ Preview migration only:
 openclaw simplex migrate --dry-run
 ```
 
-## SimpleX CLI invite commands
+## Plugin CLI invite commands
+
+Create a one-time invite link and print a terminal QR code:
+
+```bash
+openclaw simplex invite create --qr
+```
+
+List current invite and address state:
+
+```bash
+openclaw simplex invite list
+```
+
+Show the current address link:
+
+```bash
+openclaw simplex address show --qr
+```
+
+Create or return the current address link:
+
+```bash
+openclaw simplex address create --qr
+```
+
+Revoke the current address link:
+
+```bash
+openclaw simplex address revoke
+```
+
+## SimpleX CLI console commands
 
 Run these inside the `simplex-chat` console:
 

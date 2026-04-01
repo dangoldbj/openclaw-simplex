@@ -215,9 +215,37 @@ Breaking changes in `1.0.0`:
 * pairing approval commands now use `openclaw-simplex`
 * gateway method names remain `simplex.invite.*`; they were not renamed in this release
 
-## Invite Link Generation
+## Invite and Address Commands
 
-For day-to-day use, the simplest way to create or inspect SimpleX invite links is the `simplex-chat` CLI itself:
+The most user-friendly path is now the plugin CLI itself:
+
+Create a one-time invite link:
+
+```bash
+openclaw simplex invite create --qr
+```
+
+List current invite and address state:
+
+```bash
+openclaw simplex invite list
+```
+
+Show the current address link:
+
+```bash
+openclaw simplex address show --qr
+```
+
+Revoke the current address link:
+
+```bash
+openclaw simplex address revoke
+```
+
+These commands connect to the configured SimpleX WebSocket endpoint and can print a terminal QR code with `--qr`.
+
+You can still use the `simplex-chat` console directly:
 
 ```text
 /c
@@ -233,7 +261,7 @@ These correspond to:
 * `/show_address`: show the current address link
 * `/delete_address`: revoke the current address link
 
-OpenClaw also exposes the same flows through gateway methods and plugin tools for automation:
+For automation and integrations, OpenClaw also exposes gateway methods and plugin tools:
 
 * `simplex.invite.create`
 * `simplex.invite.list`

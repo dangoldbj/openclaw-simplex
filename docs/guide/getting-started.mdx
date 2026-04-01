@@ -111,7 +111,29 @@ Use this guide for the first working setup: install `simplex-chat`, run the WebS
 
 ## Create an Invite
 
-The simplest user-facing path is the `simplex-chat` console:
+The simplest user-facing path is the plugin CLI:
+
+Create a one-time invite link:
+
+```bash
+openclaw simplex invite create --qr
+```
+
+For address links:
+
+Show the current address link:
+
+```bash
+openclaw simplex address show --qr
+```
+
+Revoke the current address link:
+
+```bash
+openclaw simplex address revoke
+```
+
+You can still use the `simplex-chat` console directly:
 
 ```text
 /c

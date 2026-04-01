@@ -1,6 +1,12 @@
 import { access, mkdir, readdir, rename } from "node:fs/promises";
 import path from "node:path";
+import { toString as toQrString } from "qrcode";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import {
+  createSimplexInvite,
+  listSimplexInvites,
+  revokeSimplexInvite,
+} from "../simplex/simplex-invite-service.js";
 
 export const LEGACY_PLUGIN_ID = "simplex";
 export const PLUGIN_ID = "openclaw-simplex";
@@ -11,6 +17,92 @@ type MigrationResult = {
   changed: string[];
   skipped: string[];
 };
+
+type InviteCliOptions = {
+  accountId?: string;
+  qr?: boolean;
+};
+
+function readOptionalAccountId(value?: string): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+async function printTerminalQr(value: string): Promise<void> {
+  const qr = await toQrString(value, { type: "terminal", small: true, margin: 1 });
+  console.log(qr);
+}
+
+function printJson(value: unknown): void {
+  console.log(JSON.stringify(value, null, 2));
+}
+
+async function runInviteCreateCli(
+  api: OpenClawPluginApi,
+  mode: "connect" | "address",
+  opts: InviteCliOptions
+): Promise<void> {
+  const result = await createSimplexInvite({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    mode,
+    logger: api.logger,
+  });
+  printJson({
+    accountId: result.accountId,
+    mode: result.mode,
+    command: result.command,
+    link: result.link,
+  });
+  if (opts.qr && result.link) {
+    await printTerminalQr(result.link);
+  }
+}
+
+async function runInviteListCli(api: OpenClawPluginApi, opts: InviteCliOptions): Promise<void> {
+  const result = await listSimplexInvites({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    logger: api.logger,
+  });
+  printJson({
+    accountId: result.accountId,
+    addressLink: result.addressLink,
+    links: result.links,
+    pendingHints: result.pendingHints,
+  });
+  if (opts.qr && result.addressLink) {
+    await printTerminalQr(result.addressLink);
+  }
+}
+
+async function runAddressShowCli(api: OpenClawPluginApi, opts: InviteCliOptions): Promise<void> {
+  const result = await listSimplexInvites({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    logger: api.logger,
+  });
+  printJson({
+    accountId: result.accountId,
+    addressLink: result.addressLink,
+    pendingHints: result.pendingHints,
+  });
+  if (opts.qr && result.addressLink) {
+    await printTerminalQr(result.addressLink);
+  }
+}
+
+async function runAddressRevokeCli(api: OpenClawPluginApi, opts: InviteCliOptions): Promise<void> {
+  const result = await revokeSimplexInvite({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    logger: api.logger,
+  });
+  printJson({
+    accountId: result.accountId,
+    revoked: true,
+  });
+}
 
 function dedupeStrings(values: unknown[] | undefined): string[] | undefined {
   if (!Array.isArray(values)) {
@@ -187,6 +279,54 @@ export function registerSimplexCli(api: OpenClawPluginApi): void {
         .option("--dry-run", "Show planned changes without writing files", false)
         .action(async (opts: { dryRun?: boolean }) => {
           await runMigration(api, opts.dryRun === true);
+        });
+
+      const invite = command.command("invite").description("SimpleX invite helpers");
+
+      invite
+        .command("create")
+        .description("Create a one-time invite link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the generated link", false)
+        .action(async (opts: InviteCliOptions) => {
+          await runInviteCreateCli(api, "connect", opts);
+        });
+
+      invite
+        .command("list")
+        .description("List current invite and address link state")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the current address link", false)
+        .action(async (opts: InviteCliOptions) => {
+          await runInviteListCli(api, opts);
+        });
+
+      const address = command.command("address").description("SimpleX address helpers");
+
+      address
+        .command("show")
+        .description("Show the current address link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the current address link", false)
+        .action(async (opts: InviteCliOptions) => {
+          await runAddressShowCli(api, opts);
+        });
+
+      address
+        .command("create")
+        .description("Create or return the current address link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the address link", false)
+        .action(async (opts: InviteCliOptions) => {
+          await runInviteCreateCli(api, "address", opts);
+        });
+
+      address
+        .command("revoke")
+        .description("Revoke the current address link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: InviteCliOptions) => {
+          await runAddressRevokeCli(api, opts);
         });
     },
     { commands: [PLUGIN_ID, LEGACY_PLUGIN_ID] }
