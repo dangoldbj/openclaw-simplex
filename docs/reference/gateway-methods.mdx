@@ -32,6 +32,23 @@ Request params:
 - `connect`
 - `address`
 
+Response highlights:
+
+- `link`: the generated SimpleX link
+- `qrDataUrl`: PNG QR image as a `data:` URL for the same link
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "command": "/c",
+  "mode": "connect",
+  "link": "simplex://...",
+  "qrDataUrl": "data:image/png;base64,..."
+}
+```
+
 ## `simplex.invite.list`
 
 List current invite/address links and pending hints.
@@ -41,6 +58,25 @@ Request params:
 ```json
 {
   "accountId": "default"
+}
+```
+
+Response highlights:
+
+- `addressLink`: current address link if available
+- `links`: extracted invite/address links seen in the responses
+- `pendingHints`: pending contact hints from `/contacts`
+- `addressQrDataUrl`: PNG QR image as a `data:` URL for `addressLink`
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "addressLink": "simplex://...",
+  "links": ["simplex://..."],
+  "pendingHints": [],
+  "addressQrDataUrl": "data:image/png;base64,..."
 }
 ```
 
