@@ -1,5 +1,7 @@
 import {
+  AllowFromListSchema,
   BlockStreamingCoalesceSchema,
+  buildCatchallMultiAccountChannelSchema,
   buildChannelConfigSchema,
   DmConfigSchema,
   DmPolicySchema,
@@ -9,7 +11,6 @@ import {
 } from "openclaw/plugin-sdk/channel-config-schema";
 import { z } from "zod";
 
-const allowFromEntry = z.union([z.string(), z.number()]);
 const groupConfigSchema = z.object({
   requireMention: z.boolean().optional(),
   tools: ToolPolicySchema.optional(),
@@ -35,20 +36,17 @@ export const SimplexAccountConfigSchema = z
     dmPolicy: DmPolicySchema.optional().default("pairing"),
     dmHistoryLimit: z.number().int().min(0).optional(),
     dms: z.record(z.string(), DmConfigSchema.optional()).optional(),
-    allowFrom: z.array(allowFromEntry).optional(),
+    allowFrom: AllowFromListSchema,
     blockStreaming: z.boolean().optional(),
     blockStreamingCoalesce: BlockStreamingCoalesceSchema.optional(),
     groupPolicy: GroupPolicySchema.optional(),
-    groupAllowFrom: z.array(allowFromEntry).optional(),
+    groupAllowFrom: AllowFromListSchema,
     groups: z.object({}).catchall(groupConfigSchema).optional(),
     connection: SimplexConnectionSchema.optional(),
   })
   .strict();
 
-export const SimplexConfigSchema = SimplexAccountConfigSchema.extend({
-  // Avoid z.record() here; toJSONSchema in zod v4 fails on records.
-  accounts: z.object({}).catchall(SimplexAccountConfigSchema).optional(),
-});
+export const SimplexConfigSchema = buildCatchallMultiAccountChannelSchema(SimplexAccountConfigSchema);
 
 export type SimplexAccountConfig = z.infer<typeof SimplexAccountConfigSchema>;
 export type SimplexConfig = z.infer<typeof SimplexConfigSchema>;
