@@ -103,23 +103,13 @@ simplex-chat -h
 
 ---
 
-### 2. Install plugin
-
-```bash
-npm i @dangoldbj/openclaw-simplex
-# or
-pnpm add @dangoldbj/openclaw-simplex
-# or
-yarn add @dangoldbj/openclaw-simplex
-```
-
----
-
-### 3. Install in OpenClaw
+### 2. Install in OpenClaw
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
 ```
+
+This release no longer requires the unsafe-install override because the plugin does not spawn `simplex-chat`.
 
 Enable:
 
@@ -321,7 +311,7 @@ Plugin tools:
 
 1. Open `Control -> Channels -> SimpleX`
 2. Start `simplex-chat` separately and configure OpenClaw with its `wsUrl`
-3. Generate an invite link or QR code
+3. Generate an invite link in `simplex-chat` or through the gateway/tool automation path
 4. Connect via the SimpleX app
 5. Approve pairing in OpenClaw
 6. Send a message and verify the response

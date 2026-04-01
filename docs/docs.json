@@ -18,6 +18,7 @@
       "pages": [
         "guide/why-simplex",
         "guide/getting-started",
+        "guide/migration",
         "guide/how-it-works",
         "guide/architecture",
         "guide/setup",

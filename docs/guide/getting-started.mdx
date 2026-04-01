@@ -25,33 +25,15 @@ Verify CLI is available:
 simplex-chat -h
 ```
 
-## 2. Install package
-
-`npm`
-
-```bash
-npm i @dangoldbj/openclaw-simplex
-```
-
-`pnpm`
-
-```bash
-pnpm add @dangoldbj/openclaw-simplex
-```
-
-`yarn`
-
-```bash
-yarn add @dangoldbj/openclaw-simplex
-```
-
-## 3. Register with OpenClaw
+## 2. Register with OpenClaw
 
 Install plugin in OpenClaw:
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
 ```
+
+This release no longer needs the unsafe-install override because the plugin no longer starts `simplex-chat` itself.
 
 Enable plugin:
 
@@ -84,7 +66,7 @@ Preview only:
 openclaw simplex migrate --dry-run
 ```
 
-## 4. Configure channel
+## 3. Configure channel
 
 Configure the WebSocket endpoint via CLI:
 
@@ -109,11 +91,11 @@ Or write config directly:
 }
 ```
 
-## 5. Restart OpenClaw
+## 4. Restart OpenClaw
 
 Restart OpenClaw so plugin/channel registry reloads.
 
-## 6. Verify
+## 5. Verify
 
 ```bash
 openclaw plugins list
@@ -124,7 +106,7 @@ In Control UI, open `Control -> Channels -> SimpleX`:
 
 Note: the current SimpleX card is a config editor. OpenClaw does not currently expose plugin-defined custom invite buttons on the channel card for this plugin.
 
-## 7. Create a 1-time link
+## 6. Create a 1-time link
 
 The simplest user-facing path is to create the link directly in `simplex-chat`:
 
@@ -148,18 +130,18 @@ OpenClaw also exposes the same flows for automation through:
 
 See [Gateway Methods](/reference/gateway-methods) for the request shapes.
 
-## 8. Pair in the SimpleX app
+## 7. Pair in the SimpleX app
 
 Open the SimpleX app with the returned link. If you need a QR code, OpenClaw's gateway/tool path can return QR data for the same invite link.
 
-## 9. Send first message and receive pairing code
+## 8. Send first message and receive pairing code
 
 Send a message from the SimpleX app to the OpenClaw contact.  
 OpenClaw creates a pairing request and returns an approval code.
 
 ![Pairing code shown in SimpleX app](/images/pairing-request.png)
 
-## 10. Approve in OpenClaw
+## 9. Approve in OpenClaw
 
 List pairing requests and get the code:
 
@@ -181,7 +163,7 @@ SimpleX app shows approval confirmation:
 
 ![SimpleX access approved message](/images/approved.png)
 
-## 11. Confirm and chat
+## 10. Confirm and chat
 
 After approval, send a new message from the SimpleX app.  
 OpenClaw should now accept and process messages from that contact.
