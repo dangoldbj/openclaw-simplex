@@ -17,13 +17,7 @@ description: Reference for OpenClaw SimpleX channel configuration fields.
       "groupPolicy": "allowlist",
       "groupAllowFrom": [],
       "connection": {
-        "mode": "managed",
-        "cliPath": "simplex-chat",
-        "wsHost": "127.0.0.1",
-        "wsPort": 5225,
         "wsUrl": "ws://127.0.0.1:5225",
-        "dataDir": "~/.simplex",
-        "logCliOutput": false,
         "connectTimeoutMs": 15000
       },
       "accounts": {}
@@ -40,8 +34,6 @@ description: Reference for OpenClaw SimpleX channel configuration fields.
 - `groupPolicy`: `open` | `allowlist` | `disabled`
 - `groupAllowFrom`: group allowlist entries
 - `mediaMaxMb`: maximum accepted/uploaded media size in MB
-- `connection.mode`: `managed` or `external`
-- `connection.cliPath`: command path for managed mode
-- `connection.wsUrl`: websocket URL for external mode
-- `connection.logCliOutput`: opt-in raw `simplex-chat` stdout/stderr forwarding for debugging
+- `connection.wsUrl`: websocket URL for the running `simplex-chat` WebSocket API
+- `connection.wsHost` / `connection.wsPort`: optional host/port form for local endpoints
 - `accounts`: per-account overrides

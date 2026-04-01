@@ -1,53 +1,19 @@
 ---
-title: External vs Managed
-description: Choose whether OpenClaw runs the SimpleX CLI or connects to an existing runtime.
+title: Runtime Connection
+description: External WebSocket runtime model for the SimpleX plugin.
 ---
 
-# External vs Managed
+# Runtime Connection
 
-## Managed mode
+OpenClaw no longer starts `simplex-chat` itself. Run the SimpleX runtime separately and connect over WebSocket.
 
-OpenClaw starts and supervises `simplex-chat`.
-
-Use when:
-
-- You want single-process orchestration from OpenClaw.
-- You prefer fewer moving parts in deployment.
-
-Example:
+## Recommended shape
 
 ```json
 {
   "channels": {
     "simplex": {
       "connection": {
-        "mode": "managed",
-        "cliPath": "simplex-chat",
-        "wsHost": "127.0.0.1",
-        "wsPort": 5225
-      }
-    }
-  }
-}
-```
-
-## External mode
-
-You operate SimpleX WS separately and OpenClaw only connects.
-
-Use when:
-
-- You need stronger process isolation.
-- You already run SimpleX as a separate service.
-
-Example:
-
-```json
-{
-  "channels": {
-    "simplex": {
-      "connection": {
-        "mode": "external",
         "wsUrl": "ws://127.0.0.1:5225"
       }
     }
@@ -55,7 +21,9 @@ Example:
 }
 ```
 
-## Decision rule
+## Notes
 
-- Choose `managed` for fastest setup.
-- Choose `external` for stricter operational isolation and explicit lifecycle control.
+- Install `simplex-chat` on the host.
+- Start the SimpleX runtime yourself.
+- Point `channels.simplex.connection.wsUrl` at the running endpoint.
+- Invite/address creation can still be done directly in the `simplex-chat` console with `/c`, `/ad`, `/show_address`, and `/delete_address`.

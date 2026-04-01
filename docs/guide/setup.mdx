@@ -1,59 +1,21 @@
 ---
 title: Setup
-description: Runtime configuration examples for managed, external, and multi-account setups.
+description: Runtime configuration examples for external and multi-account SimpleX setups.
 ---
 
 # Setup
 
 Prerequisite: install `simplex-chat` first (see [Getting Started](/guide/getting-started)).
 
-## Managed mode
+## External runtime
 
-Use when OpenClaw should start and manage `simplex-chat`.
-
-```json
-{
-  "channels": {
-    "simplex": {
-      "connection": {
-        "mode": "managed",
-        "cliPath": "simplex-chat",
-        "wsHost": "127.0.0.1",
-        "wsPort": 5225
-      }
-    }
-  }
-}
-```
-
-Managed mode does not forward raw `simplex-chat` stdout/stderr into OpenClaw logs unless you opt in with:
+Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint.
 
 ```json
 {
   "channels": {
     "simplex": {
       "connection": {
-        "mode": "managed",
-        "cliPath": "simplex-chat",
-        "logCliOutput": true
-      }
-    }
-  }
-}
-```
-
-Use this only while debugging. Raw CLI output may include sensitive chat details in runtime logs.
-
-## External mode
-
-Use when SimpleX WS is already running outside OpenClaw.
-
-```json
-{
-  "channels": {
-    "simplex": {
-      "connection": {
-        "mode": "external",
         "wsUrl": "ws://127.0.0.1:5225"
       }
     }
@@ -71,7 +33,6 @@ Use when SimpleX WS is already running outside OpenClaw.
         "ops": {
           "enabled": true,
           "connection": {
-            "mode": "external",
             "wsUrl": "ws://127.0.0.1:7777"
           }
         }

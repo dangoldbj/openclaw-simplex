@@ -8,7 +8,7 @@ import { registerSimplexToolHooks, registerSimplexTools } from "./src/tools/plug
 export default defineChannelPluginEntry({
   id: "simplex",
   name: "SimpleX",
-  description: "SimpleX Chat channel plugin via CLI",
+  description: "SimpleX Chat channel plugin via external WebSocket API",
   plugin: simplexPlugin,
   setRuntime: setSimplexRuntime,
   registerFull: (api) => {

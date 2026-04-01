@@ -50,10 +50,10 @@ openclaw config set plugins.allow "$(
 )" --strict-json
 ```
 
-Configure managed mode:
+Configure the WebSocket endpoint:
 
 ```bash
-openclaw channels add --channel simplex --cli-path simplex-chat
+openclaw channels add --channel simplex --url ws://127.0.0.1:5225
 ```
 
 Verify:

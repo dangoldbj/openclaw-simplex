@@ -1,15 +1,12 @@
 import type { SimplexAccountConfig } from "./config-schema.js";
 
-export type SimplexConnectionMode = "managed" | "external";
+export type SimplexConnectionMode = "external";
 
 export type SimplexConnectionConfig = {
   mode?: SimplexConnectionMode;
   wsUrl?: string;
   wsHost?: string;
   wsPort?: number;
-  cliPath?: string;
-  dataDir?: string;
-  logCliOutput?: boolean;
   autoAcceptFiles?: boolean;
   connectTimeoutMs?: number;
 };
@@ -23,7 +20,5 @@ export type ResolvedSimplexAccount = {
   wsUrl: string;
   wsHost: string;
   wsPort: number;
-  cliPath: string;
-  dataDir?: string;
   config: SimplexAccountConfig;
 };

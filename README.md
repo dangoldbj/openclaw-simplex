@@ -62,7 +62,7 @@ This plugin integrates SimpleX into OpenClaw as a dedicated channel backed by th
 * plugin tools for invite and group administration
 * runtime status and lifecycle management
 * Control UI configuration
-* managed or external runtime modes
+* external WebSocket runtime integration
 * explicit runtime and policy control
 
 ---
@@ -143,7 +143,7 @@ Important:
 * `openclaw plugins enable simplex` only enables the plugin
 * OpenClaw will not start the SimpleX channel until `channels.simplex.connection` is configured
 * The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
-* `openclaw channels add --channel simplex --cli-path simplex-chat` works
+* configure `channels.simplex.connection.wsUrl` to the running SimpleX WebSocket endpoint
 * The interactive `openclaw channels add` picker may not list this external plugin yet
 
 ## Invite Link Generation
@@ -219,30 +219,9 @@ OpenClaw also exposes the same flows through gateway methods and plugin tools fo
 
 ---
 
-## External vs Managed Modes
+## Runtime Connection
 
-### Managed mode (OpenClaw runs SimpleX)
-
-```json
-{
-  "channels": {
-    "simplex": {
-      "enabled": true,
-      "connection": {
-        "mode": "managed",
-        "cliPath": "simplex-chat",
-        "wsHost": "127.0.0.1",
-        "wsPort": 5225
-      },
-      "allowFrom": ["*"]
-    }
-  }
-}
-```
-
----
-
-### External mode (you run SimpleX separately)
+Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint:
 
 ```json
 {
@@ -250,7 +229,6 @@ OpenClaw also exposes the same flows through gateway methods and plugin tools fo
     "simplex": {
       "enabled": true,
       "connection": {
-        "mode": "external",
         "wsUrl": "ws://127.0.0.1:5225"
       },
       "allowFrom": ["*"]
@@ -275,7 +253,7 @@ OpenClaw also exposes the same flows through gateway methods and plugin tools fo
 ```bash
 openclaw plugins list
 openclaw plugins info simplex
-openclaw channels add --channel simplex --cli-path simplex-chat
+openclaw channels add --channel simplex --url ws://127.0.0.1:5225
 openclaw pairing list
 ```
 
@@ -309,9 +287,7 @@ Plugin tools:
 ## Happy Path
 
 1. Open `Control -> Channels -> SimpleX`
-2. Configure SimpleX in managed mode by either:
-   - running `openclaw channels add --channel simplex --cli-path simplex-chat`
-   - or filling in the managed connection fields on the Control UI card
+2. Start `simplex-chat` separately and configure OpenClaw with its `wsUrl`
 3. Generate an invite link or QR code
 4. Connect via the SimpleX app
 5. Approve pairing in OpenClaw

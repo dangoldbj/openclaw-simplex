@@ -74,10 +74,10 @@ This appends `simplex` to the existing allowlist instead of replacing it.
 
 ## 4. Configure channel
 
-Managed mode via CLI:
+Configure the WebSocket endpoint via CLI:
 
 ```bash
-openclaw channels add --channel simplex --cli-path simplex-chat
+openclaw channels add --channel simplex --url ws://127.0.0.1:5225
 ```
 
 Or write config directly:
@@ -88,8 +88,7 @@ Or write config directly:
     "simplex": {
       "enabled": true,
       "connection": {
-        "mode": "managed",
-        "cliPath": "simplex-chat"
+        "wsUrl": "ws://127.0.0.1:5225"
       },
       "dmPolicy": "pairing",
       "allowFrom": ["*"]

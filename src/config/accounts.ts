@@ -9,19 +9,15 @@ import type {
 
 const DEFAULT_WS_HOST = "127.0.0.1";
 const DEFAULT_WS_PORT = 5225;
-const DEFAULT_CLI_PATH = "simplex-chat";
 
 function hasMeaningfulConnectionConfig(connection: SimplexConnectionConfig | undefined): boolean {
   if (!connection) {
     return false;
   }
   return Boolean(
-    connection.mode?.trim() ||
-      connection.wsUrl?.trim() ||
+    connection.wsUrl?.trim() ||
       connection.wsHost?.trim() ||
-      connection.wsPort !== undefined ||
-      connection.cliPath?.trim() ||
-      connection.dataDir?.trim()
+      connection.wsPort !== undefined
   );
 }
 
@@ -120,13 +116,11 @@ export function resolveSimplexAccount(params: {
   const baseEnabled = params.cfg.channels?.simplex?.enabled !== false;
   const enabled = baseEnabled && merged.enabled !== false;
   const connection = merged.connection ?? {};
-  const mode: SimplexConnectionMode = connection.mode ?? "managed";
-  const explicitWsUrl = connection.wsUrl?.trim();
-  const wsUrl = mode === "external" && !explicitWsUrl ? "" : resolveWsUrl(connection);
+  const mode: SimplexConnectionMode = "external";
+  const wsUrl = resolveWsUrl(connection);
   const wsHost = resolveWsHost(connection);
   const wsPort = resolveWsPort(connection);
-  const cliPath = connection.cliPath?.trim() || DEFAULT_CLI_PATH;
-  const configured = hasMeaningfulConfig && (mode === "external" ? Boolean(explicitWsUrl) : true);
+  const configured = hasMeaningfulConfig;
   return {
     accountId,
     enabled,
@@ -136,8 +130,6 @@ export function resolveSimplexAccount(params: {
     wsUrl,
     wsHost,
     wsPort,
-    cliPath,
-    dataDir: connection.dataDir?.trim() || undefined,
     config: merged,
   };
 }

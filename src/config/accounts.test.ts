@@ -62,16 +62,13 @@ describe("simplex accounts", () => {
         simplex: {
           enabled: true,
           connection: {
-            mode: "managed",
             wsHost: "base-host",
             wsPort: 4111,
-            cliPath: "/opt/simplex",
           },
           accounts: {
             alpha: {
               connection: {
                 wsPort: 5225,
-                dataDir: "/tmp/simplex-alpha",
               },
             },
           },
@@ -80,37 +77,11 @@ describe("simplex accounts", () => {
     } as OpenClawConfig;
 
     const account = resolveSimplexAccount({ cfg, accountId: "alpha" });
-    expect(account.mode).toBe("managed");
+    expect(account.mode).toBe("external");
     expect(account.wsHost).toBe("base-host");
     expect(account.wsPort).toBe(5225);
     expect(account.wsUrl).toBe("ws://base-host:5225");
-    expect(account.cliPath).toBe("/opt/simplex");
-    expect(account.dataDir).toBe("/tmp/simplex-alpha");
     expect(account.enabled).toBe(true);
-  });
-
-  it("inherits logCliOutput from connection config", () => {
-    const cfg = {
-      channels: {
-        simplex: {
-          connection: {
-            mode: "managed",
-            cliPath: "simplex-chat",
-            logCliOutput: true,
-          },
-          accounts: {
-            alpha: {
-              connection: {
-                wsPort: 5225,
-              },
-            },
-          },
-        },
-      },
-    } as OpenClawConfig;
-
-    const account = resolveSimplexAccount({ cfg, accountId: "alpha" });
-    expect(account.config.connection?.logCliOutput).toBe(true);
   });
 
   it("honors disabled flags", () => {
@@ -141,14 +112,15 @@ describe("simplex accounts", () => {
     expect(resolveSimplexAccount({ cfg: cfg2, accountId: "alpha" }).enabled).toBe(false);
   });
 
-  it("requires explicit wsUrl for external mode configuration", () => {
+  it("uses explicit wsUrl for external mode configuration", () => {
     const cfg = {
       channels: {
         simplex: {
           accounts: {
             alpha: {
               connection: {
-                mode: "external",
+                wsHost: "127.0.0.1",
+                wsPort: 5225,
               },
             },
             beta: {
@@ -163,27 +135,27 @@ describe("simplex accounts", () => {
     } as OpenClawConfig;
 
     const alpha = resolveSimplexAccount({ cfg, accountId: "alpha" });
-    expect(alpha.wsUrl).toBe("");
-    expect(alpha.configured).toBe(false);
+    expect(alpha.wsUrl).toBe("ws://127.0.0.1:5225");
+    expect(alpha.configured).toBe(true);
 
     const beta = resolveSimplexAccount({ cfg, accountId: "beta" });
     expect(beta.configured).toBe(true);
   });
 
-  it("treats missing channel config as unconfigured despite managed defaults", () => {
+  it("treats missing channel config as unconfigured", () => {
     const cfg = { channels: {} } as OpenClawConfig;
 
     expect(hasMeaningfulSimplexConfig({ cfg })).toBe(false);
     expect(resolveSimplexAccount({ cfg, accountId: "default" }).configured).toBe(false);
   });
 
-  it("treats explicit managed connection config as configured", () => {
+  it("treats explicit ws connection config as configured", () => {
     const cfg = {
       channels: {
         simplex: {
           connection: {
-            mode: "managed",
-            cliPath: "simplex-chat",
+            wsHost: "127.0.0.1",
+            wsPort: 5225,
           },
         },
       },

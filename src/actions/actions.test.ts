@@ -8,8 +8,7 @@ describe("simplex message tool discovery", () => {
       channels: {
         simplex: {
           connection: {
-            mode: "managed",
-            cliPath: "simplex-chat",
+            wsUrl: "ws://127.0.0.1:5225",
           },
         },
       },

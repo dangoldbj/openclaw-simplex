@@ -18,13 +18,10 @@ const groupConfigSchema = z.object({
 
 const SimplexConnectionSchema = z
   .object({
-    mode: z.enum(["managed", "external"]).optional(),
+    mode: z.literal("external").optional(),
     wsUrl: z.string().url().optional(),
     wsHost: z.string().optional(),
     wsPort: z.number().int().positive().optional(),
-    cliPath: z.string().optional(),
-    dataDir: z.string().optional(),
-    logCliOutput: z.boolean().optional(),
     autoAcceptFiles: z.boolean().optional(),
     connectTimeoutMs: z.number().int().positive().optional(),
   })

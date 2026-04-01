@@ -15,10 +15,8 @@ description: Common issues when connecting OpenClaw to SimpleX and how to resolv
 ## Channel fails to start
 
 - Check `channels.simplex.connection`
-- Validate `connection` values (`mode`, `cliPath`, `wsUrl`, `wsHost/wsPort`)
-- In managed mode, verify `simplex-chat` is executable from PATH
-- If you need upstream CLI output while debugging managed mode, temporarily set `channels.simplex.connection.logCliOutput: true`
-- Turn `logCliOutput` back off after debugging, because raw CLI output may include sensitive chat details
+- Validate `connection` values (`wsUrl`, `wsHost`, `wsPort`)
+- Verify `simplex-chat` is running and exposing the expected WebSocket endpoint
 
 ## Inbound messages dropped
 
@@ -42,5 +40,5 @@ description: Common issues when connecting OpenClaw to SimpleX and how to resolv
 ```bash
 openclaw plugins list
 openclaw plugins info simplex
-openclaw channels add --channel simplex --cli-path simplex-chat
+openclaw channels add --channel simplex --url ws://127.0.0.1:5225
 ```

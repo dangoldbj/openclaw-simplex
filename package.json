@@ -75,10 +75,10 @@
     "channel": {
       "id": "simplex",
       "label": "SimpleX",
-      "selectionLabel": "SimpleX (CLI)",
+      "selectionLabel": "SimpleX (WebSocket)",
       "docsPath": "/channels/simplex",
       "docsLabel": "simplex",
-      "blurb": "SimpleX Chat over CLI WebSocket API.",
+      "blurb": "SimpleX Chat over an external WebSocket runtime.",
       "order": 95,
       "quickstartAllowFrom": true
     },

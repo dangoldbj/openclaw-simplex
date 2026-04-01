@@ -3,7 +3,7 @@
   "kind": "channel",
   "channels": ["simplex"],
   "name": "SimpleX",
-  "description": "SimpleX Chat channel plugin via CLI",
+  "description": "SimpleX Chat channel plugin via external WebSocket API",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

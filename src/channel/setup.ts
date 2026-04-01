@@ -113,24 +113,6 @@ export const simplexSetupAdapter: ChannelSetupAdapter = {
       patch: { enabled: true },
     });
 
-    const cliPath = input.cliPath?.trim();
-    if (cliPath) {
-      next = setSimplexConnectionConfig({
-        cfg: next,
-        accountId,
-        patch: { mode: "managed", cliPath },
-      });
-    }
-
-    const dataDir = input.dbPath?.trim() || input.authDir?.trim();
-    if (dataDir) {
-      next = setSimplexConnectionConfig({
-        cfg: next,
-        accountId,
-        patch: { dataDir },
-      });
-    }
-
     const wsUrl = input.url?.trim() || input.httpUrl?.trim();
     if (wsUrl) {
       next = setSimplexConnectionConfig({
@@ -143,6 +125,10 @@ export const simplexSetupAdapter: ChannelSetupAdapter = {
     return next;
   },
   validateInput: ({ input }) => {
+    const cliPath = input.cliPath?.trim();
+    if (cliPath) {
+      return "SimpleX managed mode is no longer supported; run simplex-chat separately and provide a ws:// or wss:// URL instead.";
+    }
     const wsUrl = input.url?.trim() || input.httpUrl?.trim();
     if (wsUrl && !/^wss?:\/\//i.test(wsUrl)) {
       return "SimpleX external URL must start with ws:// or wss://";

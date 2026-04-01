@@ -86,11 +86,10 @@ describe("simplex allowlist", () => {
       accountId: "alpha",
       enabled: true,
       configured: true,
-      mode: "managed",
+      mode: "external",
       wsUrl: "ws://127.0.0.1:5225",
       wsHost: "127.0.0.1",
       wsPort: 5225,
-      cliPath: "simplex-chat",
       config: { markdown: {}, dmPolicy: "open" },
     };
     const result = resolveSimplexDmPolicy({

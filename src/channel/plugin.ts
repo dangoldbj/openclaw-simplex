@@ -39,9 +39,9 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   meta: {
     id: "simplex",
     label: "SimpleX",
-    selectionLabel: "SimpleX (CLI)",
+    selectionLabel: "SimpleX (WebSocket)",
     docsPath: "/channels/simplex",
-    blurb: "SimpleX Chat via local CLI WebSocket API",
+    blurb: "SimpleX Chat via external WebSocket API",
     order: 95,
     quickstartAllowFrom: true,
   },
