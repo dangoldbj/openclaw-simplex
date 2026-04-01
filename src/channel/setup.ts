@@ -1,6 +1,10 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/core";
 import type { ChannelSetupAdapter, ChannelSetupInput } from "openclaw/plugin-sdk/channel-setup";
+import {
+  applyAccountNameToChannelSection,
+  applySetupAccountConfigPatch,
+} from "openclaw/plugin-sdk/setup";
 
 function resolveSetupAccountId(params: {
   cfg: OpenClawConfig;
@@ -15,114 +19,34 @@ function resolveSetupAccountId(params: {
   return normalizeAccountId(fromName || DEFAULT_ACCOUNT_ID);
 }
 
-function setSimplexAccountConfig(params: {
-  cfg: OpenClawConfig;
-  accountId: string;
-  patch: Record<string, unknown>;
-}): OpenClawConfig {
-  if (params.accountId === DEFAULT_ACCOUNT_ID) {
-    return {
-      ...params.cfg,
-      channels: {
-        ...params.cfg.channels,
-        "openclaw-simplex": {
-          ...params.cfg.channels?.["openclaw-simplex"],
-          ...params.patch,
-        },
-      },
-    };
-  }
-
-  return {
-    ...params.cfg,
-    channels: {
-      ...params.cfg.channels,
-      "openclaw-simplex": {
-        ...params.cfg.channels?.["openclaw-simplex"],
-        accounts: {
-          ...params.cfg.channels?.["openclaw-simplex"]?.accounts,
-          [params.accountId]: {
-            ...params.cfg.channels?.["openclaw-simplex"]?.accounts?.[params.accountId],
-            ...params.patch,
-          },
-        },
-      },
-    },
-  };
-}
-
-function setSimplexConnectionConfig(params: {
-  cfg: OpenClawConfig;
-  accountId: string;
-  patch: Record<string, unknown>;
-}): OpenClawConfig {
-  if (params.accountId === DEFAULT_ACCOUNT_ID) {
-    return {
-      ...params.cfg,
-      channels: {
-        ...params.cfg.channels,
-        "openclaw-simplex": {
-          ...params.cfg.channels?.["openclaw-simplex"],
-          connection: {
-            ...params.cfg.channels?.["openclaw-simplex"]?.connection,
-            ...params.patch,
-          },
-        },
-      },
-    };
-  }
-
-  return {
-    ...params.cfg,
-    channels: {
-      ...params.cfg.channels,
-      "openclaw-simplex": {
-        ...params.cfg.channels?.["openclaw-simplex"],
-        accounts: {
-          ...params.cfg.channels?.["openclaw-simplex"]?.accounts,
-          [params.accountId]: {
-            ...params.cfg.channels?.["openclaw-simplex"]?.accounts?.[params.accountId],
-            connection: {
-              ...params.cfg.channels?.["openclaw-simplex"]?.accounts?.[params.accountId]?.connection,
-              ...params.patch,
-            },
-          },
-        },
-      },
-    },
-  };
-}
-
 export const simplexSetupAdapter: ChannelSetupAdapter = {
   resolveAccountId: resolveSetupAccountId,
   applyAccountName: ({ cfg, accountId, name }) => {
-    const trimmed = name?.trim();
-    if (!trimmed) {
-      return cfg;
-    }
-    return setSimplexAccountConfig({
+    return applyAccountNameToChannelSection({
       cfg,
+      channelKey: "openclaw-simplex",
       accountId,
-      patch: { name: trimmed, enabled: true },
+      name,
     });
   },
   applyAccountConfig: ({ cfg, accountId, input }) => {
-    let next = setSimplexAccountConfig({
-      cfg,
-      accountId,
-      patch: { enabled: true },
-    });
-
     const wsUrl = input.url?.trim() || input.httpUrl?.trim();
-    if (wsUrl) {
-      next = setSimplexConnectionConfig({
-        cfg: next,
-        accountId,
-        patch: { mode: "external", wsUrl },
-      });
-    }
-
-    return next;
+    return applySetupAccountConfigPatch({
+      cfg,
+      channelKey: "openclaw-simplex",
+      accountId,
+      patch: {
+        enabled: true,
+        ...(wsUrl
+          ? {
+              connection: {
+                mode: "external",
+                wsUrl,
+              },
+            }
+          : {}),
+      },
+    });
   },
   validateInput: ({ input }) => {
     const cliPath = input.cliPath?.trim();
