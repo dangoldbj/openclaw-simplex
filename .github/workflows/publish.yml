@@ -1,6 +1,8 @@
 name: Publish
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       npm_tag:
@@ -23,11 +25,16 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    concurrency:
+      group: publish-npm
+      cancel-in-progress: false
     env:
       NPM_CONFIG_PROVENANCE: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
@@ -44,6 +51,33 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
+      - name: Resolve publish tag
+        id: publish_tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+              echo "npm_tag=next" >> "$GITHUB_OUTPUT"
+            else
+              echo "npm_tag=latest" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "npm_tag=${{ inputs.npm_tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify release tag matches package version
+        shell: bash
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            EXPECTED_TAG="v${PKG_VERSION}"
+            if [ "${{ github.event.release.tag_name }}" != "$EXPECTED_TAG" ]; then
+              echo "Release tag ${{ github.event.release.tag_name }} does not match package.json version $PKG_VERSION" >&2
+              exit 1
+            fi
+          fi
+          echo "Publishing version $PKG_VERSION"
+
       - name: Test
         run: pnpm run test
 
@@ -56,7 +90,7 @@ jobs:
       - name: Publish to npm
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --access public --provenance --tag "${{ inputs.npm_tag }}" --dry-run
+            npm publish --access public --provenance --tag "${{ steps.publish_tag.outputs.npm_tag }}" --dry-run
           else
-            npm publish --access public --provenance --tag "${{ inputs.npm_tag }}"
+            npm publish --access public --provenance --tag "${{ steps.publish_tag.outputs.npm_tag }}"
           fi

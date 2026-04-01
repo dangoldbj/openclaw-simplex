@@ -17,13 +17,12 @@ This plugin enforces channel-side controls before handing requests to the agent.
 
 ## Operational boundaries
 
-- In `managed` mode, OpenClaw controls the SimpleX CLI process.
-- In `external` mode, OpenClaw only gets WS access to an already-running endpoint.
+- OpenClaw only gets WebSocket access to an already-running SimpleX endpoint.
 - You decide where each process runs and what network path is allowed.
 
 ## Recommended production posture
 
 - Start with `dmPolicy: "pairing"` and `groupPolicy: "allowlist"`.
 - Keep `allowFrom`/`groupAllowFrom` narrow.
-- Prefer `external` mode where process isolation is a strict requirement.
+- External runtime mode is the supported deployment model for this plugin.
 - Monitor status snapshots and logs for repeated authorization failures.

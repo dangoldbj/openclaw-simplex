@@ -5,6 +5,8 @@ description: Install, register, configure, and pair the OpenClaw SimpleX channel
 
 # Getting Started
 
+> Breaking in `1.0.0`: if you are upgrading an older `simplex` install, run `openclaw simplex migrate` before switching commands and config to `openclaw-simplex`. See [Migration](/guide/migration).
+
 ## 1. Install SimpleX CLI (required)
 
 Official installer:
@@ -25,27 +27,13 @@ Verify CLI is available:
 simplex-chat -h
 ```
 
-## 2. Install package
-
-`npm`
+Start the long-running WebSocket process:
 
 ```bash
-npm i @dangoldbj/openclaw-simplex
+simplex-chat -p 5225
 ```
 
-`pnpm`
-
-```bash
-pnpm add @dangoldbj/openclaw-simplex
-```
-
-`yarn`
-
-```bash
-yarn add @dangoldbj/openclaw-simplex
-```
-
-## 3. Register with OpenClaw
+## 2. Register with OpenClaw
 
 Install plugin in OpenClaw:
 
@@ -53,10 +41,12 @@ Install plugin in OpenClaw:
 openclaw plugins install @dangoldbj/openclaw-simplex
 ```
 
+This release no longer needs the unsafe-install override because the plugin no longer starts `simplex-chat` itself.
+
 Enable plugin:
 
 ```bash
-openclaw plugins enable simplex
+openclaw plugins enable openclaw-simplex
 ```
 
 Trust the plugin explicitly:
@@ -64,20 +54,29 @@ Trust the plugin explicitly:
 ```bash
 openclaw config set plugins.allow "$(
   (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
-  | jq -c '. + ["simplex"] | unique'
+  | jq -c '. + ["openclaw-simplex"] | unique'
 )" --strict-json
 ```
 
-This appends `simplex` to the existing allowlist instead of replacing it.
+This appends `openclaw-simplex` to the existing allowlist instead of replacing it.
 
-`plugins enable simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.simplex.connection` is configured.
+`plugins enable openclaw-simplex` only enables the plugin. OpenClaw will not start the SimpleX runtime until `channels.openclaw-simplex.connection` is configured.
+If `simplex-chat` is not running at the configured endpoint, OpenClaw will mark the channel disconnected and record the connection error in channel status.
 
-## 4. Configure channel
-
-Managed mode via CLI:
+If you are upgrading an older `0.x` install that used `simplex` as the plugin/channel id, run:
 
 ```bash
-openclaw channels add --channel simplex --cli-path simplex-chat
+openclaw simplex migrate
+```
+
+Use `--dry-run` to preview changes. Full upgrade notes are in [Migration](/guide/migration).
+
+## 3. Configure channel
+
+Configure the WebSocket endpoint via CLI:
+
+```bash
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
 Or write config directly:
@@ -85,11 +84,10 @@ Or write config directly:
 ```json
 {
   "channels": {
-    "simplex": {
+    "openclaw-simplex": {
       "enabled": true,
       "connection": {
-        "mode": "managed",
-        "cliPath": "simplex-chat"
+        "wsUrl": "ws://127.0.0.1:5225"
       },
       "dmPolicy": "pairing",
       "allowFrom": ["*"]
@@ -98,22 +96,22 @@ Or write config directly:
 }
 ```
 
-## 5. Restart OpenClaw
+## 4. Restart OpenClaw
 
 Restart OpenClaw so plugin/channel registry reloads.
 
-## 6. Verify
+## 5. Verify
 
 ```bash
 openclaw plugins list
-openclaw plugins info simplex
+openclaw plugins info openclaw-simplex
 ```
 
 In Control UI, open `Control -> Channels -> SimpleX`:
 
 Note: the current SimpleX card is a config editor. OpenClaw does not currently expose plugin-defined custom invite buttons on the channel card for this plugin.
 
-## 7. Create a 1-time link
+## 6. Create a 1-time link
 
 The simplest user-facing path is to create the link directly in `simplex-chat`:
 
@@ -137,18 +135,18 @@ OpenClaw also exposes the same flows for automation through:
 
 See [Gateway Methods](/reference/gateway-methods) for the request shapes.
 
-## 8. Pair in the SimpleX app
+## 7. Pair in the SimpleX app
 
 Open the SimpleX app with the returned link. If you need a QR code, OpenClaw's gateway/tool path can return QR data for the same invite link.
 
-## 9. Send first message and receive pairing code
+## 8. Send first message and receive pairing code
 
 Send a message from the SimpleX app to the OpenClaw contact.  
 OpenClaw creates a pairing request and returns an approval code.
 
-![Pairing code shown in SimpleX app](/images/pairing-request.png)
+Screenshot walkthrough: [Screenshots](/reference/screenshots)
 
-## 10. Approve in OpenClaw
+## 9. Approve in OpenClaw
 
 List pairing requests and get the code:
 
@@ -156,25 +154,13 @@ List pairing requests and get the code:
 openclaw pairing list
 ```
 
-Pairing request table in OpenClaw:
-
-![OpenClaw pairing requests table](/images/pairing-list.png)
-
 Approve the pairing request:
 
 ```bash
-openclaw pairing approve simplex <code>
+openclaw pairing approve openclaw-simplex <code>
 ```
 
-SimpleX app shows approval confirmation:
-
-![SimpleX access approved message](/images/approved.png)
-
-## 11. Confirm and chat
+## 10. Confirm and chat
 
 After approval, send a new message from the SimpleX app.  
 OpenClaw should now accept and process messages from that contact.
-
-![SimpleX chat after approval](/images/chat.png)
-
-More screenshots: [Screenshots](/reference/screenshots)

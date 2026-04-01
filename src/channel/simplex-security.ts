@@ -12,9 +12,11 @@ function normalizeSimplexId(value: string): string {
 
 function stripSimplexPrefix(value: string): string {
   const trimmed = value.trim();
-  return trimmed.toLowerCase().startsWith("simplex:")
-    ? trimmed.slice("simplex:".length).trim()
-    : trimmed;
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("openclaw-simplex:")) {
+    return trimmed.slice("openclaw-simplex:".length).trim();
+  }
+  return lower.startsWith("simplex:") ? trimmed.slice("simplex:".length).trim() : trimmed;
 }
 
 export function parseSimplexAllowlistEntry(raw: string | number): SimplexAllowlistEntry | null {
@@ -58,8 +60,8 @@ export function resolveSimplexAllowFrom(params: {
   accountId?: string | null;
 }): string[] {
   const accountId = params.accountId ?? "default";
-  const accountAllow = params.cfg.channels?.simplex?.accounts?.[accountId]?.allowFrom;
-  const baseAllow = params.cfg.channels?.simplex?.allowFrom;
+  const accountAllow = params.cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId]?.allowFrom;
+  const baseAllow = params.cfg.channels?.["openclaw-simplex"]?.allowFrom;
   const raw = Array.isArray(accountAllow) ? accountAllow : baseAllow;
   return normalizeSimplexAllowFrom(raw ?? []);
 }
@@ -81,7 +83,7 @@ export function resolveSimplexDmPolicy(params: {
   account: ResolvedSimplexAccount;
 }): { policy: string; allowFrom: string[] } {
   const policy =
-    params.account.config.dmPolicy ?? params.cfg.channels?.simplex?.dmPolicy ?? "pairing";
+    params.account.config.dmPolicy ?? params.cfg.channels?.["openclaw-simplex"]?.dmPolicy ?? "pairing";
   const allowFrom = resolveSimplexAllowFrom({
     cfg: params.cfg,
     accountId: params.account.accountId,

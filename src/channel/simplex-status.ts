@@ -43,7 +43,7 @@ export function buildSimplexStatus(
         }
         return [
           {
-            channel: "simplex",
+            channel: "openclaw-simplex",
             accountId: account.accountId,
             kind: "runtime" as const,
             message: `Channel error: ${lastError}`,

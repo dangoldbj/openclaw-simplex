@@ -58,9 +58,12 @@ function normalizeSimplexChatRef(raw: string): string {
     return trimmed;
   }
 
-  const withoutPrefix = trimmed.toLowerCase().startsWith("simplex:")
-    ? trimmed.slice("simplex:".length).trim()
-    : trimmed;
+  const lower = trimmed.toLowerCase();
+  const withoutPrefix = lower.startsWith("openclaw-simplex:")
+    ? trimmed.slice("openclaw-simplex:".length).trim()
+    : lower.startsWith("simplex:")
+      ? trimmed.slice("simplex:".length).trim()
+      : trimmed;
   if (!withoutPrefix) {
     return withoutPrefix;
   }
@@ -88,6 +91,7 @@ function normalizeChatRefToken(value: string): string {
   const lowered = trimmed.toLowerCase();
   const normalized =
     lowered.startsWith("simplex:") ||
+    lowered.startsWith("openclaw-simplex:") ||
     lowered.startsWith("group:") ||
     lowered.startsWith("contact:") ||
     lowered.startsWith("user:") ||

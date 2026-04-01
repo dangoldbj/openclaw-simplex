@@ -11,30 +11,27 @@ Generate or retrieve the invite/address link in `simplex-chat` with `/c`, `/ad`,
 
 If you need automation instead, OpenClaw also exposes `simplex.invite.create` and `simplex.invite.list`.
 
-It assumes the SimpleX channel is already configured, for example with a managed `channels.simplex.connection` setup.
+It assumes the SimpleX channel is already configured with a reachable `channels.openclaw-simplex.connection.wsUrl`.
 
 ## Pairing flow
 
-1. Send first message from the SimpleX app and capture pairing request:
+1. Send the first message from the SimpleX app and capture the pairing request.
 
-![Pairing code shown in SimpleX app](/images/pairing-request.png)
+<img src="/images/pairing-request.png" alt="Pairing code shown in SimpleX app" width="720" />
 
-Pairing request table in OpenClaw:
+2. Review the pairing request in OpenClaw.
 
-![OpenClaw pairing requests table](/images/pairing-list.png)
+<img src="/images/pairing-list.png" alt="OpenClaw pairing requests table" width="900" />
 
-2. Approve pairing in OpenClaw:
+3. Approve pairing in OpenClaw.
 
 ```bash
 openclaw pairing list
+openclaw pairing approve openclaw-simplex <code>
 ```
 
-```bash
-openclaw pairing approve simplex <code>
-```
+4. Confirm the approval and test the first successful chat.
 
-3. Confirm approved + first successful chat:
+<img src="/images/approved.png" alt="SimpleX access approved message" width="720" />
 
-![SimpleX access approved message](/images/approved.png)
-
-![SimpleX chat after approval](/images/chat.png)
+<img src="/images/chat.png" alt="SimpleX chat after approval" width="720" />

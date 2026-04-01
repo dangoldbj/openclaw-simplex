@@ -7,79 +7,52 @@ description: SimpleX channel plugin for OpenClaw.
 
 SimpleX channel plugin for OpenClaw.
 
-## Why this plugin
+> Breaking in `1.0.0`: the plugin id and channel id are now `openclaw-simplex`, managed mode was removed, and existing users should run `openclaw simplex migrate`. See [Migration](/guide/migration).
 
-This plugin brings OpenClaw to SimpleX with clear policy controls, multi-account support, and operational flexibility (`managed` or `external` runtime).
+This plugin brings OpenClaw to SimpleX with clear policy controls, multi-account support, and an external WebSocket runtime model.
 
-## Install
+## Quick Start
 
-Required runtime (`simplex-chat` CLI):
+Fresh install:
 
-Official installer:
-
-```bash
-curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
-```
-
-If the official installer resolves the wrong Darwin/Linux target on your host, use this temporary arch-matrix installer:
+1. Install `simplex-chat`.
+2. Start the WebSocket runtime:
 
 ```bash
-curl -o- https://raw.githubusercontent.com/dangoldbj/simplex-chat/install-arch-matrix/install.sh | bash
+simplex-chat -p 5225
 ```
 
-Package:
-
-`pnpm`
-
-```bash
-pnpm add @dangoldbj/openclaw-simplex
-```
-
-`npm`
-
-```bash
-npm i @dangoldbj/openclaw-simplex
-```
-
-`yarn`
-
-```bash
-yarn add @dangoldbj/openclaw-simplex
-```
-
-OpenClaw plugin setup:
-
-Install plugin in OpenClaw:
+3. Install and enable the plugin:
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
+openclaw plugins enable openclaw-simplex
 ```
 
-Enable plugin:
+4. Configure the channel:
 
 ```bash
-openclaw plugins enable simplex
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
-Trust plugin:
+For the full setup flow, trust configuration, pairing, and invite generation, see [Getting Started](/guide/getting-started).
+
+Upgrading from the older `simplex` ids?
 
 ```bash
-openclaw config set plugins.allow "$(
-  (openclaw config get plugins.allow --json 2>/dev/null || echo '[]') \
-  | jq -c '. + ["simplex"] | unique'
-)" --strict-json
+openclaw simplex migrate
 ```
 
-Then configure `channels.simplex.connection` before expecting the channel runtime to start. See [Getting Started](/guide/getting-started) for the full flow.
+See [Migration](/guide/migration) for the full breaking-change checklist.
 
 ## Start Here
 
 - [Why SimpleX](/guide/why-simplex)
 - [Getting Started](/guide/getting-started)
+- [Migration](/guide/migration)
 - [How It Works](/guide/how-it-works)
 - [Architecture](/guide/architecture)
 - [Setup](/guide/setup)
-- [External vs Managed](/guide/external-vs-managed)
 - [Security Model](/guide/security-model)
 - [Troubleshooting](/guide/troubleshooting)
 
