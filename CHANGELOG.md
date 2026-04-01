@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-04-01
+
+### Changed
+
+- Aligned the SimpleX channel config schema more closely with OpenClaw's exported schema primitives and helpers.
+- Replaced remaining local `allowFrom` and multi-account config composition with OpenClaw's shared config-schema APIs.
+- Switched the setup adapter to OpenClaw's exported setup config patch helpers instead of local config-tree mutation code.
+
 ## [1.0.1] - 2026-04-01
 
 ### Fixed
