@@ -40,6 +40,7 @@
     "format": "biome format --write .",
     "lint": "biome lint .",
     "check": "biome check .",
+    "manifest:sync": "pnpm run build && node scripts/write-plugin-manifest.mjs && biome format --write openclaw.plugin.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepublishOnly": "pnpm run test && pnpm run typecheck && pnpm run build"
