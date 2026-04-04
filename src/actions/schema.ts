@@ -1,5 +1,8 @@
 import { Type } from "@sinclair/typebox";
-import type { ChannelMessageActionName } from "openclaw/plugin-sdk/channel-contract";
+import type {
+  ChannelMessageActionName,
+  ChannelMessageToolSchemaContribution,
+} from "openclaw/plugin-sdk/channel-contract";
 
 export const SIMPLEX_SUPPORTED_ACTIONS = new Set<ChannelMessageActionName>([
   "upload-file",
@@ -26,7 +29,7 @@ export const SIMPLEX_MESSAGE_TOOL_ACTIONS = [
   "leaveGroup",
 ] as const satisfies readonly ChannelMessageActionName[];
 
-export function buildSimplexMessageToolSchema() {
+export function buildSimplexMessageToolSchema(): ChannelMessageToolSchemaContribution {
   return {
     properties: {
       to: Type.Optional(
@@ -180,5 +183,5 @@ export function buildSimplexMessageToolSchema() {
         })
       ),
     },
-  };
+  } as unknown as ChannelMessageToolSchemaContribution;
 }

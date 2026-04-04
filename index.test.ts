@@ -118,6 +118,7 @@ function setupRegistration(
     registerSpeechProvider: () => {},
     registerMediaUnderstandingProvider: () => {},
     registerImageGenerationProvider: () => {},
+    registerWebFetchProvider: () => {},
     registerWebSearchProvider: () => {},
     registerInteractiveHandler: () => {},
     onConversationBindingResolved: () => {},

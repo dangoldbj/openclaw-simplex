@@ -49,7 +49,7 @@
     "zod": "^4.3.6"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.3.28"
+    "openclaw": ">=2026.4.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
@@ -57,7 +57,7 @@
     "@types/node": "^24.3.0",
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
-    "openclaw": "^2026.3.28",
+    "openclaw": "^2026.4.2",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"

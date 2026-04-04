@@ -351,6 +351,20 @@ export function registerSimplexCli(api: OpenClawPluginApi): void {
           await runAddressRevokeCli(api, opts);
         });
     },
-    { commands: [PLUGIN_ID, LEGACY_PLUGIN_ID] }
+    {
+      commands: [PLUGIN_ID, LEGACY_PLUGIN_ID],
+      descriptors: [
+        {
+          name: PLUGIN_ID,
+          description: "OpenClaw SimpleX plugin commands",
+          hasSubcommands: true,
+        },
+        {
+          name: LEGACY_PLUGIN_ID,
+          description: "OpenClaw SimpleX plugin commands",
+          hasSubcommands: true,
+        },
+      ],
+    }
   );
 }

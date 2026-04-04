@@ -1,14 +1,6 @@
-import type { PluginRuntime } from "openclaw/plugin-sdk/core";
+import { createPluginRuntimeStore, type PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
 
-let runtime: PluginRuntime | null = null;
+const runtimeStore = createPluginRuntimeStore<PluginRuntime>("SimpleX runtime not initialized");
 
-export function setSimplexRuntime(next: PluginRuntime): void {
-  runtime = next;
-}
-
-export function getSimplexRuntime(): PluginRuntime {
-  if (!runtime) {
-    throw new Error("SimpleX runtime not initialized");
-  }
-  return runtime;
-}
+export const setSimplexRuntime = runtimeStore.setRuntime;
+export const getSimplexRuntime = runtimeStore.getRuntime;
