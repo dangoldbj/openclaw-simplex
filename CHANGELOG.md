@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-04-04
+
+### Changed
+
+- Raised the minimum supported OpenClaw version to `2026.4.2`.
+- Migrated the channel entrypoint to `defineChannelPluginEntry` and switched plugin runtime state to OpenClaw's `createPluginRuntimeStore`.
+- Registered CLI command descriptors so `openclaw-simplex` and `simplex` plugin commands integrate with OpenClaw's current CLI metadata flow.
+- Refreshed runtime and development dependencies, aligned TypeBox with OpenClaw's SDK dependency version, and migrated Biome config to Biome 2.
+- Reworked README and docs around the invitation-first SimpleX channel model, explicit runtime boundaries, and ecosystem positioning.
+
+### Fixed
+
+- Removed TypeScript escape-hatch casts around channel tool schema registration and test/runtime stubs.
+- Fixed stale docs wording that overstated platform and relay assumptions for default SimpleX deployments.
+
 ## [1.1.1] - 2026-04-01
 
 ### Fixed
