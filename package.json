@@ -27,7 +27,12 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "openclaw.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup index.ts setup-entry.ts --format esm --dts --clean",
     "docs:dev": "cd docs && mint dev",
@@ -45,25 +50,27 @@
   "dependencies": {
     "@sinclair/typebox": "^0.34.49",
     "qrcode": "^1.5.4",
-    "ws": "^8.19.0",
+    "ws": "^8.20.0",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
     "openclaw": ">=2026.4.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
-    "@mintlify/cli": "^4.0.580",
-    "@types/node": "^24.3.0",
+    "@biomejs/biome": "^2.4.10",
+    "@mintlify/cli": "^4.0.1090",
+    "@types/node": "^25.5.2",
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
     "openclaw": "^2026.4.2",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   },
   "openclaw": {
-    "extensions": ["./dist/index.js"],
+    "extensions": [
+      "./dist/index.js"
+    ],
     "setupEntry": "./dist/setup-entry.js",
     "channel": {
       "id": "openclaw-simplex",

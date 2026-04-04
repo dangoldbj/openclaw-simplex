@@ -29,7 +29,7 @@ import { buildSimplexOutbound } from "./simplex-outbound.js";
 import { buildSimplexPairing } from "./simplex-pairing.js";
 import { buildSimplexStatus } from "./simplex-status.js";
 import { formatSimplexAllowFrom, resolveSimplexAllowFrom } from "./simplex-security.js";
-import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 
 const activeClients = new Map<string, SimplexWsClient>();

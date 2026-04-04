@@ -76,10 +76,7 @@ type Handler = (ctx: {
   };
 }) => Promise<void>;
 
-type BeforeToolCallHook = (event: {
-  toolName: string;
-  params: Record<string, unknown>;
-}) => unknown;
+type BeforeToolCallHook = (event: { toolName: string; params: Record<string, unknown> }) => unknown;
 
 function setupRegistration(
   config: Record<string, unknown> = {},
