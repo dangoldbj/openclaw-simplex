@@ -3,11 +3,50 @@ title: Configuration
 description: Reference for OpenClaw SimpleX channel configuration fields.
 ---
 
-<Note>
-  The plugin reads configuration from <code>channels.openclaw-simplex</code>. Managed mode is gone; use <code>connection.wsUrl</code> for the separately running runtime.
-</Note>
+The plugin reads configuration from <code>channels.openclaw-simplex</code>.
 
-## Top-level channel config
+## Minimal config
+
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "enabled": true,
+      "connection": {
+        "wsUrl": "ws://127.0.0.1:5225"
+      }
+    }
+  }
+}
+```
+
+## Single-account config
+
+If <code>accounts</code> is not set, the root <code>channels.openclaw-simplex</code> object acts as the default account config.
+
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "enabled": true,
+      "name": "SimpleX",
+      "dmPolicy": "pairing",
+      "allowFrom": ["*"],
+      "groupPolicy": "allowlist",
+      "groupAllowFrom": [],
+      "mediaMaxMb": 5,
+      "connection": {
+        "wsUrl": "ws://127.0.0.1:5225",
+        "connectTimeoutMs": 15000
+      }
+    }
+  }
+}
+```
+
+## Per-account config
+
+If <code>accounts</code> is set, each account entry can override the shared root config. This is the model to use when different SimpleX identities or runtimes should map to different OpenClaw channel accounts.
 
 ```json
 {
@@ -15,29 +54,51 @@ description: Reference for OpenClaw SimpleX channel configuration fields.
     "openclaw-simplex": {
       "enabled": true,
       "dmPolicy": "pairing",
-      "allowFrom": ["*"],
       "groupPolicy": "allowlist",
-      "groupAllowFrom": [],
       "connection": {
-        "wsUrl": "ws://127.0.0.1:5225",
-        "connectTimeoutMs": 15000
+        "wsUrl": "ws://127.0.0.1:5225"
       },
-      "accounts": {}
+      "accounts": {
+        "ops": {
+          "name": "Ops",
+          "enabled": true,
+          "allowFrom": ["alice", "bob"],
+          "connection": {
+            "wsUrl": "ws://127.0.0.1:7777"
+          }
+        }
+      }
     }
   }
 }
 ```
 
-## Useful fields
+## Field reference
 
 | Field | Meaning |
 | --- | --- |
-| `enabled` | Master toggle |
-| `dmPolicy` | `open` \| `allowlist` \| `pairing` \| `disabled` |
-| `allowFrom` | DM allowlist entries |
-| `groupPolicy` | `open` \| `allowlist` \| `disabled` |
-| `groupAllowFrom` | Group allowlist entries |
-| `mediaMaxMb` | Maximum accepted/uploaded media size in MB |
-| `connection.wsUrl` | WebSocket URL for the running `simplex-chat` WebSocket API |
-| `connection.wsHost` / `connection.wsPort` | Optional host/port form for local endpoints |
-| `accounts` | Per-account overrides |
+| `enabled` | Master toggle for the channel or account. |
+| `name` | Optional display name for an account. |
+| `dmPolicy` | Direct-message policy: `open` \| `allowlist` \| `pairing` \| `disabled`. Default: `pairing`. |
+| `allowFrom` | DM allowlist entries. |
+| `dmHistoryLimit` | Optional per-DM history limit. |
+| `dms` | Per-DM config overrides using OpenClaw's shared DM config schema. |
+| `groupPolicy` | Group-message policy: `open` \| `allowlist` \| `disabled`. |
+| `groupAllowFrom` | Group allowlist entries. |
+| `groups.<groupId>.requireMention` | Whether a group message must mention the bot before it is handled. |
+| `groups.<groupId>.tools` | Per-group tool policy using OpenClaw's shared tool policy schema. |
+| `mediaMaxMb` | Maximum accepted/uploaded media size in MB. |
+| `markdown` | Markdown rendering config from OpenClaw's shared channel schema. |
+| `blockStreaming` | If true, buffer the response instead of streaming partial output. |
+| `blockStreamingCoalesce` | Optional response coalescing behavior for blocked streaming. |
+| `connection.mode` | Connection mode. Only `external` is supported. |
+| `connection.wsUrl` | WebSocket URL for the running `simplex-chat` WebSocket API. If set, this wins over `wsHost`/`wsPort`. |
+| `connection.wsHost` | Optional host fallback when `wsUrl` is not set. Default: `127.0.0.1`. |
+| `connection.wsPort` | Optional port fallback when `wsUrl` is not set. Default: `5225`. |
+| `connection.autoAcceptFiles` | Whether incoming file transfers should be auto-accepted by the SimpleX runtime. |
+| `connection.connectTimeoutMs` | WebSocket connection timeout in milliseconds. |
+| `accounts.<accountId>` | Per-account overrides for the same schema. |
+
+<Note>
+  A channel/account is considered configured only when <code>connection.wsUrl</code>, <code>connection.wsHost</code>, or <code>connection.wsPort</code> is present. If none of those are set, OpenClaw will not treat the channel as startup-ready.
+</Note>

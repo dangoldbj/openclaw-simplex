@@ -7,16 +7,13 @@ The architecture is built around one rule: OpenClaw should enforce policy and ro
 
 That separation keeps the channel implementation explicit, makes host-level supervision a deployment choice, and avoids hiding the network/runtime boundary inside plugin startup code.
 
-<Info>
-  The plugin no longer manages the <code>simplex-chat</code> process. The runtime boundary is an external WebSocket connection to a separately running SimpleX process.
-</Info>
-
 ## High-level diagram
 
 ```text
             +-------------------------+
             |        OpenClaw         |
             |  (agent + router/core)  |
+            | - policy enforcement    |
             +------------+------------+
                          |
                          | channel plugin API
@@ -25,8 +22,7 @@ That separation keeps the channel implementation explicit, makes host-level supe
             | @dangoldbj/openclaw-    |
             |        simplex          |
             | - inbound monitor       |
-            | - outbound actions      |
-            | - policy enforcement    |
+            | - outbound translation  |
             | - account/runtime state |
             +------------+------------+
                          |
@@ -70,3 +66,10 @@ That separation keeps the channel implementation explicit, makes host-level supe
 2. The plugin monitor parses those events into OpenClaw channel context.
 3. OpenClaw applies policy checks and runs the agent.
 4. The plugin translates replies, edits, reactions, media sends, and group actions back into SimpleX commands.
+
+## Implementation surfaces
+
+- <code>src/channel/simplex-monitor.ts</code>: inbound SimpleX event parsing and message normalization.
+- <code>src/channel/simplex-send.ts</code> and <code>src/channel/simplex-outbound.ts</code>: outbound message/action translation.
+- <code>src/simplex/simplex-ws-client.ts</code> and <code>src/simplex/simplex-transport.ts</code>: WebSocket transport and command execution.
+- <code>channels.openclaw-simplex</code> and <code>channels.openclaw-simplex.accounts</code>: shared and per-account runtime config.

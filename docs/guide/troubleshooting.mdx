@@ -9,54 +9,133 @@ Most failures fall into one of three buckets: the plugin is not trusted/enabled,
   When the runtime is down, OpenClaw will not start it for you. The channel stays disconnected until <code>simplex-chat</code> is running at the configured endpoint.
 </Note>
 
+<Tip>
+  Two common mistakes: <code>simplex-chat</code> is listening on one port but <code>wsUrl</code> points to another, or <code>dmPolicy: "pairing"</code> is enabled but the sender has not been approved yet.
+</Tip>
+
 ## Plugin not listed
 
-- Run `openclaw plugins list`
-- Verify `plugins.allow` includes `openclaw-simplex`
-- Verify package installed in the same runtime environment as OpenClaw
-- Restart OpenClaw
-
-## Channel fails to start
-
-- Check `channels.openclaw-simplex.connection`
-- Validate `connection` values (`wsUrl`, `wsHost`, `wsPort`)
-- Verify `simplex-chat` is running and exposing the expected WebSocket endpoint
-- If the runtime is down, OpenClaw will keep the channel disconnected and record the connection error in channel status
-- For persistent startup, run `simplex-chat` under a host-managed service. See [Setup](/guide/setup).
-
-## Inbound messages dropped
-
-- Review `dmPolicy`, `allowFrom`, `groupPolicy`, `groupAllowFrom`
-- In pairing mode, approve pending senders
-
-## Invite methods failing
-
-- Ensure channel account is configured and enabled
-- Verify WS connectivity to SimpleX endpoint
-- Check runtime status for last error
-
-## Media issues
-
-- Ensure media URLs are reachable by OpenClaw host
-- Check configured max media size (`mediaMaxMb`)
-- Confirm MIME/file handling on source side
-
-## Useful diagnostic commands
-
-```bash
-simplex-chat -p 5225
-```
+First check:
 
 ```bash
 openclaw plugins list
 ```
 
+Then inspect the plugin entry directly:
+
 ```bash
 openclaw plugins info openclaw-simplex
 ```
+
+What to verify:
+
+- the package is installed in the same runtime environment where OpenClaw is running
+- <code>plugins.allow</code> includes <code>openclaw-simplex</code>
+- the plugin is enabled
+- OpenClaw has been restarted after any manual config or install changes
+
+If the package is installed but not allowlisted, OpenClaw may still refuse to load it.
+
+## Channel fails to start
+
+What to check first: <code>simplex-chat</code> must be running on the same WebSocket endpoint that <code>channels.openclaw-simplex.connection.wsUrl</code> points to.
+
+Start the runtime manually if needed:
+
+```bash
+simplex-chat -p 5225
+```
+
+Then verify the configured channel endpoint:
 
 ```bash
 openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
-If you need persistent runtime startup, see [Setup](/guide/setup).
+What to verify:
+
+- <code>channels.openclaw-simplex.connection</code> exists
+- <code>wsUrl</code> matches the port where <code>simplex-chat</code> is actually listening
+- if you use <code>wsHost</code>/<code>wsPort</code> instead, those values match the runtime endpoint
+- channel status shows the latest connection error if the WebSocket handshake fails
+
+For persistent startup, run <code>simplex-chat</code> under a host-managed service. See [Runtime Setup](/guide/runtime-setup).
+
+## Inbound messages dropped
+
+If messages arrive in SimpleX but the agent does not answer, check policy first:
+
+- <code>dmPolicy: "pairing"</code> means a newly discovered contact must be approved before responses start
+- <code>dmPolicy: "allowlist"</code> means the sender must match <code>allowFrom</code>
+- group traffic may be blocked by <code>groupPolicy</code> or <code>groupAllowFrom</code>
+- if the account requires mentions in groups, a group message without the bot mention will be ignored
+
+List pending pairing requests:
+
+```bash
+openclaw pairing list
+```
+
+Approve a sender if needed:
+
+```bash
+openclaw pairing approve openclaw-simplex <pairingCode>
+```
+
+## Invite methods failing
+
+Invite commands and gateway methods require more than plugin installation: the channel account must be configured, enabled, and connected to a live <code>simplex-chat</code> runtime.
+
+Use the plugin CLI first:
+
+```bash
+openclaw simplex invite create --qr
+```
+
+If that fails:
+
+- confirm the account's <code>connection.wsUrl</code> points at a running runtime
+- check whether the channel account is enabled
+- inspect the latest channel status/runtime error in OpenClaw
+- if you are automating through gateway methods, verify the same account works through the plugin CLI first
+
+## Media issues
+
+- media URLs must be reachable from the OpenClaw host, not just from the client that sent the command
+- check the configured size limit (<code>mediaMaxMb</code>)
+- verify the source URL returns a usable content type and file payload
+- if a specific message action fails, retry with a small known-good file first to separate transport issues from size/type issues
+
+## Useful diagnostic commands
+
+Start the runtime in the foreground and watch connection behavior directly:
+
+```bash
+simplex-chat -p 5225
+```
+
+List installed plugins:
+
+```bash
+openclaw plugins list
+```
+
+Inspect this plugin's enable/allow state:
+
+```bash
+openclaw plugins info openclaw-simplex
+```
+
+Write the channel endpoint config explicitly:
+
+```bash
+openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+```
+
+## Where to inspect errors
+
+- In Control UI, open <code>Control -&gt; Channels -&gt; SimpleX</code> and inspect the channel status and connection state.
+- Use <code>openclaw plugins info openclaw-simplex</code> to verify plugin enable/allow state.
+- Check the terminal or service logs for the <code>simplex-chat</code> process itself, especially if the WebSocket runtime exits or cannot bind the expected port.
+
+If you need persistent runtime startup, see [Runtime Setup](/guide/runtime-setup).

@@ -12,33 +12,28 @@
     "library": "lucide"
   },
   "navigation": {
-    "tabs": [
+    "pages": ["index"],
+    "groups": [
       {
-        "tab": "Documentation",
-        "pages": ["index"],
-        "groups": [
-          {
-            "group": "Guide",
-            "pages": [
-              "guide/getting-started",
-              "guide/why-simplex",
-              "guide/migration",
-              "guide/how-it-works",
-              "guide/architecture",
-              "guide/setup",
-              "guide/security-model",
-              "guide/troubleshooting"
-            ]
-          },
-          {
-            "group": "Reference",
-            "pages": [
-              "reference/config",
-              "reference/gateway-methods",
-              "reference/example-commands",
-              "reference/screenshots"
-            ]
-          }
+        "group": "Guide",
+        "pages": [
+          "guide/getting-started",
+          "guide/why-simplex",
+          "guide/how-it-works",
+          "guide/architecture",
+          "guide/runtime-setup",
+          "guide/security-model",
+          "guide/migration",
+          "guide/troubleshooting"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/config",
+          "reference/gateway-methods",
+          "reference/example-commands",
+          "reference/screenshots"
         ]
       }
     ]

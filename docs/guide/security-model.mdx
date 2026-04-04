@@ -5,6 +5,12 @@ description: Invitation boundaries, pairing policy, and runtime trust boundaries
 
 The core security property of this channel is that reachability starts from an invitation, not from a public bot identity. OpenClaw then adds policy checks before a sender can trigger agent work.
 
+There are three boundaries to keep straight:
+
+- the SimpleX invite or address link controls who can reach the agent at all
+- OpenClaw policy controls who is allowed to trigger agent work after a message arrives
+- the external <code>simplex-chat</code> runtime boundary controls where process and relay trust live
+
 <Tip>
   Start conservative: use <code>dmPolicy: "pairing"</code> and <code>groupPolicy: "allowlist"</code> until you have a reason to widen access.
 </Tip>
@@ -13,16 +19,16 @@ The core security property of this channel is that reachability starts from an i
 
 <Columns cols={2}>
   <Card title="DM policy" icon="message-square">
-    <code>open</code>, <code>allowlist</code>, <code>pairing</code>, or <code>disabled</code>.
+    <code>open</code>, <code>allowlist</code>, <code>pairing</code>, or <code>disabled</code>. This is the first policy gate OpenClaw applies to direct messages after they arrive from SimpleX.
   </Card>
   <Card title="Allowlist" icon="list-checks">
-    Explicit sender allowlist through <code>allowFrom</code>.
+    Explicit sender allowlist through <code>allowFrom</code>. Use this when only known SimpleX contacts should be allowed to reach the agent.
   </Card>
 </Columns>
 
 <Columns cols={2}>
   <Card title="Group policy" icon="users">
-    <code>open</code>, <code>allowlist</code>, or <code>disabled</code> for group traffic.
+    <code>open</code>, <code>allowlist</code>, or <code>disabled</code> for group traffic. Combine this with mention requirements if you want the bot present in a group without answering every message.
   </Card>
   <Card title="Pairing" icon="key-round">
     Explicit approval flow for newly discovered contacts before they become trusted senders.
@@ -34,10 +40,17 @@ The core security property of this channel is that reachability starts from an i
 - OpenClaw only talks to an already-running <code>simplex-chat</code> endpoint over WebSocket.
 - You decide where the runtime runs, which relay path it uses, and whether relays are public or self-hosted.
 - If you need a fully internal deployment, keep <code>simplex-chat</code> and your relays inside that network boundary.
+- External runtime mode is the supported deployment model for this plugin. OpenClaw does not spawn or supervise <code>simplex-chat</code> here.
+
+## What this does not protect against
+
+- Anyone with a currently valid invite or address link can attempt to contact the agent. Use pairing and allowlists if that link may be shared beyond your intended audience.
+- If you set <code>dmPolicy: "open"</code> and <code>allowFrom: ["*"]</code>, a shared link becomes broad access to the agent.
+- If <code>simplex-chat</code> uses public relays, traffic still traverses third-party relay infrastructure even though message contents are end-to-end encrypted.
 
 ## Recommended production posture
 
 - Start with `dmPolicy: "pairing"` and `groupPolicy: "allowlist"`.
 - Keep `allowFrom`/`groupAllowFrom` narrow.
-- External runtime mode is the supported deployment model for this plugin.
+- Prefer one-time invite links for onboarding and revoke address links when they are no longer needed.
 - Monitor status snapshots and logs for repeated authorization failures.

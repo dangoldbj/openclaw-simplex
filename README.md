@@ -216,7 +216,7 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 
 OpenClaw does not supervise `simplex-chat` for external plugins. If you want it to start automatically, run it as a host-managed user service such as `systemd --user` or `launchd`.
 
-For full persistent runtime examples: https://openclaw-simplex.mintlify.app/guide/setup
+For full persistent runtime examples: https://openclaw-simplex.mintlify.app/guide/runtime-setup
 
 ---
 

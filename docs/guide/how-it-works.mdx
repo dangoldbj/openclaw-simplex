@@ -5,13 +5,15 @@ description: Understand the OpenClaw-to-SimpleX request and response flow.
 
 The runtime model is intentionally split: OpenClaw owns routing and policy, this plugin translates channel behavior, and <code>simplex-chat</code> remains a separately managed process with a WebSocket API.
 
+The invite or address link is the access boundary. Once a sender reaches the agent through SimpleX, OpenClaw still applies pairing approval, allowlists, and group policy before that sender can trigger agent work.
+
 <Steps>
   <Step title="OpenClaw loads the plugin">
     OpenClaw registers the <code>openclaw-simplex</code> channel. For disabled or unconfigured channels, it can use the lightweight setup entry before loading the full runtime entry.
   </Step>
 
-  <Step title="The runtime connects over WebSocket">
-    OpenClaw only starts the channel after explicit <code>channels.openclaw-simplex.connection</code> config exists. The channel then connects to the separately running <code>simplex-chat</code> WebSocket API.
+  <Step title="The plugin attaches to your SimpleX runtime">
+    OpenClaw only starts the channel after explicit <code>channels.openclaw-simplex.connection</code> config exists. The plugin then connects to the separately running <code>simplex-chat</code> WebSocket API.
   </Step>
 
   <Step title="Inbound events are normalized">
@@ -19,7 +21,7 @@ The runtime model is intentionally split: OpenClaw owns routing and policy, this
   </Step>
 
   <Step title="Policies are applied">
-    OpenClaw evaluates DM policy, allowlists, group policy, pairing state, and command authorization before the agent is allowed to answer.
+    OpenClaw evaluates DM policy, allowlists, group policy, pairing state, and command authorization. In pairing mode, newly discovered contacts must be approved before they become trusted senders.
   </Step>
 
   <Step title="Replies go back through SimpleX">
@@ -27,14 +29,18 @@ The runtime model is intentionally split: OpenClaw owns routing and policy, this
   </Step>
 </Steps>
 
-## Runtime features
+<Note>
+  OpenClaw does not spawn <code>simplex-chat</code>, does not create a hosted bot identity for this channel, and does not currently expose plugin-defined invite buttons on the external plugin channel card.
+</Note>
+
+## What the plugin surfaces
 
 <Columns cols={2}>
   <Card title="Runtime status" icon="activity">
     Channel status snapshots, health state, disconnect tracking, and runtime error surfaces.
   </Card>
-  <Card title="Account resolution" icon="users">
-    Default-account behavior and per-account routing with shared channel config overrides.
+  <Card title="Multi-account routing" icon="users">
+    Default-account behavior and per-account overrides under the shared <code>openclaw-simplex</code> channel config.
   </Card>
 </Columns>
 

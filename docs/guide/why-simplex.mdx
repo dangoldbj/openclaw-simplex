@@ -9,6 +9,8 @@ This plugin takes a different shape. With SimpleX, the agent becomes reachable w
 
 That makes the channel especially useful for OpenClaw deployments where privacy, local control, and explicit network boundaries matter.
 
+The point is not that this channel replaces every platform-backed integration. It adds a different reachability and trust model to OpenClaw's channel set.
+
 <Columns cols={2}>
   <Card title="Invitation-first reachability" icon="key-round">
     Create a one-time connect link or an address link, share it only with intended users, and revoke it when that access should disappear.
@@ -20,9 +22,9 @@ That makes the channel especially useful for OpenClaw deployments where privacy,
 
 <Columns cols={2}>
   <Card title="Operator-controlled runtime" icon="server">
-    Run <code>simplex-chat</code> yourself, choose whether relays are public or self-hosted, and keep OpenClaw policy enforcement local.
+    Run <code>simplex-chat</code> yourself, choose where the runtime and relay path live, and keep OpenClaw policy enforcement local.
   </Card>
-  <Card title="Usable in production workflows" icon="message-circle">
+  <Card title="OpenClaw-native operations" icon="message-circle">
     Pairing approval, allowlists, invite helpers, media support, and channel status all exist in the plugin, not in ad hoc glue code.
   </Card>
 </Columns>

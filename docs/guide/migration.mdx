@@ -3,78 +3,86 @@ title: Migration to openclaw-simplex
 description: Upgrade existing simplex installs to the renamed openclaw-simplex plugin and channel ids.
 ---
 
-<Info>
-  <code>1.0.0</code> is a breaking release. It renames both the plugin id and the channel id, and it removes managed mode.
-</Info>
+Use this guide only if you previously configured or paired the plugin under the old <code>simplex</code> ids. For a fresh install, start with [Getting Started](/guide/getting-started).
 
-Use this guide if you previously configured or paired the plugin under the old `simplex` ids.
-
-`1.0.0` renames both the plugin id and the channel id:
+## What changed in `1.0.0`
 
 - plugin id: `simplex` -> `openclaw-simplex`
 - channel id: `simplex` -> `openclaw-simplex`
-
-It also removes managed mode. OpenClaw no longer starts `simplex-chat` for you; run it separately and connect over WebSocket.
-
-Gateway method names remain unchanged in this release:
-
-- `simplex.invite.create`
-- `simplex.invite.list`
-- `simplex.invite.revoke`
+- managed mode was removed; OpenClaw no longer starts `simplex-chat` for you
+- pairing approval commands now use `openclaw-simplex`
 
 <Info>
-  The migration helper updates both config keys and stored pairing/allowlist state so existing approvals can carry forward.
+  Gateway method names did not change. Programmatic invite flows still use <code>simplex.invite.create</code>, <code>simplex.invite.list</code>, and <code>simplex.invite.revoke</code>.
 </Info>
 
+The migration helper updates config keys and stored pairing/allowlist state so existing approvals can carry forward.
+
 <Steps>
-  <Step title="Run the migration helper">
+  <Step title="Start the external SimpleX runtime">
+    Managed mode is gone. Run <code>simplex-chat</code> yourself and expose the WebSocket endpoint the channel should use:
+
+    ```bash
+    simplex-chat -p 5225
+    ```
+
+    Make sure your config points to that endpoint under <code>channels.openclaw-simplex.connection.wsUrl</code>.
+  </Step>
+
+  <Step title="Preview the migration">
+    ```bash
+    openclaw simplex migrate --dry-run
+    ```
+
+    Review the planned config/state renames before writing anything.
+  </Step>
+
+  <Step title="Apply the migration">
     ```bash
     openclaw simplex migrate
     ```
 
-    Dry run:
-
-    ```bash
-    openclaw simplex migrate --dry-run
-    ```
+    This rewrites the old <code>simplex</code> config keys and renames the related pairing/allowlist state files in the OpenClaw state directory.
   </Step>
 
-  <Step title="Update commands and config">
-    Use the new ids in commands:
-
-    ```bash
-    openclaw plugins enable openclaw-simplex
-    ```
+  <Step title="Verify the new ids and pairing flow">
+    Check the plugin under its new id:
 
     ```bash
     openclaw plugins info openclaw-simplex
     ```
 
+    If you need to re-add the channel explicitly, use the new channel id:
+
     ```bash
     openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
     ```
 
+    Pairing approval also uses the new channel id:
+
     ```bash
-    openclaw pairing approve openclaw-simplex <code>
+    openclaw pairing approve openclaw-simplex <pairingCode>
     ```
-  </Step>
 
-  <Step title="Run the external runtime">
-    Configure the runtime under:
-
-    ```json
-    {
-      "channels": {
-        "openclaw-simplex": {
-          "connection": {
-            "wsUrl": "ws://127.0.0.1:5225"
-          }
-        }
-      }
-    }
-    ```
+    Send a SimpleX message from an already approved contact and confirm the approval still holds after migration.
   </Step>
 </Steps>
+
+## Target config shape
+
+After migration, the channel should be configured under <code>openclaw-simplex</code>:
+
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "connection": {
+        "wsUrl": "ws://127.0.0.1:5225"
+      }
+    }
+  }
+}
+```
 
 ## What the migration helper updates
 

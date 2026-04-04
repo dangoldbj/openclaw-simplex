@@ -3,22 +3,22 @@ title: Gateway Methods
 description: Gateway methods exposed by the OpenClaw SimpleX plugin.
 ---
 
-The plugin registers these methods for automation and programmatic access.
+The plugin registers these gateway RPC methods for invite/address automation and programmatic onboarding flows.
 
 <Info>
-  For day-to-day user workflows, prefer the plugin CLI commands such as <code>openclaw simplex invite create --qr</code> and <code>openclaw simplex address show --qr</code>. Gateway methods are most useful for automation, agent integrations, or returning QR data URLs programmatically.
+  For day-to-day operator workflows, prefer the plugin CLI commands in [Example Commands](/reference/example-commands). Use these gateway methods when another system needs the same invite/address flow programmatically, including QR data URLs.
 </Info>
 
-You can also use the `simplex-chat` console directly:
+## Prerequisites and behavior
 
-- `/c`
-- `/ad`
-- `/show_address`
-- `/delete_address`
+- The target SimpleX account must be enabled and configured under <code>channels.openclaw-simplex</code>.
+- The <code>simplex-chat</code> WebSocket runtime must be reachable for that account.
+- If <code>accountId</code> is omitted or blank, the plugin uses the channel's default account.
+- If the channel is not running, these methods ask OpenClaw to start <code>openclaw-simplex</code> for the target account and retry the SimpleX command.
 
 ## `simplex.invite.create`
 
-Create an invite link.
+Create a one-time connect link or an address link.
 
 Request params:
 
@@ -31,8 +31,8 @@ Request params:
 
 `mode` supports:
 
-- `connect`
-- `address`
+- `connect` -> runs <code>/c</code>
+- `address` -> runs <code>/ad</code>
 
 Response highlights:
 
@@ -53,7 +53,7 @@ Example response shape:
 
 ## `simplex.invite.list`
 
-List current invite/address links and pending hints.
+List current invite/address links and pending contact hints. Internally this combines <code>/show_address</code> and <code>/contacts</code>.
 
 Request params:
 
@@ -84,7 +84,7 @@ Example response shape:
 
 ## `simplex.invite.revoke`
 
-Revoke active address link.
+Revoke the active address link by running <code>/delete_address</code>.
 
 Request params:
 
@@ -94,9 +94,27 @@ Request params:
 }
 ```
 
-## Related Plugin Tools
+Example response shape:
 
-The plugin also registers these tool-facing operations:
+```json
+{
+  "accountId": "default",
+  "response": {
+    "corrId": "..."
+  }
+}
+```
+
+## Errors
+
+| Code | Meaning |
+| --- | --- |
+| `INVALID_REQUEST` | The request params are invalid. For example, <code>simplex.invite.create</code> received an unsupported <code>mode</code>. |
+| `UNAVAILABLE` | The account is disabled/unconfigured, the channel runtime is unavailable, or the underlying SimpleX command failed. The response message includes the failure reason. |
+
+## Related agent tools
+
+The plugin also exposes these agent/tool-surface operations. They are not gateway RPC methods, but they cover the same invite and group administration flows from inside an agent run.
 
 - `simplex_invite_create`
 - `simplex_invite_list`

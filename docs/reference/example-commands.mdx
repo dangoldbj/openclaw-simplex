@@ -3,15 +3,15 @@ title: Example Commands
 description: Useful OpenClaw and SimpleX CLI command examples for the plugin.
 ---
 
+Use this page as a command cookbook after the first setup is working. For the full first-run flow, start with [Getting Started](/guide/getting-started).
+
 <Info>
-  Use these as operator-facing commands. The long-running <code>simplex-chat -p 5225</code> process should run in a separate terminal or as a host-managed service.
+  The long-running <code>simplex-chat -p 5225</code> process should run in a separate terminal or as a host-managed service. See [Runtime Setup](/guide/runtime-setup) for persistent startup.
 </Info>
 
-## Plugin lifecycle
+## Install and verify
 
-OpenClaw plugin setup:
-
-Start the SimpleX runtime:
+Start the SimpleX WebSocket runtime:
 
 ```bash
 simplex-chat -p 5225
@@ -44,7 +44,7 @@ Configure the WebSocket endpoint:
 openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
-Verify:
+Verify that OpenClaw sees and trusts the plugin:
 
 ```bash
 openclaw plugins list
@@ -54,19 +54,7 @@ openclaw plugins list
 openclaw plugins info openclaw-simplex
 ```
 
-Migrate older `simplex` installs:
-
-```bash
-openclaw simplex migrate
-```
-
-Preview migration only:
-
-```bash
-openclaw simplex migrate --dry-run
-```
-
-## Plugin CLI invite commands
+## Invite and address management
 
 Create a one-time invite link and print a terminal QR code:
 
@@ -98,36 +86,45 @@ Revoke the current address link:
 openclaw simplex address revoke
 ```
 
-## SimpleX CLI console commands
+## Pairing
 
-Run these inside the `simplex-chat` console:
+List pending pairing requests:
 
-```text
-/c
-/ad
-/show_address
-/delete_address
+```bash
+openclaw pairing list
 ```
 
-## Gateway method examples
+Approve a sender for this channel:
 
-Use your normal gateway client when you want the same invite flow programmatically:
-
-- `simplex.invite.create`
-- `simplex.invite.list`
-- `simplex.invite.revoke`
-
-Example payloads:
-
-```json
-{
-  "mode": "connect",
-  "accountId": "default"
-}
+```bash
+openclaw pairing approve openclaw-simplex <pairingCode>
 ```
 
-```json
-{
-  "accountId": "default"
-}
+## Migration
+
+Migrate older <code>simplex</code> installs to <code>openclaw-simplex</code>:
+
+```bash
+openclaw simplex migrate
 ```
+
+Preview migration only:
+
+```bash
+openclaw simplex migrate --dry-run
+```
+
+## SimpleX console commands
+
+Run these inside the <code>simplex-chat</code> console if you want to manage links directly from the runtime:
+
+| Command | Meaning |
+| --- | --- |
+| `/c` | Create a one-time connect link. |
+| `/ad` | Create or return the account address link. |
+| `/show_address` | Show the current address link. |
+| `/delete_address` | Revoke the current address link. |
+
+## Gateway method names
+
+For programmatic invite/address automation, the plugin exposes <code>simplex.invite.create</code>, <code>simplex.invite.list</code>, and <code>simplex.invite.revoke</code>. See [Gateway Methods](/reference/gateway-methods) for request and response shapes.

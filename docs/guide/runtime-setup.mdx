@@ -1,0 +1,123 @@
+---
+title: Runtime Setup
+description: Run simplex-chat as an external runtime and point OpenClaw at its WebSocket endpoint.
+---
+
+Use this page after you already have a working first setup and want to make the SimpleX runtime persistent or split multiple accounts across separate runtimes. For the first install and first pairing flow, start with [Getting Started](/guide/getting-started).
+
+## Keep `simplex-chat` running
+
+If you want the SimpleX runtime to start automatically on login or machine boot, let the host OS supervise it and keep OpenClaw focused on the channel connection itself.
+
+### Create the service
+
+<Tabs>
+  <Tab title="Linux">
+    ```bash
+    mkdir -p ~/.config/systemd/user
+    cat > ~/.config/systemd/user/simplex-chat.service <<'EOF'
+    [Unit]
+    Description=SimpleX Chat WebSocket Runtime
+    After=network-online.target
+
+    [Service]
+    ExecStart=%h/.local/bin/simplex-chat -p 5225
+    Restart=on-failure
+    RestartSec=5
+
+    [Install]
+    WantedBy=default.target
+    EOF
+    ```
+
+    <Note>
+      Adjust the <code>ExecStart</code> path if <code>simplex-chat</code> is installed somewhere other than <code>%h/.local/bin/simplex-chat</code>.
+    </Note>
+  </Tab>
+  <Tab title="macOS">
+    ```bash
+    mkdir -p ~/Library/LaunchAgents
+    cat > ~/Library/LaunchAgents/ai.openclaw.simplex-chat.plist <<'EOF'
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+      <dict>
+        <key>Label</key>
+        <string>ai.openclaw.simplex-chat</string>
+        <key>ProgramArguments</key>
+        <array>
+          <string>/usr/local/bin/simplex-chat</string>
+          <string>-p</string>
+          <string>5225</string>
+        </array>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>KeepAlive</key>
+        <true/>
+      </dict>
+    </plist>
+    EOF
+    ```
+
+    <Note>
+      Adjust <code>/usr/local/bin/simplex-chat</code> if the binary is installed elsewhere on your system.
+    </Note>
+  </Tab>
+</Tabs>
+
+### Start it
+
+<Tabs>
+  <Tab title="Linux">
+    ```bash
+    systemctl --user daemon-reload
+    systemctl --user enable --now simplex-chat.service
+    ```
+  </Tab>
+  <Tab title="macOS">
+    ```bash
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.openclaw.simplex-chat.plist
+    launchctl kickstart -k gui/$(id -u)/ai.openclaw.simplex-chat
+    ```
+  </Tab>
+</Tabs>
+
+### Check status
+
+<Tabs>
+  <Tab title="Linux">
+    ```bash
+    systemctl --user status simplex-chat.service
+    ```
+
+    Expected result: the service status should be <code>active (running)</code>.
+  </Tab>
+  <Tab title="macOS">
+    ```bash
+    launchctl print gui/$(id -u)/ai.openclaw.simplex-chat
+    ```
+
+    Expected result: the launch agent should appear under that label and report a running PID.
+  </Tab>
+</Tabs>
+
+## Per-account config
+
+Use per-account config when you want separate SimpleX identities or separate runtime ports for different OpenClaw channel accounts. Each account can point at its own <code>simplex-chat</code> WebSocket endpoint, and that endpoint must already be running.
+
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "accounts": {
+        "ops": {
+          "enabled": true,
+          "connection": {
+            "wsUrl": "ws://127.0.0.1:7777"
+          }
+        }
+      }
+    }
+  }
+}
+```

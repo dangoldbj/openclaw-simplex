@@ -5,11 +5,17 @@ description: Visual walkthrough of the SimpleX pairing and approval flow.
 
 This page shows the supported SimpleX pairing and approval flow.
 
-Generate or retrieve the invite/address link in `simplex-chat` with `/c`, `/ad`, or `/show_address`, then continue with the pairing flow below.
+<Info>
+  This walkthrough assumes <code>channels.openclaw-simplex.connection.wsUrl</code> already points to a running SimpleX runtime. If not, start with [Getting Started](/guide/getting-started).
+</Info>
 
-If you need automation instead, OpenClaw also exposes `simplex.invite.create` and `simplex.invite.list`.
+Generate a one-time invite link with the plugin CLI:
 
-It assumes the SimpleX channel is already configured with a reachable `channels.openclaw-simplex.connection.wsUrl`.
+```bash
+openclaw simplex invite create --qr
+```
+
+You can also generate or inspect links directly in the <code>simplex-chat</code> console with <code>/c</code>, <code>/ad</code>, or <code>/show_address</code>. For automation, OpenClaw also exposes <code>simplex.invite.create</code> and <code>simplex.invite.list</code>.
 
 <Steps>
   <Step title="Send the first message">
@@ -19,17 +25,21 @@ It assumes the SimpleX channel is already configured with a reachable `channels.
   </Step>
 
   <Step title="Review the pairing request in OpenClaw">
+    <code>openclaw pairing list</code> should now show a pending request for the sender that just messaged the agent.
+
     <img src="/images/pairing-list.png" alt="OpenClaw pairing requests table" width="900" />
   </Step>
 
   <Step title="Approve the pairing request">
     ```bash
     openclaw pairing list
-    openclaw pairing approve openclaw-simplex <code>
+    openclaw pairing approve openclaw-simplex <pairingCode>
     ```
   </Step>
 
   <Step title="Confirm approval and successful chat">
+    After approval, SimpleX should show the access-approved message and the next user message should receive an agent reply.
+
     <img src="/images/approved.png" alt="SimpleX access approved message" width="720" />
 
     <img src="/images/chat.png" alt="SimpleX chat after approval" width="720" />
