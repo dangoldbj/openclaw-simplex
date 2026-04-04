@@ -1,5 +1,6 @@
 ---
 title: OpenClaw SimpleX
+sidebarTitle: Overview
 description: Invitation-first SimpleX messaging for OpenClaw, without phone numbers or hosted bot identities.
 ---
 
@@ -13,74 +14,12 @@ Within OpenClaw's channel ecosystem, this plugin enables a communication model t
 
 The implementation keeps developer-facing boundaries explicit: OpenClaw enforces policy, the plugin translates channel events and actions, and a separately managed <code>simplex-chat</code> runtime handles the SimpleX WebSocket API.
 
-## Quick Start
-
-Fresh install:
-
-Install `simplex-chat`:
-
-```bash
-curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
-```
-
-Run the SimpleX runtime in another terminal:
-
-```bash
-simplex-chat -p 5225
-```
-
-Install and enable the plugin:
-
-```bash
-openclaw plugins install @dangoldbj/openclaw-simplex
-```
-
-```bash
-openclaw plugins enable openclaw-simplex
-```
-
-Configure the channel:
-
-```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
-```
-
-For the full setup flow, trust configuration, pairing, invite generation, and persistent runtime setup, see [Getting Started](/guide/getting-started) and [Setup](/guide/setup).
-
-Upgrade from older `simplex` ids:
-
-```bash
-openclaw simplex migrate
-```
-
-See [Migration](/guide/migration) for the full breaking-change checklist.
-
-## Guides
-
 <Columns cols={2}>
   <Card title="Getting Started" icon="rocket" href="/guide/getting-started" cta="Open guide">
     Install the runtime and plugin, configure <code>wsUrl</code>, generate the first invite, and verify end-to-end messaging.
   </Card>
-  <Card title="Migration" icon="arrow-right-left" href="/guide/migration" cta="Upgrade safely">
-    Upgrade existing <code>simplex</code> installs to <code>openclaw-simplex</code> and preserve pairing state.
-  </Card>
-</Columns>
-
-<Columns cols={2}>
   <Card title="Setup" icon="settings" href="/guide/setup" cta="Run the runtime">
     Run <code>simplex-chat</code> yourself, wire OpenClaw to its WebSocket endpoint, and optionally move it under <code>systemd</code> or <code>launchd</code>.
-  </Card>
-  <Card title="Security Model" icon="shield" href="/guide/security-model" cta="Review policies">
-    Understand the invitation boundary, pairing approval, allowlists, and group policy before widening who can talk to the agent.
-  </Card>
-</Columns>
-
-<Columns cols={2}>
-  <Card title="Gateway Methods" icon="bolt" href="/reference/gateway-methods" cta="See responses">
-    Use <code>simplex.invite.*</code> methods, including QR data URL response fields for invite flows.
-  </Card>
-  <Card title="Configuration" icon="sliders-horizontal" href="/reference/config" cta="See config">
-    Review <code>channels.openclaw-simplex</code> settings, account overrides, and connection options.
   </Card>
 </Columns>
 
@@ -94,19 +33,10 @@ See [Migration](/guide/migration) for the full breaking-change checklist.
 </Columns>
 
 <Columns cols={2}>
-  <Card title="Architecture" icon="network" href="/guide/architecture" cta="Review boundaries">
-    Review the plugin, runtime, and WebSocket integration boundaries.
+  <Card title="Migration" icon="arrow-right-left" href="/guide/migration" cta="Upgrade safely">
+    Upgrade existing <code>simplex</code> installs to <code>openclaw-simplex</code> and preserve pairing state.
   </Card>
   <Card title="Troubleshooting" icon="wrench" href="/guide/troubleshooting" cta="Debug issues">
     Diagnose startup, runtime, invite, and policy issues quickly.
-  </Card>
-</Columns>
-
-<Columns cols={2}>
-  <Card title="Example Commands" icon="terminal" href="/reference/example-commands" cta="Copy commands">
-    Use copy-pasteable OpenClaw, <code>simplex-chat</code>, migration, and runtime management commands.
-  </Card>
-  <Card title="Screenshots" icon="image" href="/reference/screenshots" cta="View flow">
-    Follow the pairing and approval flow visually.
   </Card>
 </Columns>

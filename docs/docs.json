@@ -15,16 +15,13 @@
     "tabs": [
       {
         "tab": "Documentation",
+        "pages": ["index"],
         "groups": [
-          {
-            "group": "Overview",
-            "pages": ["index"]
-          },
           {
             "group": "Guide",
             "pages": [
-              "guide/why-simplex",
               "guide/getting-started",
+              "guide/why-simplex",
               "guide/migration",
               "guide/how-it-works",
               "guide/architecture",
