@@ -1,7 +1,7 @@
 import { access, mkdir, readdir, rename } from "node:fs/promises";
 import path from "node:path";
-import { toString as toQrString } from "qrcode";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { toString as toQrString } from "qrcode";
 import {
   createSimplexInvite,
   listSimplexInvites,
@@ -16,6 +16,14 @@ export const CHANNEL_ID = "openclaw-simplex";
 type MigrationResult = {
   changed: string[];
   skipped: string[];
+};
+
+type SimplexMigrationStateApi = {
+  runtime: {
+    state: {
+      resolveStateDir: () => string;
+    };
+  };
 };
 
 type InviteCliOptions = {
@@ -213,7 +221,7 @@ export function migrateConfigObject(rawConfig: Record<string, unknown>): {
 }
 
 export async function migrateStateFiles(
-  api: OpenClawPluginApi,
+  api: SimplexMigrationStateApi,
   dryRun: boolean
 ): Promise<MigrationResult> {
   const result: MigrationResult = { changed: [], skipped: [] };

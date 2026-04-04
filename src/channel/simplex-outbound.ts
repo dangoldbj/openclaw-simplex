@@ -1,8 +1,8 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
 import { resolveSimplexAccount } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
-import { assertSimplexOutboundAccountReady } from "./simplex-common.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
+import { assertSimplexOutboundAccountReady } from "./simplex-common.js";
 import { buildAndSendSimplexMessages } from "./simplex-send.js";
 
 export function buildSimplexOutbound(

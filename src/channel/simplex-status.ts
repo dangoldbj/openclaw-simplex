@@ -1,10 +1,13 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
-import { extractSimplexLink } from "../simplex/simplex-links.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { extractSimplexLink } from "../simplex/simplex-links.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import { withSimplexRegistryClient } from "./simplex-client-registry.js";
-import { DEFAULT_ACCOUNT_ID } from "./simplex-common.js";
-import { extractSimplexWsUrlFromApplication, resolveSimplexHealthState } from "./simplex-common.js";
+import {
+  DEFAULT_ACCOUNT_ID,
+  extractSimplexWsUrlFromApplication,
+  resolveSimplexHealthState,
+} from "./simplex-common.js";
 
 async function readAddressLink(
   registry: SimplexClientRegistry,

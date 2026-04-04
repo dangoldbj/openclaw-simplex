@@ -1,14 +1,14 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import type { ResolvedSimplexAccount } from "../config/types.js";
-import { buildComposedMessages } from "./simplex-media.js";
+import {
+  buildSendMessagesCommand,
+  type SimplexComposedMessage,
+} from "../simplex/simplex-commands.js";
+import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import { withSimplexRegistryClient } from "./simplex-client-registry.js";
 import { normalizeSimplexMessageId } from "./simplex-common.js";
-import {
-  type SimplexComposedMessage,
-  buildSendMessagesCommand,
-} from "../simplex/simplex-commands.js";
-import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
+import { buildComposedMessages } from "./simplex-media.js";
 
 export async function sendComposedMessages(params: {
   registry: SimplexClientRegistry;

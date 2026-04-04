@@ -1,5 +1,5 @@
-import { SimplexWsClient, type SimplexWsResponse } from "./simplex-ws-client.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { SimplexWsClient, type SimplexWsResponse } from "./simplex-ws-client.js";
 
 export type SimplexLogger = {
   info?: (message: string) => void;

@@ -1,10 +1,9 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import type { ChannelMessageActionName } from "openclaw/plugin-sdk/channel-contract";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
+import { buildComposedMessages } from "../channel/simplex-media.js";
 import { resolveSimplexAccount } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
-import { buildComposedMessages } from "../channel/simplex-media.js";
 import {
-  type SimplexComposedMessage,
   buildAddGroupMemberCommand,
   buildDeleteChatItemCommand,
   buildLeaveGroupCommand,
@@ -13,6 +12,7 @@ import {
   buildSendMessagesCommand,
   buildUpdateChatItemCommand,
   buildUpdateGroupProfileCommand,
+  type SimplexComposedMessage,
 } from "../simplex/simplex-commands.js";
 import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
 import { SimplexWsClient } from "../simplex/simplex-ws-client.js";

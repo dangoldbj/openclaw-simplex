@@ -1,14 +1,14 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   CHANNEL_ID,
   LEGACY_CHANNEL_ID,
   LEGACY_PLUGIN_ID,
-  PLUGIN_ID,
   migrateConfigObject,
   migrateStateFiles,
+  PLUGIN_ID,
 } from "./plugin-cli.js";
 
 describe("simplex migration config", () => {
@@ -88,7 +88,7 @@ describe("simplex migration state", () => {
           resolveStateDir: () => stateDir,
         },
       },
-    } as any;
+    };
 
     const result = await migrateStateFiles(api, false);
 
@@ -120,7 +120,7 @@ describe("simplex migration state", () => {
           resolveStateDir: () => stateDir,
         },
       },
-    } as any;
+    };
 
     const result = await migrateStateFiles(api, false);
 
@@ -143,7 +143,7 @@ describe("simplex migration state", () => {
           resolveStateDir: () => stateDir,
         },
       },
-    } as any;
+    };
 
     const result = await migrateStateFiles(api, true);
 

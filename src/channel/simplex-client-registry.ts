@@ -1,5 +1,5 @@
-import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
 
 export type SimplexClientRegistry = Map<string, SimplexWsClient>;
 

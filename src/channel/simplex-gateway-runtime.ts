@@ -1,7 +1,7 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
-import { startSimplexMonitor } from "./simplex-monitor.js";
-import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import type { SimplexClientRegistry } from "./simplex-client-registry.js";
+import { startSimplexMonitor } from "./simplex-monitor.js";
 
 export function buildSimplexGatewayRuntime(
   activeClients: SimplexClientRegistry

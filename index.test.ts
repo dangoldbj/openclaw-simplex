@@ -42,8 +42,8 @@ vi.mock("qrcode", () => ({
   toDataURL: qrMocks.toDataURL,
 }));
 
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import type { PluginRuntime } from "openclaw/plugin-sdk/core";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
 

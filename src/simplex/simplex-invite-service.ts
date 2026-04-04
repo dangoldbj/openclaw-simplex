@@ -1,12 +1,12 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { INVITE_COMMANDS, type SimplexInviteMode } from "./simplex-invite.js";
 import {
   extractSimplexLink,
   extractSimplexLinks,
   extractSimplexPendingHints,
 } from "./simplex-links.js";
-import { INVITE_COMMANDS, type SimplexInviteMode } from "./simplex-invite.js";
 import {
   type SimplexLogger,
   sendSimplexCommand,

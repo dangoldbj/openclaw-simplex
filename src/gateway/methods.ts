@@ -1,14 +1,23 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { toDataURL as toQrDataUrl } from "qrcode";
+import { resolveInviteMode } from "../simplex/simplex-invite.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
   revokeSimplexInvite,
 } from "../simplex/simplex-invite-service.js";
-import { resolveInviteMode } from "../simplex/simplex-invite.js";
 
 const INVALID_REQUEST = "INVALID_REQUEST";
 const UNAVAILABLE = "UNAVAILABLE";
+
+type RuntimeChannelState = {
+  running?: boolean;
+};
+
+type RuntimeSnapshot = {
+  channelAccounts?: Record<string, Record<string, RuntimeChannelState | undefined> | undefined>;
+  channels?: Record<string, RuntimeChannelState | undefined>;
+};
 
 type GatewayError = {
   code: string;
@@ -29,7 +38,7 @@ function readAccountId(params: Record<string, unknown> | undefined): string | nu
 }
 
 function createRuntimeChecker(
-  context: { getRuntimeSnapshot: () => any },
+  context: { getRuntimeSnapshot: () => RuntimeSnapshot },
   accountId: string
 ): () => boolean {
   return () => {

@@ -1,12 +1,22 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
+import { simplexMessageActions } from "../actions/actions.js";
 import {
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
   resolveSimplexAccount,
 } from "../config/accounts.js";
-import { simplexMessageActions } from "../actions/actions.js";
 import { SimplexChannelConfigSchema } from "../config/config-schema.js";
+import type { ResolvedSimplexAccount } from "../config/types.js";
+import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
 import { simplexSetupAdapter } from "./setup.js";
+import {
+  DEFAULT_ACCOUNT_ID,
+  formatPairingApproveHint,
+  resolveSimplexGroupRequireMention,
+  resolveSimplexGroupToolPolicy,
+  stripLeadingAt,
+  stripSimplexPrefix,
+} from "./simplex-common.js";
 import {
   listSimplexDirectoryGroups,
   listSimplexDirectoryPeers,
@@ -14,23 +24,11 @@ import {
   resolveSimplexSelf,
   resolveSimplexTargets,
 } from "./simplex-directory.js";
-import {
-  DEFAULT_ACCOUNT_ID,
-  extractSimplexWsUrlFromApplication,
-  formatPairingApproveHint,
-  resolveSimplexGroupRequireMention,
-  resolveSimplexGroupToolPolicy,
-  resolveSimplexHealthState,
-  stripLeadingAt,
-  stripSimplexPrefix,
-} from "./simplex-common.js";
 import { buildSimplexGatewayRuntime } from "./simplex-gateway-runtime.js";
 import { buildSimplexOutbound } from "./simplex-outbound.js";
 import { buildSimplexPairing } from "./simplex-pairing.js";
-import { buildSimplexStatus } from "./simplex-status.js";
 import { formatSimplexAllowFrom, resolveSimplexAllowFrom } from "./simplex-security.js";
-import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
+import { buildSimplexStatus } from "./simplex-status.js";
 
 const activeClients = new Map<string, SimplexWsClient>();
 

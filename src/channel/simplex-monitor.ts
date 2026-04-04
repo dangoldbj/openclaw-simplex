@@ -1,8 +1,8 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
-import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveMentionGatingWithBypass } from "openclaw/plugin-sdk/channel-inbound";
-import { getSimplexRuntime } from "./runtime.js";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
+import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
+import type { ResolvedSimplexAccount } from "../config/types.js";
 import {
   buildCancelFileCommand,
   buildReceiveFileCommand,
@@ -10,10 +10,10 @@ import {
   formatChatRef,
 } from "../simplex/simplex-commands.js";
 import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
+import { SimplexWsClient, type SimplexWsEvent } from "../simplex/simplex-ws-client.js";
+import { getSimplexRuntime } from "./runtime.js";
 import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "./simplex-media.js";
 import { isSimplexAllowlisted } from "./simplex-security.js";
-import { SimplexWsClient, type SimplexWsEvent } from "../simplex/simplex-ws-client.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
 
 export type SimplexMonitorOpts = {
   account: ResolvedSimplexAccount;

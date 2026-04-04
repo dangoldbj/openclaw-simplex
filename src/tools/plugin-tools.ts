@@ -1,13 +1,13 @@
 import { Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
 import { executeSimplexAction } from "../actions/execute.js";
+import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
+import { resolveInviteMode } from "../simplex/simplex-invite.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
   revokeSimplexInvite,
 } from "../simplex/simplex-invite-service.js";
-import { resolveInviteMode } from "../simplex/simplex-invite.js";
 
 type ToolResult = {
   content: Array<{ type: "text"; text: string }>;
