@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2026-04-04
+
+### Changed
+
+- Switched GitHub Actions workflows to Node.js 24 and removed the publish job's global npm self-upgrade step.
+- Refined the docs structure and wording across Getting Started, Runtime Setup, architecture, security, troubleshooting, and reference pages.
+
+### Fixed
+
+- Added the channel config schema to `openclaw.plugin.json` and a schema drift test so OpenClaw Control UI can render the SimpleX card config editor from manifest metadata.
+
 ## [1.2.0] - 2026-04-04
 
 ### Changed
