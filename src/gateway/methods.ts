@@ -85,7 +85,9 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
         startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
         isRunning: createRuntimeChecker(context, accountId ?? "default"),
       });
-      const addressQrDataUrl = result.addressLink ? await renderQrDataUrl(result.addressLink) : null;
+      const addressQrDataUrl = result.addressLink
+        ? await renderQrDataUrl(result.addressLink)
+        : null;
       respond(true, {
         ...result,
         addressQrDataUrl,

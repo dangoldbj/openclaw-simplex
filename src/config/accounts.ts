@@ -15,9 +15,7 @@ function hasMeaningfulConnectionConfig(connection: SimplexConnectionConfig | und
     return false;
   }
   return Boolean(
-    connection.wsUrl?.trim() ||
-      connection.wsHost?.trim() ||
-      connection.wsPort !== undefined
+    connection.wsUrl?.trim() || connection.wsHost?.trim() || connection.wsPort !== undefined
   );
 }
 
@@ -26,7 +24,8 @@ function resolveRawSimplexAccountConfig(
   accountId: string
 ): SimplexAccountConfig {
   if (accountId === DEFAULT_ACCOUNT_ID) {
-    const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ?? {}) as SimplexConfig & {
+    const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ??
+      {}) as SimplexConfig & {
       accounts?: unknown;
     };
     return base;
@@ -78,10 +77,12 @@ function mergeConnection(
 }
 
 function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): SimplexAccountConfig {
-  const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ?? {}) as SimplexConfig & {
+  const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ??
+    {}) as SimplexConfig & {
     accounts?: unknown;
   };
-  const account = (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
+  const account = (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ??
+    {}) as SimplexAccountConfig;
   return {
     ...base,
     ...account,

@@ -38,26 +38,37 @@ function resolveToolAccountId(
 }
 
 const InviteToolSchema = Type.Object({
-  accountId: Type.Optional(Type.String({ description: "SimpleX account id. Defaults to the active/default account." })),
+  accountId: Type.Optional(
+    Type.String({ description: "SimpleX account id. Defaults to the active/default account." })
+  ),
   mode: Type.Optional(
     Type.Union([Type.Literal("connect"), Type.Literal("address")], {
-      description: 'Invite mode. "connect" creates a one-time link, "address" returns the account address link.',
+      description:
+        'Invite mode. "connect" creates a one-time link, "address" returns the account address link.',
     })
   ),
 });
 
 const GroupParticipantToolSchema = Type.Object({
-  accountId: Type.Optional(Type.String({ description: "SimpleX account id. Defaults to the active/default account." })),
+  accountId: Type.Optional(
+    Type.String({ description: "SimpleX account id. Defaults to the active/default account." })
+  ),
   groupId: Type.Optional(Type.String({ description: "SimpleX group id." })),
   chatRef: Type.Optional(Type.String({ description: "SimpleX group chat ref such as #group." })),
   to: Type.Optional(Type.String({ description: "Alias for group target." })),
   participant: Type.Optional(Type.String({ description: "Participant identifier." })),
-  contactId: Type.Optional(Type.String({ description: "Alias for participant when adding a member." })),
-  memberId: Type.Optional(Type.String({ description: "Alias for participant when removing a member." })),
+  contactId: Type.Optional(
+    Type.String({ description: "Alias for participant when adding a member." })
+  ),
+  memberId: Type.Optional(
+    Type.String({ description: "Alias for participant when removing a member." })
+  ),
 });
 
 const LeaveGroupToolSchema = Type.Object({
-  accountId: Type.Optional(Type.String({ description: "SimpleX account id. Defaults to the active/default account." })),
+  accountId: Type.Optional(
+    Type.String({ description: "SimpleX account id. Defaults to the active/default account." })
+  ),
   groupId: Type.Optional(Type.String({ description: "SimpleX group id." })),
   chatRef: Type.Optional(Type.String({ description: "SimpleX group chat ref such as #group." })),
   to: Type.Optional(Type.String({ description: "Alias for group target." })),
@@ -100,104 +111,126 @@ function buildApprovalDescription(toolName: string, params: Record<string, unkno
 }
 
 export function registerSimplexTools(api: OpenClawPluginApi): void {
-  api.registerTool((ctx) => ({
-    name: "simplex_invite_create",
-    label: "SimpleX Invite Create",
-    description: "Create a SimpleX one-time connect link or return the account address link.",
-    parameters: InviteToolSchema,
-    async execute(_toolCallId, rawParams) {
-      const mode = resolveInviteMode(rawParams?.mode) ?? "connect";
-      return jsonResult(
-        await createSimplexInvite({
+  api.registerTool(
+    (ctx) => ({
+      name: "simplex_invite_create",
+      label: "SimpleX Invite Create",
+      description: "Create a SimpleX one-time connect link or return the account address link.",
+      parameters: InviteToolSchema,
+      async execute(_toolCallId, rawParams) {
+        const mode = resolveInviteMode(rawParams?.mode) ?? "connect";
+        return jsonResult(
+          await createSimplexInvite({
+            cfg: api.config,
+            accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
+            mode,
+            logger: api.logger,
+          })
+        );
+      },
+    }),
+    { name: "simplex_invite_create" }
+  );
+
+  api.registerTool(
+    (ctx) => ({
+      name: "simplex_invite_list",
+      label: "SimpleX Invite List",
+      description: "List the current SimpleX address link plus known invite/pending-contact hints.",
+      parameters: Type.Object({
+        accountId: Type.Optional(
+          Type.String({
+            description: "SimpleX account id. Defaults to the active/default account.",
+          })
+        ),
+      }),
+      async execute(_toolCallId, rawParams) {
+        return await runInviteListTool({
+          api,
+          accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
+        });
+      },
+    }),
+    { name: "simplex_invite_list" }
+  );
+
+  api.registerTool(
+    (ctx) => ({
+      name: "simplex_invite_revoke",
+      label: "SimpleX Invite Revoke",
+      description: "Revoke the current SimpleX address/invite link for an account.",
+      parameters: Type.Object({
+        accountId: Type.Optional(
+          Type.String({
+            description: "SimpleX account id. Defaults to the active/default account.",
+          })
+        ),
+      }),
+      async execute(_toolCallId, rawParams) {
+        const result = await revokeSimplexInvite({
           cfg: api.config,
           accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
-          mode,
           logger: api.logger,
-        })
-      );
-    },
-  }), { name: "simplex_invite_create" });
-
-  api.registerTool((ctx) => ({
-    name: "simplex_invite_list",
-    label: "SimpleX Invite List",
-    description: "List the current SimpleX address link plus known invite/pending-contact hints.",
-    parameters: Type.Object({
-      accountId: Type.Optional(
-        Type.String({ description: "SimpleX account id. Defaults to the active/default account." })
-      ),
+        });
+        return jsonResult({ ...result, revoked: true });
+      },
     }),
-    async execute(_toolCallId, rawParams) {
-      return await runInviteListTool({
-        api,
-        accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
-      });
-    },
-  }), { name: "simplex_invite_list" });
+    { name: "simplex_invite_revoke" }
+  );
 
-  api.registerTool((ctx) => ({
-    name: "simplex_invite_revoke",
-    label: "SimpleX Invite Revoke",
-    description: "Revoke the current SimpleX address/invite link for an account.",
-    parameters: Type.Object({
-      accountId: Type.Optional(
-        Type.String({ description: "SimpleX account id. Defaults to the active/default account." })
-      ),
+  api.registerTool(
+    (ctx) => ({
+      name: "simplex_group_add_participant",
+      label: "SimpleX Group Add Participant",
+      description: "Add a participant to a SimpleX group.",
+      parameters: GroupParticipantToolSchema,
+      async execute(_toolCallId, rawParams) {
+        return await executeSimplexAction({
+          action: "addParticipant",
+          cfg: api.config,
+          accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
+          actionParams: rawParams as Record<string, unknown>,
+        });
+      },
     }),
-    async execute(_toolCallId, rawParams) {
-      const result = await revokeSimplexInvite({
-        cfg: api.config,
-        accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
-        logger: api.logger,
-      });
-      return jsonResult({ ...result, revoked: true });
-    },
-  }), { name: "simplex_invite_revoke" });
+    { name: "simplex_group_add_participant" }
+  );
 
-  api.registerTool((ctx) => ({
-    name: "simplex_group_add_participant",
-    label: "SimpleX Group Add Participant",
-    description: "Add a participant to a SimpleX group.",
-    parameters: GroupParticipantToolSchema,
-    async execute(_toolCallId, rawParams) {
-      return await executeSimplexAction({
-        action: "addParticipant",
-        cfg: api.config,
-        accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
-        actionParams: rawParams as Record<string, unknown>,
-      });
-    },
-  }), { name: "simplex_group_add_participant" });
+  api.registerTool(
+    (ctx) => ({
+      name: "simplex_group_remove_participant",
+      label: "SimpleX Group Remove Participant",
+      description: "Remove a participant from a SimpleX group.",
+      parameters: GroupParticipantToolSchema,
+      async execute(_toolCallId, rawParams) {
+        return await executeSimplexAction({
+          action: "removeParticipant",
+          cfg: api.config,
+          accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
+          actionParams: rawParams as Record<string, unknown>,
+        });
+      },
+    }),
+    { name: "simplex_group_remove_participant" }
+  );
 
-  api.registerTool((ctx) => ({
-    name: "simplex_group_remove_participant",
-    label: "SimpleX Group Remove Participant",
-    description: "Remove a participant from a SimpleX group.",
-    parameters: GroupParticipantToolSchema,
-    async execute(_toolCallId, rawParams) {
-      return await executeSimplexAction({
-        action: "removeParticipant",
-        cfg: api.config,
-        accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
-        actionParams: rawParams as Record<string, unknown>,
-      });
-    },
-  }), { name: "simplex_group_remove_participant" });
-
-  api.registerTool((ctx) => ({
-    name: "simplex_group_leave",
-    label: "SimpleX Group Leave",
-    description: "Leave a SimpleX group.",
-    parameters: LeaveGroupToolSchema,
-    async execute(_toolCallId, rawParams) {
-      return await executeSimplexAction({
-        action: "leaveGroup",
-        cfg: api.config,
-        accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
-        actionParams: rawParams as Record<string, unknown>,
-      });
-    },
-  }), { name: "simplex_group_leave" });
+  api.registerTool(
+    (ctx) => ({
+      name: "simplex_group_leave",
+      label: "SimpleX Group Leave",
+      description: "Leave a SimpleX group.",
+      parameters: LeaveGroupToolSchema,
+      async execute(_toolCallId, rawParams) {
+        return await executeSimplexAction({
+          action: "leaveGroup",
+          cfg: api.config,
+          accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
+          actionParams: rawParams as Record<string, unknown>,
+        });
+      },
+    }),
+    { name: "simplex_group_leave" }
+  );
 }
 
 export function registerSimplexToolHooks(api: OpenClawPluginApi): void {

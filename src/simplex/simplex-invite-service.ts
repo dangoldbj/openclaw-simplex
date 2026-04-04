@@ -130,7 +130,10 @@ export async function listSimplexInvites(
     accountId: account.accountId,
     addressLink: extractSimplexLink(addressResponse),
     links: [
-      ...new Set([...extractSimplexLinks(addressResponse), ...extractSimplexLinks(contactsResponse)]),
+      ...new Set([
+        ...extractSimplexLinks(addressResponse),
+        ...extractSimplexLinks(contactsResponse),
+      ]),
     ],
     pendingHints: extractSimplexPendingHints(contactsResponse),
     addressResponse,

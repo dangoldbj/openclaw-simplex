@@ -27,12 +27,7 @@
       "default": "./dist/index.js"
     }
   },
-  "files": [
-    "dist",
-    "openclaw.plugin.json",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "openclaw.plugin.json", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsup index.ts setup-entry.ts --format esm --dts --clean",
     "docs:dev": "cd docs && mint dev",
@@ -68,9 +63,7 @@
     "vitest": "^3.2.4"
   },
   "openclaw": {
-    "extensions": [
-      "./dist/index.js"
-    ],
+    "extensions": ["./dist/index.js"],
     "setupEntry": "./dist/setup-entry.js",
     "channel": {
       "id": "openclaw-simplex",

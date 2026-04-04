@@ -48,7 +48,9 @@ export const SimplexAccountConfigSchema = z
   })
   .strict();
 
-export const SimplexConfigSchema = buildCatchallMultiAccountChannelSchema(SimplexAccountConfigSchema);
+export const SimplexConfigSchema = buildCatchallMultiAccountChannelSchema(
+  SimplexAccountConfigSchema
+);
 
 export type SimplexAccountConfig = z.infer<typeof SimplexAccountConfigSchema>;
 export type SimplexConfig = z.infer<typeof SimplexConfigSchema>;

@@ -4,7 +4,10 @@ import { buildComposedMessages } from "./simplex-media.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import { withSimplexRegistryClient } from "./simplex-client-registry.js";
 import { normalizeSimplexMessageId } from "./simplex-common.js";
-import { type SimplexComposedMessage, buildSendMessagesCommand } from "../simplex/simplex-commands.js";
+import {
+  type SimplexComposedMessage,
+  buildSendMessagesCommand,
+} from "../simplex/simplex-commands.js";
 import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
 
 export async function sendComposedMessages(params: {

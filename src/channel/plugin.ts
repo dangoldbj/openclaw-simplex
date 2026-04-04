@@ -98,7 +98,9 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   security: {
     resolveDmPolicy: ({ cfg, accountId, account }) => {
       const resolvedAccountId = accountId ?? account.accountId ?? DEFAULT_ACCOUNT_ID;
-      const useAccountPath = Boolean(cfg.channels?.["openclaw-simplex"]?.accounts?.[resolvedAccountId]);
+      const useAccountPath = Boolean(
+        cfg.channels?.["openclaw-simplex"]?.accounts?.[resolvedAccountId]
+      );
       const basePath = useAccountPath
         ? `channels.openclaw-simplex.accounts.${resolvedAccountId}.`
         : "channels.openclaw-simplex.";

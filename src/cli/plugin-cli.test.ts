@@ -60,9 +60,15 @@ describe("simplex migration config", () => {
         },
       },
     });
-    expect(result.changed).toContain(`config: plugins.entries.${LEGACY_PLUGIN_ID} -> plugins.entries.${PLUGIN_ID}`);
-    expect(result.changed).toContain(`config: plugins.installs.${LEGACY_PLUGIN_ID} -> plugins.installs.${PLUGIN_ID}`);
-    expect(result.changed).toContain(`config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`);
+    expect(result.changed).toContain(
+      `config: plugins.entries.${LEGACY_PLUGIN_ID} -> plugins.entries.${PLUGIN_ID}`
+    );
+    expect(result.changed).toContain(
+      `config: plugins.installs.${LEGACY_PLUGIN_ID} -> plugins.installs.${PLUGIN_ID}`
+    );
+    expect(result.changed).toContain(
+      `config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`
+    );
   });
 });
 
@@ -141,7 +147,9 @@ describe("simplex migration state", () => {
 
     const result = await migrateStateFiles(api, true);
 
-    expect(result.changed).toEqual([`state: ${LEGACY_CHANNEL_ID}-pairing.json -> ${CHANNEL_ID}-pairing.json`]);
+    expect(result.changed).toEqual([
+      `state: ${LEGACY_CHANNEL_ID}-pairing.json -> ${CHANNEL_ID}-pairing.json`,
+    ]);
     const files = (await readdir(credentialsDir)).sort();
     expect(files).toEqual([`${LEGACY_CHANNEL_ID}-pairing.json`]);
   });

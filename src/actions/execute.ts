@@ -90,8 +90,7 @@ async function sendActionComposedMessages(params: {
   if (commandError) {
     throw new Error(commandError);
   }
-  const rawMessageId =
-    resp.chatItems?.[0]?.chatItem?.meta?.itemId ?? resp.messageId ?? resp.itemId;
+  const rawMessageId = resp.chatItems?.[0]?.chatItem?.meta?.itemId ?? resp.messageId ?? resp.itemId;
   if (typeof rawMessageId === "number" && Number.isFinite(rawMessageId)) {
     return { messageId: String(rawMessageId) };
   }

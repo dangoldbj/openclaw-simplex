@@ -9,9 +9,7 @@ export function buildSimplexGatewayRuntime(
   return {
     startAccount: async (ctx) => {
       const account = ctx.account;
-      ctx.log?.info?.(
-        `[${account.accountId}] SimpleX start requested (wsUrl=${account.wsUrl})`
-      );
+      ctx.log?.info?.(`[${account.accountId}] SimpleX start requested (wsUrl=${account.wsUrl})`);
       ctx.setStatus({
         accountId: account.accountId,
         mode: account.mode,

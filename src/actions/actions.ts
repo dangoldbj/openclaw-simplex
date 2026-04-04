@@ -1,6 +1,4 @@
-import type {
-  ChannelMessageActionAdapter,
-} from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelMessageActionAdapter } from "openclaw/plugin-sdk/channel-contract";
 import { listEnabledSimplexAccounts } from "../config/accounts.js";
 import { executeSimplexAction } from "./execute.js";
 import {

@@ -108,10 +108,19 @@ function dedupeStrings(values: unknown[] | undefined): string[] | undefined {
   if (!Array.isArray(values)) {
     return values as string[] | undefined;
   }
-  return [...new Set(values.filter((value): value is string => typeof value === "string" && value.trim().length > 0))];
+  return [
+    ...new Set(
+      values.filter(
+        (value): value is string => typeof value === "string" && value.trim().length > 0
+      )
+    ),
+  ];
 }
 
-function mergeObjects<T extends Record<string, unknown>>(legacy: T | undefined, next: T | undefined): T | undefined {
+function mergeObjects<T extends Record<string, unknown>>(
+  legacy: T | undefined,
+  next: T | undefined
+): T | undefined {
   if (!legacy && !next) {
     return undefined;
   }
@@ -159,7 +168,9 @@ export function migrateConfigObject(rawConfig: Record<string, unknown>): {
     );
     delete entries[LEGACY_PLUGIN_ID];
     plugins.entries = entries;
-    result.changed.push(`config: plugins.entries.${LEGACY_PLUGIN_ID} -> plugins.entries.${PLUGIN_ID}`);
+    result.changed.push(
+      `config: plugins.entries.${LEGACY_PLUGIN_ID} -> plugins.entries.${PLUGIN_ID}`
+    );
   }
 
   const installs = { ...((plugins.installs as Record<string, unknown> | undefined) ?? {}) };
@@ -170,7 +181,9 @@ export function migrateConfigObject(rawConfig: Record<string, unknown>): {
     );
     delete installs[LEGACY_PLUGIN_ID];
     plugins.installs = installs;
-    result.changed.push(`config: plugins.installs.${LEGACY_PLUGIN_ID} -> plugins.installs.${PLUGIN_ID}`);
+    result.changed.push(
+      `config: plugins.installs.${LEGACY_PLUGIN_ID} -> plugins.installs.${PLUGIN_ID}`
+    );
   }
 
   for (const key of ["allow", "deny"] as const) {
@@ -178,9 +191,13 @@ export function migrateConfigObject(rawConfig: Record<string, unknown>): {
     if (!values?.includes(LEGACY_PLUGIN_ID)) {
       continue;
     }
-    const migrated = dedupeStrings(values.map((value) => (value === LEGACY_PLUGIN_ID ? PLUGIN_ID : value)));
+    const migrated = dedupeStrings(
+      values.map((value) => (value === LEGACY_PLUGIN_ID ? PLUGIN_ID : value))
+    );
     plugins[key] = migrated;
-    result.changed.push(`config: plugins.${key} replaced "${LEGACY_PLUGIN_ID}" with "${PLUGIN_ID}"`);
+    result.changed.push(
+      `config: plugins.${key} replaced "${LEGACY_PLUGIN_ID}" with "${PLUGIN_ID}"`
+    );
   }
 
   if (LEGACY_CHANNEL_ID in channels) {
@@ -195,7 +212,10 @@ export function migrateConfigObject(rawConfig: Record<string, unknown>): {
   return { nextConfig, result };
 }
 
-export async function migrateStateFiles(api: OpenClawPluginApi, dryRun: boolean): Promise<MigrationResult> {
+export async function migrateStateFiles(
+  api: OpenClawPluginApi,
+  dryRun: boolean
+): Promise<MigrationResult> {
   const result: MigrationResult = { changed: [], skipped: [] };
   const credentialsDir = path.join(api.runtime.state.resolveStateDir(), "credentials");
   await mkdir(credentialsDir, { recursive: true });
@@ -237,7 +257,9 @@ export async function migrateStateFiles(api: OpenClawPluginApi, dryRun: boolean)
 }
 
 function printMigrationResult(result: MigrationResult, dryRun: boolean): void {
-  const title = dryRun ? "OpenClaw SimpleX migration dry run" : "OpenClaw SimpleX migration complete";
+  const title = dryRun
+    ? "OpenClaw SimpleX migration dry run"
+    : "OpenClaw SimpleX migration complete";
   console.log(title);
   if (result.changed.length === 0) {
     console.log("- No changes were needed.");
