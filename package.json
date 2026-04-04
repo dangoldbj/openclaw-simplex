@@ -43,7 +43,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.34.48",
+    "@sinclair/typebox": "^0.34.49",
     "qrcode": "^1.5.4",
     "ws": "^8.19.0",
     "zod": "^4.3.6"

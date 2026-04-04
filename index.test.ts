@@ -76,7 +76,10 @@ type Handler = (ctx: {
   };
 }) => Promise<void>;
 
-type HookHandler = (event: { toolName: string; params: Record<string, unknown> }) => unknown;
+type BeforeToolCallHook = (event: {
+  toolName: string;
+  params: Record<string, unknown>;
+}) => unknown;
 
 function setupRegistration(
   config: Record<string, unknown> = {},
@@ -84,11 +87,11 @@ function setupRegistration(
 ): {
   methods: Map<string, Handler>;
   tools: string[];
-  hooks: Array<{ events: string | string[]; handler: HookHandler }>;
+  hooks: Array<{ events: string | string[]; handler: unknown }>;
 } {
   const methods = new Map<string, Handler>();
   const tools: string[] = [];
-  const hooks: Array<{ events: string | string[]; handler: HookHandler }> = [];
+  const hooks: Array<{ events: string | string[]; handler: unknown }> = [];
   const api: OpenClawPluginApi = {
     id: "openclaw-simplex",
     name: "SimpleX",
@@ -109,7 +112,7 @@ function setupRegistration(
       }
     },
     registerHook: (events, handler) => {
-      hooks.push({ events, handler: handler as unknown as HookHandler });
+      hooks.push({ events, handler });
     },
     registerHttpRoute: () => {},
     registerCli: () => {},
@@ -130,7 +133,7 @@ function setupRegistration(
     registerMemoryPromptSection: () => {},
     registerCommand: () => {},
     on: (hookName, handler) => {
-      hooks.push({ events: hookName, handler: handler as unknown as HookHandler });
+      hooks.push({ events: hookName, handler });
     },
     resolvePath: (value: string) => value,
   };
@@ -143,6 +146,12 @@ function setupHandlers(
   registrationMode: "full" | "setup-only" | "setup-runtime" = "full"
 ): Map<string, Handler> {
   return setupRegistration(config, registrationMode).methods;
+}
+
+function assertBeforeToolCallHook(handler: unknown): asserts handler is BeforeToolCallHook {
+  if (typeof handler !== "function") {
+    throw new Error("before_tool_call hook is not callable");
+  }
 }
 
 function setupHandler(method: string, config: Record<string, unknown> = {}): Handler {
@@ -197,6 +206,7 @@ describe("simplex approval hook", () => {
     if (!beforeToolCall) {
       throw new Error("before_tool_call hook not registered");
     }
+    assertBeforeToolCallHook(beforeToolCall.handler);
 
     expect(
       beforeToolCall.handler({

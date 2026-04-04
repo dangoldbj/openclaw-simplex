@@ -183,5 +183,5 @@ export function buildSimplexMessageToolSchema(): ChannelMessageToolSchemaContrib
         })
       ),
     },
-  } as unknown as ChannelMessageToolSchemaContribution;
+  };
 }
