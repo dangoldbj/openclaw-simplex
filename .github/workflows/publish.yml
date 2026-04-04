@@ -39,16 +39,13 @@ jobs:
       - name: Setup Node
         uses: ./.github/actions/setup-node
         with:
-          node_version: "22"
+          node_version: "24"
           pnpm_version: "10.17.1"
-
-      - name: Upgrade npm for trusted publishing
-        run: npm i -g npm@latest
 
       - name: Configure npm registry
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
       - name: Resolve publish tag
