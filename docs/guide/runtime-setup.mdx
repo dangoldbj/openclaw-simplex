@@ -100,24 +100,3 @@ If you want the SimpleX runtime to start automatically on login or machine boot,
     Expected result: the launch agent should appear under that label and report a running PID.
   </Tab>
 </Tabs>
-
-## Per-account config
-
-Use per-account config when you want separate SimpleX identities or separate runtime ports for different OpenClaw channel accounts. Each account can point at its own <code>simplex-chat</code> WebSocket endpoint, and that endpoint must already be running.
-
-```json
-{
-  "channels": {
-    "openclaw-simplex": {
-      "accounts": {
-        "ops": {
-          "enabled": true,
-          "connection": {
-            "wsUrl": "ws://127.0.0.1:7777"
-          }
-        }
-      }
-    }
-  }
-}
-```
