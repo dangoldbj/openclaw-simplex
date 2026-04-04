@@ -8,6 +8,9 @@
     "light": "#ff8a6b",
     "dark": "#ff5a36"
   },
+  "icons": {
+    "library": "lucide"
+  },
   "navigation": {
     "tabs": [
       {
