@@ -1,33 +1,35 @@
 ---
 title: Why SimpleX
-description: Why this plugin uses SimpleX for privacy-first OpenClaw messaging.
+description: Why SimpleX gives OpenClaw an invitation-first channel without phone numbers or hosted bot accounts.
 ---
 
-Why SimpleX is the right choice for privacy-critical OpenClaw deployments.
+Most OpenClaw channels start from a registered platform identity: a bot username, a phone number, or an application account that lives inside someone else's platform.
 
-Most messaging channels require a phone number, a hosted bot API, or a centralized platform account. SimpleX requires none of these. That makes it especially well suited to OpenClaw deployments where privacy, local control, and minimal external dependencies matter.
+This plugin takes a different shape. With SimpleX, the agent becomes reachable when you hand someone a link. There is no bot registry, no phone-number binding, and no hosted bot account to provision before the first conversation starts.
+
+That makes the channel especially useful for OpenClaw deployments where privacy, local control, and explicit network boundaries matter.
 
 <Columns cols={2}>
-  <Card title="Privacy-first" icon="shield">
-    No phone number requirement, end-to-end encryption by default, and lower metadata exposure than typical bot-platform channels.
+  <Card title="Invitation-first reachability" icon="key-round">
+    Create a one-time connect link or an address link, share it only with intended users, and revoke it when that access should disappear.
   </Card>
-  <Card title="Operator control" icon="settings">
-    Run the runtime yourself, choose the network boundary, and keep policy controls inside OpenClaw.
+  <Card title="No platform account dependency" icon="shield">
+    No phone number, no bot username, and no bot registration step before your OpenClaw agent can receive a message.
   </Card>
 </Columns>
 
 <Columns cols={2}>
-  <Card title="Usable in practice" icon="message-circle">
-    Pairing, allowlists, invite helpers, media support, and status reporting are built into the channel.
+  <Card title="Operator-controlled runtime" icon="server">
+    Run <code>simplex-chat</code> yourself, choose whether relays are public or self-hosted, and keep OpenClaw policy enforcement local.
   </Card>
-  <Card title="Fits self-hosting" icon="server">
-    Works well for local-first or self-hosted OpenClaw deployments that avoid hosted chat providers.
+  <Card title="Usable in production workflows" icon="message-circle">
+    Pairing approval, allowlists, invite helpers, media support, and channel status all exist in the plugin, not in ad hoc glue code.
   </Card>
 </Columns>
 
 ## What the plugin provides
 
-SimpleX messaging channel backed by the local `simplex-chat` CLI. It supports:
+A SimpleX channel backed by a local <code>simplex-chat</code> WebSocket runtime:
 
 - send/receive (text and media)
 - pairing with allowlist enforcement
@@ -39,20 +41,20 @@ SimpleX messaging channel backed by the local `simplex-chat` CLI. It supports:
 
 ## Why teams choose it
 
-- Privacy-oriented protocol and ecosystem.
-- Good fit for operators who want tighter control over runtime/network boundaries.
-- Works well with OpenClaw policy controls (`allowFrom`, `dmPolicy`, group policy).
-- Lets you avoid provider lock-in from mainstream chat APIs.
+- They want invite-based access instead of a public bot identity.
+- They want tighter control over where the runtime and relay path live.
+- They want OpenClaw-native policy controls (<code>allowFrom</code>, <code>dmPolicy</code>, group policy) to remain the enforcement point.
+- They want to avoid coupling the agent to a hosted bot API or a phone-number-backed account.
 
 ## Why this plugin matters
 
-Without this plugin, using SimpleX with OpenClaw usually means custom integration work. This package gives a standardized channel implementation with status, outbound/inbound handling, directory integration, and invite helpers.
+Without this plugin, using SimpleX with OpenClaw usually means custom integration work around event parsing, outbound command translation, pairing state, and invite management. This package turns that into a standard channel implementation.
 
-It also addresses practical gaps in the current channel mix:
+The contribution is not just “another channel”. It adds a channel model that is structurally different from bot-account integrations:
 
 - no phone number requirement
-- no third-party bot API dependency
-- avoids reliance on unofficial CLIs
+- no hosted bot account or bot API dependency
+- access starts from an invitation link, not a public platform identity
 
 <Note>
   Low risk to existing OpenClaw channels: the implementation stays isolated and is only active when <code>openclaw-simplex</code> is configured and enabled.

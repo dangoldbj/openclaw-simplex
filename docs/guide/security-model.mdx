@@ -1,9 +1,9 @@
 ---
 title: Security Model
-description: Privacy and policy boundaries for the OpenClaw SimpleX plugin.
+description: Invitation boundaries, pairing policy, and runtime trust boundaries for OpenClaw SimpleX.
 ---
 
-This plugin enforces channel-side controls before handing requests to the agent.
+The core security property of this channel is that reachability starts from an invitation, not from a public bot identity. OpenClaw then adds policy checks before a sender can trigger agent work.
 
 <Tip>
   Start conservative: use <code>dmPolicy: "pairing"</code> and <code>groupPolicy: "allowlist"</code> until you have a reason to widen access.
@@ -25,14 +25,15 @@ This plugin enforces channel-side controls before handing requests to the agent.
     <code>open</code>, <code>allowlist</code>, or <code>disabled</code> for group traffic.
   </Card>
   <Card title="Pairing" icon="key-round">
-    Explicit approval flow for unknown senders before granting access.
+    Explicit approval flow for newly discovered contacts before they become trusted senders.
   </Card>
 </Columns>
 
 ## Operational boundaries
 
-- OpenClaw only gets WebSocket access to an already-running SimpleX endpoint.
-- You decide where each process runs and what network path is allowed.
+- OpenClaw only talks to an already-running <code>simplex-chat</code> endpoint over WebSocket.
+- You decide where the runtime runs, which relay path it uses, and whether relays are public or self-hosted.
+- If you need a fully internal deployment, keep <code>simplex-chat</code> and your relays inside that network boundary.
 
 ## Recommended production posture
 

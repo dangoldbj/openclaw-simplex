@@ -1,15 +1,17 @@
 ---
 title: OpenClaw SimpleX
-description: SimpleX channel plugin for OpenClaw.
+description: Invitation-first SimpleX messaging for OpenClaw, without phone numbers or hosted bot identities.
 ---
 
-OpenClaw SimpleX is a channel plugin that lets your OpenClaw agents communicate over <a href="https://simplex.chat/">SimpleX</a>, a decentralized, end-to-end encrypted messaging network, with no phone numbers, no hosted bot APIs, and no third-party infrastructure dependencies.
+Your OpenClaw agent, reachable only by people you have invited: no phone number, no bot username, and no hosted bot platform account in the middle.
+
+Within OpenClaw's channel ecosystem, this plugin enables a communication model that does not rely on platform identity or bot registration. With <a href="https://simplex.chat/">SimpleX</a>, the invite or address link becomes the access boundary: generate it, share it intentionally, revoke it when needed, and the agent does not expose a platform-discoverable bot identity.
 
 <Info>
   Breaking in <code>1.0.0</code>: the plugin id and channel id are now <code>openclaw-simplex</code>, managed mode was removed, and existing users should run <code>openclaw simplex migrate</code>. See <a href="/guide/migration">Migration</a>.
 </Info>
 
-This plugin brings OpenClaw to SimpleX with clear policy controls, multi-account support, and an external WebSocket runtime model.
+The implementation keeps developer-facing boundaries explicit: OpenClaw enforces policy, the plugin translates channel events and actions, and a separately managed <code>simplex-chat</code> runtime handles the SimpleX WebSocket API.
 
 ## Quick Start
 
@@ -57,7 +59,7 @@ See [Migration](/guide/migration) for the full breaking-change checklist.
 
 <Columns cols={2}>
   <Card title="Getting Started" icon="rocket" href="/guide/getting-started" cta="Open guide">
-    Install the plugin, configure the channel, pair the first contact, and verify end-to-end messaging.
+    Install the runtime and plugin, configure <code>wsUrl</code>, generate the first invite, and verify end-to-end messaging.
   </Card>
   <Card title="Migration" icon="arrow-right-left" href="/guide/migration" cta="Upgrade safely">
     Upgrade existing <code>simplex</code> installs to <code>openclaw-simplex</code> and preserve pairing state.
@@ -66,10 +68,10 @@ See [Migration](/guide/migration) for the full breaking-change checklist.
 
 <Columns cols={2}>
   <Card title="Setup" icon="settings" href="/guide/setup" cta="Run the runtime">
-    Run <code>simplex-chat</code>, configure <code>wsUrl</code>, and set up a persistent host-managed service.
+    Run <code>simplex-chat</code> yourself, wire OpenClaw to its WebSocket endpoint, and optionally move it under <code>systemd</code> or <code>launchd</code>.
   </Card>
   <Card title="Security Model" icon="shield" href="/guide/security-model" cta="Review policies">
-    Review pairing, allowlists, DM policy, and group policy before widening access.
+    Understand the invitation boundary, pairing approval, allowlists, and group policy before widening who can talk to the agent.
   </Card>
 </Columns>
 
@@ -84,7 +86,7 @@ See [Migration](/guide/migration) for the full breaking-change checklist.
 
 <Columns cols={2}>
   <Card title="Why SimpleX" icon="message-circle" href="/guide/why-simplex" cta="Read overview">
-    Understand why this channel fits privacy-first and self-hosted OpenClaw deployments.
+    See why this channel is built around invitation-based reachability, self-hostable relays, and no platform account dependency.
   </Card>
   <Card title="How It Works" icon="workflow" href="/guide/how-it-works" cta="See flow">
     Learn how routing, pairing, policy checks, and outbound delivery fit together.

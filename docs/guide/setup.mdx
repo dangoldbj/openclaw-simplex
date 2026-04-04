@@ -1,6 +1,6 @@
 ---
 title: Setup
-description: Runtime configuration examples for external and multi-account SimpleX setups.
+description: Run simplex-chat as an external runtime and point OpenClaw at its WebSocket endpoint.
 ---
 
 Prerequisite: install `simplex-chat` first (see [Getting Started](/guide/getting-started)).
@@ -11,7 +11,7 @@ Prerequisite: install `simplex-chat` first (see [Getting Started](/guide/getting
 
 ## Runtime
 
-Run `simplex-chat` separately and point OpenClaw at its WebSocket endpoint.
+The plugin expects a reachable <code>simplex-chat</code> WebSocket endpoint. Start that runtime yourself, then wire OpenClaw to it through <code>channels.openclaw-simplex.connection.wsUrl</code>.
 
 Start the runtime:
 
@@ -35,9 +35,9 @@ simplex-chat -p 5225
 }
 ```
 
-If `simplex-chat` is not running, OpenClaw will keep the channel disconnected and surface the connection error in channel status.
+If the runtime is not available at that endpoint, OpenClaw keeps the channel disconnected and surfaces the connection error in channel status.
 
-Manual invite and address management still happens in the `simplex-chat` console:
+Manual invite and address management is still available in the <code>simplex-chat</code> console:
 
 ```text
 /c
@@ -47,6 +47,8 @@ Manual invite and address management still happens in the `simplex-chat` console
 ```
 
 ## Run as a service
+
+If you want the SimpleX runtime to come up automatically on login or machine boot, let the host OS supervise it and keep OpenClaw focused on the channel connection itself.
 
 ### Linux (`systemd --user`)
 

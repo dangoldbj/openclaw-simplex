@@ -3,6 +3,8 @@ title: How It Works
 description: Understand the OpenClaw-to-SimpleX request and response flow.
 ---
 
+The runtime model is intentionally split: OpenClaw owns routing and policy, this plugin translates channel behavior, and <code>simplex-chat</code> remains a separately managed process with a WebSocket API.
+
 <Steps>
   <Step title="OpenClaw loads the plugin">
     OpenClaw registers the <code>openclaw-simplex</code> channel. For disabled or unconfigured channels, it can use the lightweight setup entry before loading the full runtime entry.
@@ -13,11 +15,11 @@ description: Understand the OpenClaw-to-SimpleX request and response flow.
   </Step>
 
   <Step title="Inbound events are normalized">
-    Incoming SimpleX events are parsed into OpenClaw context, including peer/group routing information, message bodies, media handling, and runtime status updates.
+    Incoming SimpleX events are parsed into OpenClaw message context, including peer/group routing, message bodies, media references, reply context, and runtime status updates.
   </Step>
 
   <Step title="Policies are applied">
-    OpenClaw evaluates DM policy, allowlists, group policy, pairing state, and command authorization before forwarding work to the agent.
+    OpenClaw evaluates DM policy, allowlists, group policy, pairing state, and command authorization before the agent is allowed to answer.
   </Step>
 
   <Step title="Replies go back through SimpleX">
@@ -41,6 +43,6 @@ description: Understand the OpenClaw-to-SimpleX request and response flow.
     Send, react, edit, delete, upload-file, and group management actions.
   </Card>
   <Card title="Operational helpers" icon="bolt">
-    Directory lookups, resolver support, and gateway invite helper methods for setup flows.
+    Directory lookups, target resolution, and gateway invite methods for developer-controlled onboarding and automation flows.
   </Card>
 </Columns>

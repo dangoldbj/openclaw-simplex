@@ -3,6 +3,8 @@ title: Troubleshooting
 description: Common issues when connecting OpenClaw to SimpleX and how to resolve them.
 ---
 
+Most failures fall into one of three buckets: the plugin is not trusted/enabled, OpenClaw cannot reach the external <code>simplex-chat</code> WebSocket endpoint, or policy settings are correctly rejecting a sender you expected to allow.
+
 <Note>
   When the runtime is down, OpenClaw will not start it for you. The channel stays disconnected until <code>simplex-chat</code> is running at the configured endpoint.
 </Note>
