@@ -1,6 +1,6 @@
 ---
 title: How It Works
-description: Understand the OpenClaw-to-SimpleX request and response flow.
+description: Trace the full message lifecycle from an incoming SimpleX contact through the plugin WebSocket bridge, OpenClaw policy checks, and agent response delivery.
 ---
 
 The runtime model is intentionally split: OpenClaw owns routing and policy, this plugin translates channel behavior, and <code>simplex-chat</code> remains a separately managed process with a WebSocket API.
