@@ -1,34 +1,30 @@
 # @dangoldbj/openclaw-simplex
 
-> **TL;DR:** Your OpenClaw agent, reachable only by people you've invited — no phone number, no bot username, no hosted bot platform in the middle.
+> **TL;DR:** An OpenClaw channel for SimpleX Chat: invite-based reachability, end-to-end encrypted messaging, and no public bot account or hosted bot platform in the middle.
 
 > **Breaking in `1.0.0`:** the plugin id and channel id are now `openclaw-simplex`, managed mode was removed, and existing users should run `openclaw simplex migrate`. See the [migration guide](https://openclaw-simplex.mintlify.app/guide/migration).
 
 ---
 
-Every other channel you can give an OpenClaw agent has something in common: the agent exists as a registered thing. A Telegram bot username. A WhatsApp number. A Discord application ID. Something that lives on a platform, can be discovered, enumerated, or revoked by someone other than you.
+Most agent chat channels in OpenClaw assume a platform bot identity: a bot username, a phone number, an app registration, or some other platform-managed endpoint.
 
-This plugin is different.
+This plugin takes a different route.
 
-Within OpenClaw's channel ecosystem, this enables a communication model that does not rely on platform identity or bot registration.
+Within OpenClaw's channel ecosystem, it introduces a communication model where the contact path is created by a SimpleX invite or address link rather than by platform bot registration. You generate the link, you share it intentionally, and you revoke it when needed.
 
-With SimpleX, your agent has no persistent address until you hand someone a link. The link is the identity. You generate it, you share it, you revoke it. There's no bot registry. No platform account tying the agent to a registered identity. No phone number.
-
-**This is the first OpenClaw channel where the agent is an invitation, not a service.**
-
-That distinction is quiet but significant. It means you can run an agent that only the people you've explicitly handed a link to can reach — and when you revoke that link, the door closes cleanly. No deregistration flow. No platform support ticket. Just `openclaw simplex address revoke`.
+That changes where reachability comes from. The agent does not depend on a public bot-facing identity, and OpenClaw policy sits on top of that link-based contact surface instead of depending on platform-native bot identity.
 
 ---
 
-## What you can build with this
+## Why this matters
 
-**Temporary expert agents for sensitive conversations.** A lawyer spinning up an AI assistant for a single client engagement. An HR department running anonymous employee feedback. A therapist giving a patient after-hours access to a support agent. These all require the agent to feel genuinely private and bounded — not "private as a policy" but private as a structural fact.
+**Private, bounded agent access.** A lawyer spinning up an AI assistant for a single client engagement. An HR department running anonymous employee feedback. A therapist giving a patient after-hours access to a support agent. These all benefit from a channel where reachability starts with a link you intentionally shared, not with a public bot endpoint.
 
-**Self-hosted automation with no external dependencies.** If you're running OpenClaw on your own infrastructure and the requirement is that nothing leaves your network, every other channel breaks that. This one doesn't. SimpleX relays are self-hostable, the CLI runs locally, and the plugin connects to it over a local WebSocket. The entire stack can live on one machine.
+**Self-hosted transport, not only self-hosted inference.** If you're running OpenClaw on your own infrastructure and want the runtime and relay path under your control, SimpleX makes that possible. The CLI runs locally, the plugin connects to it over a local WebSocket, and SimpleX relays are self-hostable. If you run the runtime and relays inside your environment, the whole path can stay under your infrastructure.
 
-**Agent-to-agent communication without a platform account layer.** Two OpenClaw instances, each with this plugin, talking to each other over SimpleX. No shared bot API platform. No phone-number or app-account dependency. SimpleX relays are self-hostable — and if you run your own inside an isolated network, the entire path stays off third-party infrastructure. This is a foundation for private multi-agent systems that can stay fully internal to your network boundary.
+**Agent-to-agent transport without a platform account layer.** Two OpenClaw instances, each with this plugin, can talk over SimpleX without relying on a shared bot API platform, phone-number-based identity, or workspace app registration. If you run your own relays inside an isolated environment, the path can stay off third-party infrastructure.
 
-**Peer access without account creation.** You want to let someone interact with your agent without asking them to create an account on anything. SimpleX requires no phone number or email — a user downloads the app and scans your QR code. That's the entire onboarding.
+**Peer access without platform account onboarding.** You can let someone interact with your agent without asking them to create an account on a platform you control. In the common case, a user installs SimpleX, scans your QR code, and the contact path exists.
 
 ---
 
@@ -67,7 +63,7 @@ openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 openclaw simplex invite create --qr
 ```
 
-Scan it with the SimpleX app. That's it — you're talking to your agent over end-to-end encrypted messaging with no external accounts.
+Scan it with the SimpleX app. That's it: your agent is reachable over SimpleX without a public bot account.
 
 **Upgrade from older `simplex` ids:**
 
@@ -94,7 +90,6 @@ Full docs: https://openclaw-simplex.mintlify.app/
             |        simplex          |
             | - inbound monitor       |
             | - outbound actions      |
-            | - policy enforcement    |
             | - account/runtime state |
             +------------+------------+
                          |
@@ -112,7 +107,7 @@ Full docs: https://openclaw-simplex.mintlify.app/
             +-------------------------+
 ```
 
-The plugin connects OpenClaw to a locally running `simplex-chat` process via its WebSocket API. Incoming messages are normalized into the standard OpenClaw message context — the same pipeline used by every other channel. OpenClaw applies your policies (`dmPolicy`, `allowFrom`, group policy), runs the agent, and sends the response back through SimpleX.
+The plugin connects OpenClaw to a locally running `simplex-chat` process via its WebSocket API. Incoming messages are normalized into the standard OpenClaw message context. OpenClaw applies your policies (`dmPolicy`, `allowFrom`, group policy), runs the agent, and sends the response back through SimpleX.
 
 The key difference from managed-mode channels: OpenClaw does not own or supervise the `simplex-chat` process. You run it separately, point OpenClaw at its WebSocket endpoint, and the channel becomes operational. This gives you full control over the runtime lifecycle.
 
@@ -120,15 +115,14 @@ The key difference from managed-mode channels: OpenClaw does not own or supervis
 
 ## What this plugin provides
 
-- Send and receive messages, including text and media
-- Pairing and allowlist support
-- Invite link and QR generation
-- Shared `message` actions: `upload-file`, reactions, edits, deletes, group actions
-- Plugin tools for invite and group administration
-- Runtime status and lifecycle management
-- Control UI configuration
-- External WebSocket runtime integration
-- Explicit runtime and policy control
+- Direct and group messaging over SimpleX
+- Media send/receive support
+- Pairing approval and allowlist enforcement
+- Invite link, address link, and QR generation
+- Shared `message` actions including `upload-file`, reactions, edits, deletes, and group actions
+- Plugin tools and gateway methods for invite and group administration
+- Runtime status reporting and Control UI configuration
+- External WebSocket runtime integration with explicit operator-managed lifecycle
 
 ---
 
@@ -198,7 +192,7 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 
 ---
 
-## Configuration
+## Minimal configuration
 
 ```json
 {
@@ -291,11 +285,11 @@ This migrates:
 
 ## Security model
 
-- Channel-level sender gating via `dmPolicy` and `allowFrom`
-- Pairing-based approval flow — new contacts require explicit acceptance
-- Explicit control over runtime boundaries — OpenClaw does not auto-spawn processes
-- No reliance on external messaging APIs
-- No bot registration or platform-bound identifier for the agent
+- Reachability starts with a SimpleX invite or address link
+- OpenClaw applies sender gating via `dmPolicy`, `allowFrom`, and group policy
+- Pairing-based approval can require explicit acceptance before a new contact can trigger the agent
+- OpenClaw does not auto-spawn `simplex-chat`; runtime control stays explicit
+- The plugin does not depend on a platform bot registry or hosted messaging API
 
 ---
 
