@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.2] - 2026-04-05
+
+### Fixed
+
+- Stopped calling `/show_address` during routine channel status snapshots, so loading OpenClaw Control UI no longer triggers unnecessary address-link lookups against `simplex-chat`.
+
 ## [1.2.1] - 2026-04-04
 
 ### Changed
