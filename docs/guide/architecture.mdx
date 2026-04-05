@@ -1,6 +1,6 @@
 ---
 title: Architecture
-description: Runtime boundaries between OpenClaw, the SimpleX plugin, and simplex-chat.
+description: Understand the runtime boundaries between OpenClaw, the SimpleX channel plugin, and the external simplex-chat process including their responsibilities.
 ---
 
 The architecture is built around one rule: OpenClaw should enforce policy and route messages, but it should not own the <code>simplex-chat</code> process lifecycle for this plugin.
