@@ -1,34 +1,14 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
 import type { ResolvedSimplexAccount } from "../config/types.js";
-import { extractSimplexLink } from "../simplex/simplex-links.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
-import { withSimplexRegistryClient } from "./simplex-client-registry.js";
 import {
   DEFAULT_ACCOUNT_ID,
   extractSimplexWsUrlFromApplication,
   resolveSimplexHealthState,
 } from "./simplex-common.js";
 
-async function readAddressLink(
-  registry: SimplexClientRegistry,
-  account: ResolvedSimplexAccount,
-  running: boolean
-): Promise<string | null> {
-  if (!account.enabled || !account.configured || !running) {
-    return null;
-  }
-  try {
-    const response = await withSimplexRegistryClient(registry, account, (client) =>
-      client.sendCommand("/show_address")
-    );
-    return extractSimplexLink(response);
-  } catch {
-    return null;
-  }
-}
-
 export function buildSimplexStatus(
-  registry: SimplexClientRegistry
+  _registry: SimplexClientRegistry
 ): NonNullable<ChannelPlugin<ResolvedSimplexAccount>["status"]> {
   return {
     defaultRuntime: {
@@ -72,7 +52,6 @@ export function buildSimplexStatus(
       wsUrl: extractSimplexWsUrlFromApplication(snapshot.application) ?? account.wsUrl ?? null,
     }),
     buildAccountSnapshot: async ({ account, runtime }) => {
-      const addressLink = await readAddressLink(registry, account, runtime?.running ?? false);
       const wsUrl = extractSimplexWsUrlFromApplication(runtime?.application) ?? account.wsUrl;
       return {
         accountId: account.accountId,
@@ -96,7 +75,6 @@ export function buildSimplexStatus(
         lastInboundAt: runtime?.lastInboundAt ?? null,
         lastOutboundAt: runtime?.lastOutboundAt ?? null,
         application: {
-          addressLink,
           wsUrl,
         },
       };
