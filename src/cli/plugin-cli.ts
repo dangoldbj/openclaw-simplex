@@ -295,6 +295,28 @@ export async function runMigration(api: OpenClawPluginApi, dryRun: boolean): Pro
   printMigrationResult(result, dryRun);
 }
 
+const SIMPLEX_CLI_COMMANDS = [PLUGIN_ID, LEGACY_PLUGIN_ID];
+
+const SIMPLEX_CLI_DESCRIPTORS = [
+  {
+    name: PLUGIN_ID,
+    description: "OpenClaw SimpleX plugin commands",
+    hasSubcommands: true,
+  },
+  {
+    name: LEGACY_PLUGIN_ID,
+    description: "OpenClaw SimpleX plugin commands",
+    hasSubcommands: true,
+  },
+] as const;
+
+export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
+  api.registerCli(() => {}, {
+    commands: [...SIMPLEX_CLI_COMMANDS],
+    descriptors: [...SIMPLEX_CLI_DESCRIPTORS],
+  });
+}
+
 export function registerSimplexCli(api: OpenClawPluginApi): void {
   api.registerCli(
     ({ program }) => {
@@ -360,19 +382,8 @@ export function registerSimplexCli(api: OpenClawPluginApi): void {
         });
     },
     {
-      commands: [PLUGIN_ID, LEGACY_PLUGIN_ID],
-      descriptors: [
-        {
-          name: PLUGIN_ID,
-          description: "OpenClaw SimpleX plugin commands",
-          hasSubcommands: true,
-        },
-        {
-          name: LEGACY_PLUGIN_ID,
-          description: "OpenClaw SimpleX plugin commands",
-          hasSubcommands: true,
-        },
-      ],
+      commands: [...SIMPLEX_CLI_COMMANDS],
+      descriptors: [...SIMPLEX_CLI_DESCRIPTORS],
     }
   );
 }

@@ -1,5 +1,5 @@
 import type { ChannelMessageActionName } from "openclaw/plugin-sdk/channel-contract";
-import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { buildComposedMessages } from "../channel/simplex-media.js";
 import { resolveSimplexAccount } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";

@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/core";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 
 export type SimplexAllowlistEntry = {

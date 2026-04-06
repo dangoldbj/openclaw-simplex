@@ -1,4 +1,4 @@
-import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
+import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import {

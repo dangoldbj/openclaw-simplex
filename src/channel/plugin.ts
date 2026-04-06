@@ -1,4 +1,4 @@
-import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
+import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { simplexMessageActions } from "../actions/actions.js";
 import {
   listSimplexAccountIds,
