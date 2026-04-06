@@ -42,7 +42,7 @@ vi.mock("qrcode", () => ({
   toDataURL: qrMocks.toDataURL,
 }));
 
-import type { PluginRuntime } from "openclaw/plugin-sdk/core";
+import type { PluginRuntime } from "openclaw/plugin-sdk/channel-core";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
@@ -113,17 +113,25 @@ function setupRegistration(
     },
     registerHttpRoute: () => {},
     registerCli: () => {},
+    registerReload: () => {},
+    registerNodeHostCommand: () => {},
+    registerSecurityAuditCollector: () => {},
     registerService: () => {},
+    registerConfigMigration: () => {},
+    registerAutoEnableProbe: () => {},
     registerProvider: () => {},
     registerSpeechProvider: () => {},
+    registerRealtimeTranscriptionProvider: () => {},
+    registerRealtimeVoiceProvider: () => {},
     registerMediaUnderstandingProvider: () => {},
     registerImageGenerationProvider: () => {},
+    registerVideoGenerationProvider: () => {},
+    registerMusicGenerationProvider: () => {},
     registerWebFetchProvider: () => {},
     registerWebSearchProvider: () => {},
     registerInteractiveHandler: () => {},
     onConversationBindingResolved: () => {},
     registerContextEngine: () => {},
-    registerCliBackend: () => {},
     registerMemoryFlushPlan: () => {},
     registerMemoryRuntime: () => {},
     registerMemoryEmbeddingProvider: () => {},
