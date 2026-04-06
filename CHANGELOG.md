@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-04-06
+
+### Changed
+
+- Raised the minimum supported OpenClaw version to `2026.4.5`.
+- Migrated the plugin to OpenClaw's current channel SDK surfaces, including `plugin-sdk/channel-core`, `plugin-sdk/account-id`, and CLI metadata registration.
+
+### Fixed
+
+- Updated local test/runtime stubs to match the published `OpenClawPluginApi` shape in OpenClaw `2026.4.5`.
+
 ## [1.2.2] - 2026-04-05
 
 ### Fixed
