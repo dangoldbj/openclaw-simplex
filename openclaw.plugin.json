@@ -37,7 +37,6 @@
             "maximum": 9007199254740991
           },
           "dmPolicy": {
-            "default": "pairing",
             "type": "string",
             "enum": ["pairing", "allowlist", "open", "disabled"]
           },
@@ -198,7 +197,6 @@
                   "maximum": 9007199254740991
                 },
                 "dmPolicy": {
-                  "default": "pairing",
                   "type": "string",
                   "enum": ["pairing", "allowlist", "open", "disabled"]
                 },
@@ -332,7 +330,6 @@
                   "additionalProperties": false
                 }
               },
-              "required": ["dmPolicy"],
               "additionalProperties": false
             }
           },
@@ -340,7 +337,6 @@
             "type": "string"
           }
         },
-        "required": ["dmPolicy"],
         "additionalProperties": false
       },
       "label": "SimpleX",

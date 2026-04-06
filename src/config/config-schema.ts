@@ -35,7 +35,7 @@ export const SimplexAccountConfigSchema = z
     enabled: z.boolean().optional(),
     markdown: MarkdownConfigSchema,
     mediaMaxMb: z.number().int().positive().optional(),
-    dmPolicy: DmPolicySchema.optional().default("pairing"),
+    dmPolicy: DmPolicySchema.optional(),
     dmHistoryLimit: z.number().int().min(0).optional(),
     dms: z.record(z.string(), DmConfigSchema.optional()).optional(),
     allowFrom: SimplexAllowFromListSchema,
