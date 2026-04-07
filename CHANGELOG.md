@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-04-07
+
+### Fixed
+
+- Made `channels.openclaw-simplex.dmPolicy` optional again in the published plugin schema, so OpenClaw can install/update the plugin without requiring an explicit `dmPolicy` value in existing channel config.
+
 ## [1.3.0] - 2026-04-06
 
 ### Changed
