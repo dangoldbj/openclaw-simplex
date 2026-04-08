@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2026-04-08
+
+### Changed
+
+- Tightened docs wording so the docs index and reference pages stay aligned with the README's current invite-based positioning and precision.
+- Finished the remaining SDK import cleanup by moving the last `DEFAULT_ACCOUNT_ID` import onto `openclaw/plugin-sdk/account-id`.
+
 ## [1.3.1] - 2026-04-07
 
 ### Fixed
