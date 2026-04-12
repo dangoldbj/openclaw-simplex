@@ -2,6 +2,10 @@
   "id": "openclaw-simplex",
   "kind": "channel",
   "channels": ["openclaw-simplex"],
+  "activation": {
+    "onChannels": ["openclaw-simplex"],
+    "onCapabilities": ["channel", "tool"]
+  },
   "name": "SimpleX",
   "description": "SimpleX Chat channel plugin via external WebSocket API",
   "configSchema": {
@@ -338,6 +342,42 @@
           }
         },
         "additionalProperties": false
+      },
+      "uiHints": {
+        "": {
+          "label": "SimpleX",
+          "help": "Connect OpenClaw to a separately running simplex-chat WebSocket runtime. Reachability starts from SimpleX invite or address links, while OpenClaw still applies pairing, allowlists, and group policy."
+        },
+        "connection.wsUrl": {
+          "label": "WebSocket URL",
+          "help": "WebSocket URL for the running simplex-chat API, for example ws://127.0.0.1:5225."
+        },
+        "dmPolicy": {
+          "label": "DM Policy",
+          "help": "Direct-message access policy. Effective default: pairing."
+        },
+        "allowFrom": {
+          "label": "DM Allowlist",
+          "help": "Allowed SimpleX senders for direct messages. Use [\"*\"] only if you intentionally want broad DM access."
+        },
+        "groupPolicy": {
+          "label": "Group Policy",
+          "help": "Group-message access policy. Keep allowlist unless you intentionally want broader group reachability."
+        },
+        "groupAllowFrom": {
+          "label": "Group Allowlist",
+          "help": "Allowed senders for group traffic when groupPolicy is allowlist."
+        },
+        "connection.autoAcceptFiles": {
+          "label": "Auto Accept Files",
+          "help": "Automatically accept incoming file transfers from the SimpleX runtime.",
+          "advanced": true
+        },
+        "connection.connectTimeoutMs": {
+          "label": "Connect Timeout",
+          "help": "WebSocket connection timeout in milliseconds.",
+          "advanced": true
+        }
       },
       "label": "SimpleX",
       "description": "SimpleX Chat over an external WebSocket runtime."

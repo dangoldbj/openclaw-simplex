@@ -18,6 +18,7 @@ const packageJson = JSON.parse(packageJsonRaw);
 const channelPlugin = pluginEntry?.channelPlugin;
 const channelId = channelPlugin?.id;
 const channelSchema = channelPlugin?.configSchema;
+const existingChannelConfig = manifest.channelConfigs?.[channelId] ?? {};
 
 if (!channelId || !channelSchema?.schema || typeof channelSchema.schema !== "object") {
   throw new Error("Built plugin entry does not expose a channel config schema");
@@ -30,7 +31,14 @@ manifest.channelConfigs = {
   ...(manifest.channelConfigs ?? {}),
   [channelId]: {
     schema: channelSchema.schema,
-    ...(channelSchema.uiHints ? { uiHints: channelSchema.uiHints } : {}),
+    ...((existingChannelConfig.uiHints ?? channelSchema.uiHints)
+      ? {
+          uiHints: {
+            ...(channelSchema.uiHints ?? {}),
+            ...(existingChannelConfig.uiHints ?? {}),
+          },
+        }
+      : {}),
     ...(packageChannelMeta?.label ? { label: packageChannelMeta.label } : {}),
     ...(packageChannelMeta?.blurb ? { description: packageChannelMeta.blurb } : {}),
     ...(packageChannelMeta?.preferOver ? { preferOver: packageChannelMeta.preferOver } : {}),

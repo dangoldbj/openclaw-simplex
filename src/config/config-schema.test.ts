@@ -11,6 +11,7 @@ const manifest = JSON.parse(
       schema?: unknown;
       label?: string;
       description?: string;
+      uiHints?: unknown;
     }
   >;
 };
@@ -43,5 +44,24 @@ describe("simplex config schema manifest", () => {
 
     expect(channelManifest?.label).toBe(packageJson.openclaw?.channel?.label);
     expect(channelManifest?.description).toBe(packageJson.openclaw?.channel?.blurb);
+  });
+
+  it("keeps manifest-owned uiHints for the channel config", () => {
+    const channelId = packageJson.openclaw?.channel?.id ?? "";
+    const channelManifest = manifest.channelConfigs?.[channelId] as
+      | { uiHints?: Record<string, unknown> }
+      | undefined;
+
+    expect(channelManifest?.uiHints).toMatchObject({
+      "": {
+        label: "SimpleX",
+      },
+      "connection.wsUrl": {
+        label: "WebSocket URL",
+      },
+      dmPolicy: {
+        label: "DM Policy",
+      },
+    });
   });
 });
