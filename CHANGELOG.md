@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2026-04-13
+
+### Changed
+
+- Raised the minimum supported OpenClaw version to `2026.4.11`.
+- Added manifest activation hints for `openclaw-simplex` so newer OpenClaw builds can narrow plugin activation more precisely.
+- Added manifest-owned channel `uiHints` for the SimpleX config surface and fixed `manifest:sync` to preserve them.
+
+### Fixed
+
+- Updated the local `OpenClawPluginApi` test stub to match the current SDK shape used by newer OpenClaw releases.
+
 ## [1.3.2] - 2026-04-08
 
 ### Changed
