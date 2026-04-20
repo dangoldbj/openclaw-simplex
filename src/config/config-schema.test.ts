@@ -21,6 +21,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8")
 ) as {
   openclaw?: {
+    setupEntry?: string;
     channel?: {
       id?: string;
       label?: string;
@@ -68,5 +69,9 @@ describe("simplex config schema manifest", () => {
 
   it("claims the legacy simplex CLI alias for newer OpenClaw CLI gating", () => {
     expect(manifest.commandAliases).toEqual(expect.arrayContaining(["simplex"]));
+  });
+
+  it("does not advertise a setup entry that would suppress plugin CLI loading", () => {
+    expect(packageJson.openclaw?.setupEntry).toBeUndefined();
   });
 });

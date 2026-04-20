@@ -311,13 +311,6 @@ const SIMPLEX_CLI_DESCRIPTORS = [
 ] as const;
 
 export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
-  api.registerCli(() => {}, {
-    commands: [...SIMPLEX_CLI_COMMANDS],
-    descriptors: [...SIMPLEX_CLI_DESCRIPTORS],
-  });
-}
-
-export function registerSimplexCli(api: OpenClawPluginApi): void {
   api.registerCli(
     ({ program }) => {
       const command = program
@@ -386,4 +379,8 @@ export function registerSimplexCli(api: OpenClawPluginApi): void {
       descriptors: [...SIMPLEX_CLI_DESCRIPTORS],
     }
   );
+}
+
+export function registerSimplexCli(api: OpenClawPluginApi): void {
+  registerSimplexCliMetadata(api);
 }
