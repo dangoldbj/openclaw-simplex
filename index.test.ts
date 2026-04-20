@@ -84,10 +84,12 @@ function setupRegistration(
 ): {
   methods: Map<string, Handler>;
   tools: string[];
+  cliCommands: string[][];
   hooks: Array<{ events: string | string[]; handler: unknown }>;
 } {
   const methods = new Map<string, Handler>();
   const tools: string[] = [];
+  const cliCommands: string[][] = [];
   const hooks: Array<{ events: string | string[]; handler: unknown }> = [];
   const api: OpenClawPluginApi = {
     id: "openclaw-simplex",
@@ -112,7 +114,10 @@ function setupRegistration(
       hooks.push({ events, handler });
     },
     registerHttpRoute: () => {},
-    registerCli: () => {},
+    registerCli: (_registrar, opts) => {
+      const commands = Array.isArray(opts?.commands) ? opts.commands : [];
+      cliCommands.push([...commands]);
+    },
     registerReload: () => {},
     registerNodeHostCommand: () => {},
     registerSecurityAuditCollector: () => {},
@@ -150,7 +155,7 @@ function setupRegistration(
     resolvePath: (value: string) => value,
   };
   plugin.register(api);
-  return { methods, tools, hooks };
+  return { methods, tools, cliCommands, hooks };
 }
 
 function setupHandlers(
@@ -207,6 +212,12 @@ describe("plugin entry registration modes", () => {
       ])
     );
     expect(full.hooks.some((entry) => entry.events === "before_tool_call")).toBe(true);
+  });
+
+  it("registers the simplex CLI only once in full mode", () => {
+    const full = setupRegistration(simplexConfiguredChannel, "full");
+
+    expect(full.cliCommands).toEqual([["openclaw-simplex", "simplex"]]);
   });
 });
 
@@ -431,5 +442,53 @@ describe("simplex invite gateway", () => {
     expect(ok).toBe(true);
     expect(payload).toMatchObject({ accountId: "ops" });
     expect(getLastCommand()).toBe("/delete_address");
+  });
+
+  it("uses the configured default account runtime when accountId is omitted", async () => {
+    setMockResponse({
+      resp: {
+        type: "ok",
+        output: "simplex://address999",
+      },
+    });
+
+    const handler = setupHandler("simplex.invite.create", {
+      channels: {
+        "openclaw-simplex": {
+          accounts: {
+            ops: {
+              connection: { wsUrl: "ws://127.0.0.1:7777", mode: "external" },
+            },
+          },
+        },
+      },
+    });
+    const respond = vi.fn();
+    const startChannel = vi.fn(async () => {});
+    await handler({
+      params: { mode: "address" },
+      respond,
+      context: {
+        startChannel,
+        getRuntimeSnapshot: () => ({
+          channels: { "openclaw-simplex": { running: false } },
+          channelAccounts: { "openclaw-simplex": { ops: { running: true } } },
+        }),
+      },
+    });
+
+    const firstCall = respond.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    if (!firstCall) {
+      throw new Error("missing response call");
+    }
+    const [ok, payload] = firstCall;
+    expect(ok).toBe(true);
+    expect(payload).toMatchObject({
+      accountId: "ops",
+      mode: "address",
+      link: "simplex://address999",
+    });
+    expect(startChannel).not.toHaveBeenCalled();
   });
 });

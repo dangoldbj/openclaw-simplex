@@ -64,6 +64,26 @@ describe("simplex allowlist", () => {
     expect(resolveSimplexAllowFrom({ cfg, accountId: "beta" })).toEqual(["base"]);
   });
 
+  it("uses the configured default account id when accountId is omitted", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          allowFrom: ["base"],
+          accounts: {
+            beta: {
+              allowFrom: ["beta-only"],
+              connection: {
+                wsUrl: "ws://127.0.0.1:7777",
+              },
+            },
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    expect(resolveSimplexAllowFrom({ cfg })).toEqual(["beta-only"]);
+  });
+
   it("formats allowlist entries as normalized lowercase values", () => {
     const formatted = formatSimplexAllowFrom([" simplex:@Alice ", "group:Team "]);
     expect(formatted).toEqual(["@alice", "group:team"]);

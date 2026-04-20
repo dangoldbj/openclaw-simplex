@@ -99,13 +99,13 @@ function buildApprovalDescription(toolName: string, params: Record<string, unkno
     (typeof params.contactId === "string" ? params.contactId.trim() : "");
 
   if (toolName === "simplex_invite_revoke") {
-    return `Revoke the current SimpleX address/invite for account ${accountId || "default"}.`;
+    return `Revoke the current SimpleX address/invite for account ${accountId || "the active/default account"}.`;
   }
   if (toolName === "simplex_group_remove_participant") {
-    return `Remove participant ${participant || "unknown"} from group ${group || "unknown"} on account ${accountId || "default"}.`;
+    return `Remove participant ${participant || "unknown"} from group ${group || "unknown"} on account ${accountId || "the active/default account"}.`;
   }
   if (toolName === "simplex_group_leave") {
-    return `Leave SimpleX group ${group || "unknown"} on account ${accountId || "default"}.`;
+    return `Leave SimpleX group ${group || "unknown"} on account ${accountId || "the active/default account"}.`;
   }
   return "Approve destructive SimpleX operation.";
 }

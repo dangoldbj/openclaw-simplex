@@ -1,5 +1,6 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { toDataURL as toQrDataUrl } from "qrcode";
+import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
 import { resolveInviteMode } from "../simplex/simplex-invite.js";
 import {
   createSimplexInvite,
@@ -68,7 +69,10 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
         mode,
         logger: api.logger,
         startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
-        isRunning: createRuntimeChecker(context, accountId ?? "default"),
+        isRunning: createRuntimeChecker(
+          context,
+          accountId ?? resolveDefaultSimplexAccountId(api.config)
+        ),
       });
       const qrDataUrl = result.link ? await renderQrDataUrl(result.link) : null;
       respond(true, { ...result, qrDataUrl });
@@ -92,7 +96,10 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
         accountId,
         logger: api.logger,
         startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
-        isRunning: createRuntimeChecker(context, accountId ?? "default"),
+        isRunning: createRuntimeChecker(
+          context,
+          accountId ?? resolveDefaultSimplexAccountId(api.config)
+        ),
       });
       const addressQrDataUrl = result.addressLink
         ? await renderQrDataUrl(result.addressLink)
@@ -121,7 +128,10 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
         accountId,
         logger: api.logger,
         startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
-        isRunning: createRuntimeChecker(context, accountId ?? "default"),
+        isRunning: createRuntimeChecker(
+          context,
+          accountId ?? resolveDefaultSimplexAccountId(api.config)
+        ),
       });
       respond(true, result);
     } catch (err) {

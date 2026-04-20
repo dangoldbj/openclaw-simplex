@@ -1,4 +1,5 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 
 export type SimplexAllowlistEntry = {
@@ -59,7 +60,7 @@ export function resolveSimplexAllowFrom(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;
 }): string[] {
-  const accountId = params.accountId ?? "default";
+  const accountId = params.accountId ?? resolveDefaultSimplexAccountId(params.cfg);
   const accountAllow = params.cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId]?.allowFrom;
   const baseAllow = params.cfg.channels?.["openclaw-simplex"]?.allowFrom;
   const raw = Array.isArray(accountAllow) ? accountAllow : baseAllow;
