@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.5] - 2026-04-20
+
+### Fixed
+
+- Fixed SimpleX CLI command loading on newer OpenClaw hosts by avoiding the setup-runtime packaging path that suppressed plugin CLI registration.
+- Fixed duplicate SimpleX CLI registration so `openclaw simplex ...` and `openclaw openclaw-simplex ...` both resolve cleanly.
+- Fixed omitted-account invite and allowlist paths to use the plugin's configured default SimpleX account instead of assuming a literal `default` account id.
+
 ## [1.3.4] - 2026-04-20
 
 ### Fixed
