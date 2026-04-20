@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.4] - 2026-04-20
+
+### Fixed
+
+- Added the legacy `simplex` manifest command alias so newer OpenClaw builds route `openclaw simplex ...` to this plugin instead of the bundled legacy plugin gate.
+
 ## [1.3.3] - 2026-04-13
 
 ### Changed
