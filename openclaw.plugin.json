@@ -6,6 +6,7 @@
     "onChannels": ["openclaw-simplex"],
     "onCapabilities": ["channel", "tool"]
   },
+  "commandAliases": ["simplex"],
   "name": "SimpleX",
   "description": "SimpleX Chat channel plugin via external WebSocket API",
   "configSchema": {

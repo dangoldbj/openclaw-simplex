@@ -5,6 +5,7 @@ import { SimplexChannelConfigSchema } from "./config-schema.js";
 const manifest = JSON.parse(
   readFileSync(new URL("../../openclaw.plugin.json", import.meta.url), "utf8")
 ) as {
+  commandAliases?: unknown;
   channelConfigs?: Record<
     string,
     {
@@ -63,5 +64,9 @@ describe("simplex config schema manifest", () => {
         label: "DM Policy",
       },
     });
+  });
+
+  it("claims the legacy simplex CLI alias for newer OpenClaw CLI gating", () => {
+    expect(manifest.commandAliases).toEqual(expect.arrayContaining(["simplex"]));
   });
 });
