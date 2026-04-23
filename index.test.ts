@@ -46,6 +46,7 @@ import type { PluginRuntime } from "openclaw/plugin-sdk/channel-core";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
+import { simplexPlugin } from "./src/channel/plugin.js";
 
 const simplexConfiguredChannel = {
   channels: {
@@ -246,6 +247,58 @@ describe("plugin entry registration modes", () => {
     const full = setupRegistration(simplexConfiguredChannel, "full");
 
     expect(full.cliCommands).toEqual([["openclaw-simplex", "simplex"]]);
+  });
+});
+
+describe("simplex channel SDK metadata", () => {
+  it("parses, infers, and formats SimpleX explicit targets", () => {
+    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "simplex:@alice" })).toEqual({
+      to: "@alice",
+      chatType: "direct",
+    });
+    expect(
+      simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "openclaw-simplex:#ops" })
+    ).toEqual({
+      to: "#ops",
+      chatType: "group",
+    });
+    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "group:ops" })).toEqual({
+      to: "#ops",
+      chatType: "group",
+    });
+    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "contact:alice" })).toEqual({
+      to: "@alice",
+      chatType: "direct",
+    });
+    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "alice" })).toBeNull();
+    expect(simplexPlugin.messaging?.inferTargetChatType?.({ to: "#ops" })).toBe("group");
+    expect(simplexPlugin.messaging?.inferTargetChatType?.({ to: "@alice" })).toBe("direct");
+    expect(
+      simplexPlugin.messaging?.formatTargetDisplay?.({
+        target: "openclaw-simplex:group:ops",
+        kind: "group",
+      })
+    ).toBe("#ops");
+  });
+
+  it("exposes SimpleX-specific message tool guidance", () => {
+    expect(
+      simplexPlugin.agentPrompt?.messageToolHints?.({ cfg: simplexConfiguredChannel })
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("@contactId"),
+        expect.stringContaining("upload-file"),
+      ])
+    );
+    expect(simplexPlugin.actions?.messageActionTargetAliases).toMatchObject({
+      send: { aliases: expect.arrayContaining(["chatRef", "chatId"]) },
+      addParticipant: { aliases: expect.arrayContaining(["groupId", "chatRef", "chatId"]) },
+    });
+    expect(
+      simplexPlugin.actions?.extractToolSend?.({
+        args: { action: "upload-file", chatRef: "#ops", mediaUrl: "/tmp/file.txt" },
+      })
+    ).toMatchObject({ to: "#ops" });
   });
 });
 

@@ -7,6 +7,13 @@ import type { ResolvedSimplexAccount } from "../config/types.js";
 
 export { DEFAULT_ACCOUNT_ID, formatPairingApproveHint };
 
+export type SimplexExplicitTarget = {
+  to: string;
+  chatType: "direct" | "group";
+};
+
+type SimplexTargetKind = SimplexExplicitTarget["chatType"] | null;
+
 export function extractSimplexWsUrlFromApplication(application: unknown): string | undefined {
   if (!application || typeof application !== "object") {
     return undefined;
@@ -64,6 +71,75 @@ export function stripSimplexPrefix(value: string): string {
 export function stripLeadingAt(value: string): string {
   const trimmed = value.trim();
   return trimmed.startsWith("@") ? trimmed.slice(1).trim() : trimmed;
+}
+
+function readPrefixedSimplexTarget(raw: string): { value: string; kind: SimplexTargetKind } {
+  const strippedProvider = stripSimplexPrefix(raw);
+  const lower = strippedProvider.toLowerCase();
+  if (lower.startsWith("group:")) {
+    return { value: strippedProvider.slice("group:".length).trim(), kind: "group" };
+  }
+  if (lower.startsWith("contact:") || lower.startsWith("user:") || lower.startsWith("member:")) {
+    return {
+      value: strippedProvider.slice(strippedProvider.indexOf(":") + 1).trim(),
+      kind: "direct",
+    };
+  }
+  return { value: strippedProvider, kind: null };
+}
+
+export function parseSimplexExplicitTarget(raw: string): SimplexExplicitTarget | null {
+  const { value, kind } = readPrefixedSimplexTarget(raw);
+  if (!value) {
+    return null;
+  }
+  if (value.startsWith("#")) {
+    const id = value.slice(1).trim();
+    return id ? { to: `#${id}`, chatType: "group" } : null;
+  }
+  if (value.startsWith("@")) {
+    const id = value.slice(1).trim();
+    return id ? { to: `@${id}`, chatType: "direct" } : null;
+  }
+  if (kind === "group") {
+    return { to: `#${value}`, chatType: "group" };
+  }
+  if (kind === "direct") {
+    return { to: `@${value}`, chatType: "direct" };
+  }
+  return null;
+}
+
+export function inferSimplexTargetChatType(
+  raw: string
+): SimplexExplicitTarget["chatType"] | undefined {
+  return parseSimplexExplicitTarget(raw)?.chatType;
+}
+
+export function formatSimplexTargetDisplay(params: {
+  target: string;
+  display?: string;
+  kind?: string;
+}): string {
+  const display = params.display?.trim();
+  if (display) {
+    return display;
+  }
+  const parsed = parseSimplexExplicitTarget(params.target);
+  if (parsed) {
+    return parsed.to;
+  }
+  const { value } = readPrefixedSimplexTarget(params.target);
+  if (!value) {
+    return value;
+  }
+  if (params.kind === "group") {
+    return value.startsWith("#") ? value : `#${value}`;
+  }
+  if (params.kind === "user") {
+    return value.startsWith("@") ? value : `@${value}`;
+  }
+  return value;
 }
 
 export function normalizeSimplexContactRef(value: string): string {

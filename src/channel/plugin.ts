@@ -12,6 +12,9 @@ import { simplexSetupAdapter } from "./setup.js";
 import {
   DEFAULT_ACCOUNT_ID,
   formatPairingApproveHint,
+  formatSimplexTargetDisplay,
+  inferSimplexTargetChatType,
+  parseSimplexExplicitTarget,
   resolveSimplexGroupRequireMention,
   resolveSimplexGroupToolPolicy,
   stripLeadingAt,
@@ -88,10 +91,19 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   },
   messaging: {
     normalizeTarget: (raw) => stripSimplexPrefix(raw),
+    parseExplicitTarget: ({ raw }) => parseSimplexExplicitTarget(raw),
+    inferTargetChatType: ({ to }) => inferSimplexTargetChatType(to),
+    formatTargetDisplay: (params) => formatSimplexTargetDisplay(params),
     targetResolver: {
       looksLikeId: (input) => input.trim().startsWith("@") || input.trim().startsWith("#"),
-      hint: "@<contactId> or #<groupId>",
+      hint: "@<contactId>|#<groupId>|contact:<id>|group:<id>",
     },
+  },
+  agentPrompt: {
+    messageToolHints: () => [
+      "- SimpleX targets: use `to`/`chatRef` as `@contactId` for DMs or `#groupId` for groups; `contact:<id>` and `group:<id>` are accepted aliases.",
+      '- SimpleX file upload: use `action="upload-file"` with `mediaUrl`, `filePath`, `path`, or `media` plus optional `caption`/`text`.',
+    ],
   },
   actions: simplexMessageActions,
   directory: {
