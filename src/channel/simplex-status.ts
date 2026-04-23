@@ -42,6 +42,7 @@ export function buildSimplexStatus(
       lastError: snapshot.lastError ?? null,
       lastConnectedAt: snapshot.lastConnectedAt ?? null,
       lastDisconnect: snapshot.lastDisconnect ?? null,
+      lastEventAt: snapshot.lastEventAt ?? null,
       healthState: resolveSimplexHealthState({
         configured: snapshot.configured ?? false,
         running: snapshot.running ?? false,
@@ -74,6 +75,7 @@ export function buildSimplexStatus(
         mode: runtime?.mode ?? account.mode,
         lastInboundAt: runtime?.lastInboundAt ?? null,
         lastOutboundAt: runtime?.lastOutboundAt ?? null,
+        lastEventAt: runtime?.lastEventAt ?? null,
         application: {
           wsUrl,
         },

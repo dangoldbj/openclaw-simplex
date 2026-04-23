@@ -7,6 +7,16 @@
     "onCapabilities": ["channel", "tool"]
   },
   "commandAliases": ["simplex"],
+  "contracts": {
+    "tools": [
+      "simplex_invite_create",
+      "simplex_invite_list",
+      "simplex_invite_revoke",
+      "simplex_group_add_participant",
+      "simplex_group_remove_participant",
+      "simplex_group_leave"
+    ]
+  },
   "name": "SimpleX",
   "description": "SimpleX Chat channel plugin via external WebSocket API",
   "configSchema": {

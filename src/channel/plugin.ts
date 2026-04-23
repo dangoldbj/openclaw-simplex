@@ -24,6 +24,7 @@ import {
   resolveSimplexSelf,
   resolveSimplexTargets,
 } from "./simplex-directory.js";
+import { simplexDoctor } from "./simplex-doctor.js";
 import { buildSimplexGatewayRuntime } from "./simplex-gateway-runtime.js";
 import { buildSimplexOutbound } from "./simplex-outbound.js";
 import { buildSimplexPairing } from "./simplex-pairing.js";
@@ -38,9 +39,20 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     id: "openclaw-simplex",
     label: "SimpleX",
     selectionLabel: "SimpleX (WebSocket)",
+    detailLabel: "SimpleX Chat",
     docsPath: "/channels/openclaw-simplex",
+    docsLabel: "openclaw-simplex",
     blurb: "SimpleX Chat via external WebSocket API",
+    aliases: ["simplex"],
     order: 95,
+    systemImage: "link.badge.plus",
+    selectionExtras: ["Invite-based reachability", "External WebSocket runtime"],
+    markdownCapable: true,
+    exposure: {
+      configured: true,
+      setup: true,
+      docs: true,
+    },
     quickstartAllowFrom: true,
   },
   pairing: buildSimplexPairing(activeClients),
@@ -126,7 +138,9 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     resolveRequireMention: resolveSimplexGroupRequireMention,
     resolveToolPolicy: resolveSimplexGroupToolPolicy,
   },
+  gatewayMethods: ["simplex.invite.create", "simplex.invite.list", "simplex.invite.revoke"],
   outbound: buildSimplexOutbound(activeClients),
   status: buildSimplexStatus(activeClients),
+  doctor: simplexDoctor,
   gateway: buildSimplexGatewayRuntime(activeClients),
 };

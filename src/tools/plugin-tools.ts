@@ -159,6 +159,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       name: "simplex_invite_revoke",
       label: "SimpleX Invite Revoke",
       description: "Revoke the current SimpleX address/invite link for an account.",
+      ownerOnly: true,
       parameters: Type.Object({
         accountId: Type.Optional(
           Type.String({
@@ -201,6 +202,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       name: "simplex_group_remove_participant",
       label: "SimpleX Group Remove Participant",
       description: "Remove a participant from a SimpleX group.",
+      ownerOnly: true,
       parameters: GroupParticipantToolSchema,
       async execute(_toolCallId, rawParams) {
         return await executeSimplexAction({
@@ -219,6 +221,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       name: "simplex_group_leave",
       label: "SimpleX Group Leave",
       description: "Leave a SimpleX group.",
+      ownerOnly: true,
       parameters: LeaveGroupToolSchema,
       async execute(_toolCallId, rawParams) {
         return await executeSimplexAction({

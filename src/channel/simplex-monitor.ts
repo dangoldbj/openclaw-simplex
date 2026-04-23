@@ -1,6 +1,6 @@
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { resolveMentionGatingWithBypass } from "openclaw/plugin-sdk/channel-inbound";
+import { resolveInboundMentionDecision } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 import {
@@ -383,6 +383,7 @@ async function handleSimplexEvent(params: {
   client: SimplexWsClient;
 }): Promise<void> {
   const { event, account, cfg, runtime, statusSink, client } = params;
+  statusSink?.({ lastEventAt: Date.now() });
   if (event.type === "rcvFileDescrReady") {
     const fileId = Number(
       (event as { rcvFileTransfer?: { fileId?: number } })?.rcvFileTransfer?.fileId
@@ -588,14 +589,18 @@ async function handleSimplexEvent(params: {
         cfg,
         surface: "openclaw-simplex",
       });
-      const mentionGate = resolveMentionGatingWithBypass({
-        isGroup: true,
-        requireMention,
-        canDetectMention: mentionRegexes.length > 0,
-        wasMentioned,
-        allowTextCommands,
-        hasControlCommand: core.channel.text.hasControlCommand(rawBody, cfg),
-        commandAuthorized: commandAuthorized === true,
+      const mentionGate = resolveInboundMentionDecision({
+        facts: {
+          canDetectMention: mentionRegexes.length > 0,
+          wasMentioned,
+        },
+        policy: {
+          isGroup: true,
+          requireMention,
+          allowTextCommands,
+          hasControlCommand: core.channel.text.hasControlCommand(rawBody, cfg),
+          commandAuthorized: commandAuthorized === true,
+        },
       });
       effectiveWasMentioned = mentionGate.effectiveWasMentioned;
       if (mentionGate.shouldSkip) {

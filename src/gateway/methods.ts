@@ -50,99 +50,111 @@ function createRuntimeChecker(
 }
 
 export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
-  api.registerGatewayMethod("simplex.invite.create", async ({ params, respond, context }) => {
-    const mode = resolveInviteMode(params?.mode);
-    if (!mode) {
-      respond(
-        false,
-        undefined,
-        createError(INVALID_REQUEST, 'mode must be "connect" or "address"')
-      );
-      return;
-    }
+  api.registerGatewayMethod(
+    "simplex.invite.create",
+    async ({ params, respond, context }) => {
+      const mode = resolveInviteMode(params?.mode);
+      if (!mode) {
+        respond(
+          false,
+          undefined,
+          createError(INVALID_REQUEST, 'mode must be "connect" or "address"')
+        );
+        return;
+      }
 
-    const accountId = readAccountId(params);
-    try {
-      const result = await createSimplexInvite({
-        cfg: api.config,
-        accountId,
-        mode,
-        logger: api.logger,
-        startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
-        isRunning: createRuntimeChecker(
-          context,
-          accountId ?? resolveDefaultSimplexAccountId(api.config)
-        ),
-      });
-      const qrDataUrl = result.link ? await renderQrDataUrl(result.link) : null;
-      respond(true, { ...result, qrDataUrl });
-    } catch (err) {
-      respond(
-        false,
-        undefined,
-        createError(
-          UNAVAILABLE,
-          `SimpleX invite failed: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-    }
-  });
+      const accountId = readAccountId(params);
+      try {
+        const result = await createSimplexInvite({
+          cfg: api.config,
+          accountId,
+          mode,
+          logger: api.logger,
+          startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
+          isRunning: createRuntimeChecker(
+            context,
+            accountId ?? resolveDefaultSimplexAccountId(api.config)
+          ),
+        });
+        const qrDataUrl = result.link ? await renderQrDataUrl(result.link) : null;
+        respond(true, { ...result, qrDataUrl });
+      } catch (err) {
+        respond(
+          false,
+          undefined,
+          createError(
+            UNAVAILABLE,
+            `SimpleX invite failed: ${err instanceof Error ? err.message : String(err)}`
+          )
+        );
+      }
+    },
+    { scope: "operator.write" }
+  );
 
-  api.registerGatewayMethod("simplex.invite.list", async ({ params, respond, context }) => {
-    const accountId = readAccountId(params);
-    try {
-      const result = await listSimplexInvites({
-        cfg: api.config,
-        accountId,
-        logger: api.logger,
-        startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
-        isRunning: createRuntimeChecker(
-          context,
-          accountId ?? resolveDefaultSimplexAccountId(api.config)
-        ),
-      });
-      const addressQrDataUrl = result.addressLink
-        ? await renderQrDataUrl(result.addressLink)
-        : null;
-      respond(true, {
-        ...result,
-        addressQrDataUrl,
-      });
-    } catch (err) {
-      respond(
-        false,
-        undefined,
-        createError(
-          UNAVAILABLE,
-          `SimpleX invite list failed: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-    }
-  });
+  api.registerGatewayMethod(
+    "simplex.invite.list",
+    async ({ params, respond, context }) => {
+      const accountId = readAccountId(params);
+      try {
+        const result = await listSimplexInvites({
+          cfg: api.config,
+          accountId,
+          logger: api.logger,
+          startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
+          isRunning: createRuntimeChecker(
+            context,
+            accountId ?? resolveDefaultSimplexAccountId(api.config)
+          ),
+        });
+        const addressQrDataUrl = result.addressLink
+          ? await renderQrDataUrl(result.addressLink)
+          : null;
+        respond(true, {
+          ...result,
+          addressQrDataUrl,
+        });
+      } catch (err) {
+        respond(
+          false,
+          undefined,
+          createError(
+            UNAVAILABLE,
+            `SimpleX invite list failed: ${err instanceof Error ? err.message : String(err)}`
+          )
+        );
+      }
+    },
+    { scope: "operator.read" }
+  );
 
-  api.registerGatewayMethod("simplex.invite.revoke", async ({ params, respond, context }) => {
-    const accountId = readAccountId(params);
-    try {
-      const result = await revokeSimplexInvite({
-        cfg: api.config,
-        accountId,
-        logger: api.logger,
-        startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
-        isRunning: createRuntimeChecker(
-          context,
-          accountId ?? resolveDefaultSimplexAccountId(api.config)
-        ),
-      });
-      respond(true, result);
-    } catch (err) {
-      respond(
-        false,
-        undefined,
-        createError(
-          UNAVAILABLE,
-          `SimpleX invite revoke failed: ${err instanceof Error ? err.message : String(err)}`
-        )
-      );
-    }
-  });
+  api.registerGatewayMethod(
+    "simplex.invite.revoke",
+    async ({ params, respond, context }) => {
+      const accountId = readAccountId(params);
+      try {
+        const result = await revokeSimplexInvite({
+          cfg: api.config,
+          accountId,
+          logger: api.logger,
+          startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
+          isRunning: createRuntimeChecker(
+            context,
+            accountId ?? resolveDefaultSimplexAccountId(api.config)
+          ),
+        });
+        respond(true, result);
+      } catch (err) {
+        respond(
+          false,
+          undefined,
+          createError(
+            UNAVAILABLE,
+            `SimpleX invite revoke failed: ${err instanceof Error ? err.message : String(err)}`
+          )
+        );
+      }
+    },
+    { scope: "operator.admin" }
+  );
 }

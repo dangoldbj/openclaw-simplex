@@ -34,6 +34,9 @@ describe("simplex message tool discovery", () => {
         "leaveGroup",
       ])
     );
+    expect(result?.mediaSourceParams).toEqual({
+      "upload-file": ["mediaUrl", "media", "path", "filePath"],
+    });
     expect(result?.schema).toMatchObject({
       properties: expect.objectContaining({
         chatRef: expect.any(Object),

@@ -55,7 +55,7 @@
     "zod": "^4.3.6"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.4.11"
+    "openclaw": ">=2026.4.21"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
@@ -63,7 +63,7 @@
     "@types/node": "^25.5.2",
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
-    "openclaw": "^2026.4.11",
+    "openclaw": "^2026.4.21",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"
@@ -76,15 +76,31 @@
       "id": "openclaw-simplex",
       "label": "SimpleX",
       "selectionLabel": "SimpleX (WebSocket)",
+      "detailLabel": "SimpleX Chat",
       "docsPath": "/channels/openclaw-simplex",
       "docsLabel": "openclaw-simplex",
       "blurb": "SimpleX Chat over an external WebSocket runtime.",
+      "aliases": [
+        "simplex"
+      ],
       "order": 95,
+      "systemImage": "link.badge.plus",
+      "selectionExtras": [
+        "Invite-based reachability",
+        "External WebSocket runtime"
+      ],
+      "markdownCapable": true,
+      "exposure": {
+        "configured": true,
+        "setup": true,
+        "docs": true
+      },
       "quickstartAllowFrom": true
     },
     "install": {
       "npmSpec": "@dangoldbj/openclaw-simplex",
-      "defaultChoice": "npm"
+      "defaultChoice": "npm",
+      "minHostVersion": ">=2026.4.21"
     }
   }
 }

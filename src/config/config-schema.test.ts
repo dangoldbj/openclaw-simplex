@@ -6,6 +6,9 @@ const manifest = JSON.parse(
   readFileSync(new URL("../../openclaw.plugin.json", import.meta.url), "utf8")
 ) as {
   commandAliases?: unknown;
+  contracts?: {
+    tools?: unknown;
+  };
   channelConfigs?: Record<
     string,
     {
@@ -26,6 +29,19 @@ const packageJson = JSON.parse(
       id?: string;
       label?: string;
       blurb?: string;
+      detailLabel?: string;
+      aliases?: string[];
+      systemImage?: string;
+      selectionExtras?: string[];
+      markdownCapable?: boolean;
+      exposure?: {
+        configured?: boolean;
+        setup?: boolean;
+        docs?: boolean;
+      };
+    };
+    install?: {
+      minHostVersion?: string;
     };
   };
 };
@@ -46,6 +62,33 @@ describe("simplex config schema manifest", () => {
 
     expect(channelManifest?.label).toBe(packageJson.openclaw?.channel?.label);
     expect(channelManifest?.description).toBe(packageJson.openclaw?.channel?.blurb);
+  });
+
+  it("advertises the 2026.4.21 channel selection metadata", () => {
+    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.4.21");
+    expect(packageJson.openclaw?.channel).toMatchObject({
+      detailLabel: "SimpleX Chat",
+      aliases: ["simplex"],
+      systemImage: "link.badge.plus",
+      selectionExtras: ["Invite-based reachability", "External WebSocket runtime"],
+      markdownCapable: true,
+      exposure: {
+        configured: true,
+        setup: true,
+        docs: true,
+      },
+    });
+  });
+
+  it("declares the SimpleX tool contract in the static manifest", () => {
+    expect(manifest.contracts?.tools).toEqual([
+      "simplex_invite_create",
+      "simplex_invite_list",
+      "simplex_invite_revoke",
+      "simplex_group_add_participant",
+      "simplex_group_remove_participant",
+      "simplex_group_leave",
+    ]);
   });
 
   it("keeps manifest-owned uiHints for the channel config", () => {

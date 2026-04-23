@@ -17,6 +17,9 @@ export const simplexMessageActions: ChannelMessageActionAdapter = {
       actions: SIMPLEX_MESSAGE_TOOL_ACTIONS,
       capabilities: [],
       schema: buildSimplexMessageToolSchema(),
+      mediaSourceParams: {
+        "upload-file": ["mediaUrl", "media", "path", "filePath"],
+      },
     };
   },
   supportsAction: ({ action }) => SIMPLEX_SUPPORTED_ACTIONS.has(action),

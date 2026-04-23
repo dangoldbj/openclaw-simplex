@@ -83,12 +83,16 @@ function setupRegistration(
   registrationMode: "full" | "setup-only" | "setup-runtime" = "full"
 ): {
   methods: Map<string, Handler>;
+  methodScopes: Map<string, unknown>;
   tools: string[];
+  toolDefinitions: Map<string, Record<string, unknown>>;
   cliCommands: string[][];
   hooks: Array<{ events: string | string[]; handler: unknown }>;
 } {
   const methods = new Map<string, Handler>();
+  const methodScopes = new Map<string, unknown>();
   const tools: string[] = [];
+  const toolDefinitions = new Map<string, Record<string, unknown>>();
   const cliCommands: string[][] = [];
   const hooks: Array<{ events: string | string[]; handler: unknown }> = [];
   const api: OpenClawPluginApi = {
@@ -103,11 +107,18 @@ function setupRegistration(
     runtime: {} as PluginRuntime,
     logger: noopLogger,
     registerChannel: () => {},
-    registerGatewayMethod: (method, handler) => methods.set(method, handler as Handler),
-    registerTool: (_tool, opts) => {
+    registerGatewayMethod: (method, handler, opts) => {
+      methods.set(method, handler as Handler);
+      methodScopes.set(method, opts?.scope ?? null);
+    },
+    registerTool: (tool, opts) => {
       const registeredName = opts?.name;
       if (registeredName) {
         tools.push(registeredName);
+        const definition = typeof tool === "function" ? tool({}) : tool;
+        if (definition && !Array.isArray(definition)) {
+          toolDefinitions.set(registeredName, definition as unknown as Record<string, unknown>);
+        }
       }
     },
     registerHook: (events, handler) => {
@@ -141,6 +152,7 @@ function setupRegistration(
     registerContextEngine: () => {},
     registerCompactionProvider: () => {},
     registerAgentHarness: () => {},
+    registerDetachedTaskRuntime: () => {},
     registerMemoryCapability: () => {},
     registerMemoryPromptSupplement: () => {},
     registerMemoryCorpusSupplement: () => {},
@@ -155,7 +167,7 @@ function setupRegistration(
     resolvePath: (value: string) => value,
   };
   plugin.register(api);
-  return { methods, tools, cliCommands, hooks };
+  return { methods, methodScopes, tools, toolDefinitions, cliCommands, hooks };
 }
 
 function setupHandlers(
@@ -182,15 +194,22 @@ function setupHandler(method: string, config: Record<string, unknown> = {}): Han
 
 describe("plugin entry registration modes", () => {
   it("registers gateway methods only in full mode", () => {
-    const full = setupHandlers(simplexConfiguredChannel, "full");
-    const setupOnly = setupHandlers(simplexConfiguredChannel, "setup-only");
-    const setupRuntime = setupHandlers(simplexConfiguredChannel, "setup-runtime");
+    const full = setupRegistration(simplexConfiguredChannel, "full");
+    const setupOnly = setupRegistration(simplexConfiguredChannel, "setup-only");
+    const setupRuntime = setupRegistration(simplexConfiguredChannel, "setup-runtime");
 
-    expect(full.has("simplex.invite.create")).toBe(true);
-    expect(full.has("simplex.invite.list")).toBe(true);
-    expect(full.has("simplex.invite.revoke")).toBe(true);
-    expect(setupOnly.size).toBe(0);
-    expect(setupRuntime.size).toBe(0);
+    expect(full.methods.has("simplex.invite.create")).toBe(true);
+    expect(full.methods.has("simplex.invite.list")).toBe(true);
+    expect(full.methods.has("simplex.invite.revoke")).toBe(true);
+    expect(full.methodScopes).toEqual(
+      new Map([
+        ["simplex.invite.create", "operator.write"],
+        ["simplex.invite.list", "operator.read"],
+        ["simplex.invite.revoke", "operator.admin"],
+      ])
+    );
+    expect(setupOnly.methods.size).toBe(0);
+    expect(setupRuntime.methods.size).toBe(0);
   });
 
   it("exports the setup entry plugin surface", () => {
@@ -212,6 +231,15 @@ describe("plugin entry registration modes", () => {
       ])
     );
     expect(full.hooks.some((entry) => entry.events === "before_tool_call")).toBe(true);
+  });
+
+  it("marks destructive simplex tools as owner-only", () => {
+    const full = setupRegistration(simplexConfiguredChannel, "full");
+
+    expect(full.toolDefinitions.get("simplex_invite_revoke")?.ownerOnly).toBe(true);
+    expect(full.toolDefinitions.get("simplex_group_remove_participant")?.ownerOnly).toBe(true);
+    expect(full.toolDefinitions.get("simplex_group_leave")?.ownerOnly).toBe(true);
+    expect(full.toolDefinitions.get("simplex_group_add_participant")?.ownerOnly).toBeUndefined();
   });
 
   it("registers the simplex CLI only once in full mode", () => {

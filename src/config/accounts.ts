@@ -1,6 +1,6 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import type { SimplexAccountConfig, SimplexConfig } from "./config-schema.js";
+import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
 import type {
   ResolvedSimplexAccount,
   SimplexConnectionConfig,
@@ -25,9 +25,7 @@ function resolveRawSimplexAccountConfig(
 ): SimplexAccountConfig {
   if (accountId === DEFAULT_ACCOUNT_ID) {
     const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ??
-      {}) as SimplexConfig & {
-      accounts?: unknown;
-    };
+      {}) as SimplexChannelConfig;
     return base;
   }
   return (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
@@ -78,9 +76,7 @@ function mergeConnection(
 
 function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): SimplexAccountConfig {
   const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ??
-    {}) as SimplexConfig & {
-    accounts?: unknown;
-  };
+    {}) as SimplexChannelConfig;
   const account = (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ??
     {}) as SimplexAccountConfig;
   return {
