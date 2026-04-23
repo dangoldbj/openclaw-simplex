@@ -1,6 +1,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { toDataURL as toQrDataUrl } from "qrcode";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import { resolveInviteMode } from "../simplex/simplex-invite.js";
 import {
   createSimplexInvite,
@@ -44,8 +45,8 @@ function createRuntimeChecker(
 ): () => boolean {
   return () => {
     const runtime = context.getRuntimeSnapshot();
-    const accountRuntime = runtime.channelAccounts?.["openclaw-simplex"]?.[accountId];
-    return Boolean(accountRuntime?.running ?? runtime.channels?.["openclaw-simplex"]?.running);
+    const accountRuntime = runtime.channelAccounts?.[SIMPLEX_CHANNEL_ID]?.[accountId];
+    return Boolean(accountRuntime?.running ?? runtime.channels?.[SIMPLEX_CHANNEL_ID]?.running);
   };
 }
 
@@ -70,7 +71,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
           accountId,
           mode,
           logger: api.logger,
-          startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
+          startChannel: () => context.startChannel(SIMPLEX_CHANNEL_ID, accountId ?? undefined),
           isRunning: createRuntimeChecker(
             context,
             accountId ?? resolveDefaultSimplexAccountId(api.config)
@@ -101,7 +102,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
           cfg: api.config,
           accountId,
           logger: api.logger,
-          startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
+          startChannel: () => context.startChannel(SIMPLEX_CHANNEL_ID, accountId ?? undefined),
           isRunning: createRuntimeChecker(
             context,
             accountId ?? resolveDefaultSimplexAccountId(api.config)
@@ -137,7 +138,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
           cfg: api.config,
           accountId,
           logger: api.logger,
-          startChannel: () => context.startChannel("openclaw-simplex", accountId ?? undefined),
+          startChannel: () => context.startChannel(SIMPLEX_CHANNEL_ID, accountId ?? undefined),
           isRunning: createRuntimeChecker(
             context,
             accountId ?? resolveDefaultSimplexAccountId(api.config)

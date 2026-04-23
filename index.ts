@@ -3,11 +3,12 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { simplexPlugin } from "./src/channel/plugin.js";
 import { setSimplexRuntime } from "./src/channel/runtime.js";
 import { registerSimplexCliMetadata } from "./src/cli/plugin-cli.js";
+import { SIMPLEX_PLUGIN_ID } from "./src/constants.js";
 import { registerSimplexGatewayMethods } from "./src/gateway/methods.js";
 import { registerSimplexToolHooks, registerSimplexTools } from "./src/tools/plugin-tools.js";
 
 const pluginEntry: ReturnType<typeof defineChannelPluginEntry> = defineChannelPluginEntry({
-  id: "openclaw-simplex",
+  id: SIMPLEX_PLUGIN_ID,
   name: "SimpleX",
   description: "SimpleX Chat channel plugin via external WebSocket API",
   plugin: simplexPlugin,

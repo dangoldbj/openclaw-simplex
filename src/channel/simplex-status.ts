@@ -1,5 +1,6 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import {
   DEFAULT_ACCOUNT_ID,
@@ -26,7 +27,7 @@ export function buildSimplexStatus(
         }
         return [
           {
-            channel: "openclaw-simplex",
+            channel: SIMPLEX_CHANNEL_ID,
             accountId: account.accountId,
             kind: "runtime" as const,
             message: `Channel error: ${lastError}`,

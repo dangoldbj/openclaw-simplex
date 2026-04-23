@@ -1,6 +1,7 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 
 export type SimplexAllowlistEntry = {
   kind: "any" | "sender" | "group";
@@ -61,8 +62,8 @@ export function resolveSimplexAllowFrom(params: {
   accountId?: string | null;
 }): string[] {
   const accountId = params.accountId ?? resolveDefaultSimplexAccountId(params.cfg);
-  const accountAllow = params.cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId]?.allowFrom;
-  const baseAllow = params.cfg.channels?.["openclaw-simplex"]?.allowFrom;
+  const accountAllow = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId]?.allowFrom;
+  const baseAllow = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.allowFrom;
   const raw = Array.isArray(accountAllow) ? accountAllow : baseAllow;
   return normalizeSimplexAllowFrom(raw ?? []);
 }
@@ -85,7 +86,7 @@ export function resolveSimplexDmPolicy(params: {
 }): { policy: string; allowFrom: string[] } {
   const policy =
     params.account.config.dmPolicy ??
-    params.cfg.channels?.["openclaw-simplex"]?.dmPolicy ??
+    params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.dmPolicy ??
     "pairing";
   const allowFrom = resolveSimplexAllowFrom({
     cfg: params.cfg,

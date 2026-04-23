@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveChannelMediaMaxBytes } from "openclaw/plugin-sdk/media-runtime";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexComposedMessage, SimplexMsgContent } from "../simplex/simplex-commands.js";
 import { getSimplexRuntime } from "./runtime.js";
 
@@ -14,8 +15,8 @@ export function resolveSimplexMediaMaxBytes(params: {
     resolveChannelMediaMaxBytes({
       cfg: params.cfg,
       resolveChannelLimitMb: ({ cfg, accountId }) =>
-        cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId]?.mediaMaxMb ??
-        cfg.channels?.["openclaw-simplex"]?.mediaMaxMb,
+        cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId]?.mediaMaxMb ??
+        cfg.channels?.[SIMPLEX_CHANNEL_ID]?.mediaMaxMb,
       accountId: params.accountId,
     }) ?? DEFAULT_MAX_BYTES
   );
@@ -36,7 +37,7 @@ export async function resolveMediaPath(params: {
     const saved = await core.channel.media.saveMediaBuffer(
       fetched.buffer,
       fetched.contentType,
-      "openclaw-simplex",
+      SIMPLEX_CHANNEL_ID,
       params.maxBytes,
       fetched.fileName
     );

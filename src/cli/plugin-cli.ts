@@ -3,15 +3,21 @@ import path from "node:path";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { toString as toQrString } from "qrcode";
 import {
+  LEGACY_SIMPLEX_CHANNEL_ID,
+  LEGACY_SIMPLEX_PLUGIN_ID,
+  SIMPLEX_CHANNEL_ID,
+  SIMPLEX_PLUGIN_ID,
+} from "../constants.js";
+import {
   createSimplexInvite,
   listSimplexInvites,
   revokeSimplexInvite,
 } from "../simplex/simplex-invite-service.js";
 
-export const LEGACY_PLUGIN_ID = "simplex";
-export const PLUGIN_ID = "openclaw-simplex";
-export const LEGACY_CHANNEL_ID = "simplex";
-export const CHANNEL_ID = "openclaw-simplex";
+export const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
+export const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
+export const LEGACY_CHANNEL_ID = LEGACY_SIMPLEX_CHANNEL_ID;
+export const CHANNEL_ID = SIMPLEX_CHANNEL_ID;
 
 type MigrationResult = {
   changed: string[];
@@ -314,8 +320,8 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
   api.registerCli(
     ({ program }) => {
       const command = program
-        .command("openclaw-simplex")
-        .alias("simplex")
+        .command(PLUGIN_ID)
+        .alias(LEGACY_PLUGIN_ID)
         .description("OpenClaw SimpleX plugin commands");
 
       command

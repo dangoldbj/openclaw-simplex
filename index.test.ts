@@ -42,7 +42,7 @@ vi.mock("qrcode", () => ({
   toDataURL: qrMocks.toDataURL,
 }));
 
-import type { PluginRuntime } from "openclaw/plugin-sdk/channel-core";
+import type { OpenClawConfig, PluginRuntime } from "openclaw/plugin-sdk/channel-core";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
@@ -299,6 +299,128 @@ describe("simplex channel SDK metadata", () => {
         args: { action: "upload-file", chatRef: "#ops", mediaUrl: "/tmp/file.txt" },
       })
     ).toMatchObject({ to: "#ops" });
+  });
+});
+
+describe("simplex channel config and allowlist adapters", () => {
+  it("supports shared account enable and delete config hooks", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          connection: { wsUrl: "ws://127.0.0.1:5225" },
+          allowFrom: ["@base"],
+          accounts: {
+            ops: {
+              connection: { wsUrl: "ws://127.0.0.1:6225" },
+              allowFrom: ["@ops"],
+            },
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    const disabledDefault = simplexPlugin.config.setAccountEnabled?.({
+      cfg,
+      accountId: "default",
+      enabled: false,
+    });
+    expect(disabledDefault?.channels?.["openclaw-simplex"]?.enabled).toBe(false);
+
+    const disabledOps = simplexPlugin.config.setAccountEnabled?.({
+      cfg,
+      accountId: "ops",
+      enabled: false,
+    });
+    expect(disabledOps?.channels?.["openclaw-simplex"]?.accounts?.ops?.enabled).toBe(false);
+
+    const deletedOps = simplexPlugin.config.deleteAccount?.({
+      cfg,
+      accountId: "ops",
+    });
+    expect(deletedOps?.channels?.["openclaw-simplex"]?.accounts?.ops).toBeUndefined();
+
+    const deletedDefault = simplexPlugin.config.deleteAccount?.({
+      cfg,
+      accountId: "default",
+    });
+    expect(deletedDefault?.channels?.["openclaw-simplex"]?.connection).toBeUndefined();
+    expect(deletedDefault?.channels?.["openclaw-simplex"]?.allowFrom).toBeUndefined();
+    expect(deletedDefault?.channels?.["openclaw-simplex"]?.accounts?.ops).toBeDefined();
+  });
+
+  it("reads and edits SimpleX DM/group allowlists through the shared adapter", async () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          dmPolicy: "allowlist",
+          allowFrom: ["@base"],
+          groupPolicy: "allowlist",
+          groupAllowFrom: ["group:base"],
+          accounts: {
+            ops: {
+              dmPolicy: "allowlist",
+              allowFrom: ["@ops"],
+              groupPolicy: "allowlist",
+              groupAllowFrom: ["group:ops"],
+            },
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    expect(await simplexPlugin.allowlist?.readConfig?.({ cfg, accountId: "ops" })).toEqual({
+      dmAllowFrom: ["@ops"],
+      dmPolicy: "allowlist",
+      groupAllowFrom: ["group:ops"],
+      groupOverrides: undefined,
+      groupPolicy: "allowlist",
+    });
+    expect(simplexPlugin.allowlist?.supportsScope?.({ scope: "dm" })).toBe(true);
+    expect(simplexPlugin.allowlist?.supportsScope?.({ scope: "group" })).toBe(true);
+
+    const parsedConfig = structuredClone(cfg) as unknown as Record<string, unknown>;
+    const addResult = await simplexPlugin.allowlist?.applyConfigEdit?.({
+      cfg,
+      parsedConfig,
+      accountId: "ops",
+      scope: "group",
+      action: "add",
+      entry: "#NewGroup",
+    });
+
+    expect(addResult).toMatchObject({
+      kind: "ok",
+      changed: true,
+      pathLabel: "channels.openclaw-simplex.accounts.ops.groupAllowFrom",
+    });
+    expect(
+      (
+        parsedConfig.channels as {
+          "openclaw-simplex": { accounts: { ops: { groupAllowFrom: string[] } } };
+        }
+      )["openclaw-simplex"].accounts.ops.groupAllowFrom
+    ).toEqual(["group:ops", "#NewGroup"]);
+
+    const removeResult = await simplexPlugin.allowlist?.applyConfigEdit?.({
+      cfg,
+      parsedConfig,
+      accountId: "ops",
+      scope: "dm",
+      action: "remove",
+      entry: "simplex:@ops",
+    });
+    expect(removeResult).toMatchObject({
+      kind: "ok",
+      changed: true,
+      pathLabel: "channels.openclaw-simplex.accounts.ops.allowFrom",
+    });
+    expect(
+      (
+        parsedConfig.channels as {
+          "openclaw-simplex": { accounts: { ops: { allowFrom?: string[] } } };
+        }
+      )["openclaw-simplex"].accounts.ops.allowFrom
+    ).toBeUndefined();
   });
 });
 

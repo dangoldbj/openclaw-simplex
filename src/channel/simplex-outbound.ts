@@ -1,6 +1,7 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { resolveSimplexAccount } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import { assertSimplexOutboundAccountReady } from "./simplex-common.js";
 import { buildAndSendSimplexMessages } from "./simplex-send.js";
@@ -25,7 +26,7 @@ export function buildSimplexOutbound(
         audioAsVoice: payload.audioAsVoice,
       });
       return {
-        channel: "openclaw-simplex",
+        channel: SIMPLEX_CHANNEL_ID,
         messageId: result.messageId ?? "unknown",
         chatId: to,
       };
@@ -41,14 +42,14 @@ export function buildSimplexOutbound(
         text,
       });
       return {
-        channel: "openclaw-simplex",
+        channel: SIMPLEX_CHANNEL_ID,
         messageId: result.messageId ?? "unknown",
         chatId: to,
       };
     },
     sendMedia: async ({ cfg, to, text, mediaUrl, accountId }) => {
       if (!mediaUrl) {
-        return { channel: "openclaw-simplex", messageId: "empty", chatId: to };
+        return { channel: SIMPLEX_CHANNEL_ID, messageId: "empty", chatId: to };
       }
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
@@ -61,7 +62,7 @@ export function buildSimplexOutbound(
         mediaUrl,
       });
       return {
-        channel: "openclaw-simplex",
+        channel: SIMPLEX_CHANNEL_ID,
         messageId: result.messageId ?? "unknown",
         chatId: to,
         meta: { mediaUrl },

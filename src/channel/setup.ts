@@ -5,6 +5,7 @@ import {
   applyAccountNameToChannelSection,
   applySetupAccountConfigPatch,
 } from "openclaw/plugin-sdk/setup";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 
 function resolveSetupAccountId(params: {
   cfg: OpenClawConfig;
@@ -24,7 +25,7 @@ export const simplexSetupAdapter: ChannelSetupAdapter = {
   applyAccountName: ({ cfg, accountId, name }) => {
     return applyAccountNameToChannelSection({
       cfg,
-      channelKey: "openclaw-simplex",
+      channelKey: SIMPLEX_CHANNEL_ID,
       accountId,
       name,
     });
@@ -33,7 +34,7 @@ export const simplexSetupAdapter: ChannelSetupAdapter = {
     const wsUrl = input.url?.trim() || input.httpUrl?.trim();
     return applySetupAccountConfigPatch({
       cfg,
-      channelKey: "openclaw-simplex",
+      channelKey: SIMPLEX_CHANNEL_ID,
       accountId,
       patch: {
         enabled: true,

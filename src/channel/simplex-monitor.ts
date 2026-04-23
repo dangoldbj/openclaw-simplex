@@ -3,6 +3,7 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveInboundMentionDecision } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import {
   buildCancelFileCommand,
   buildReceiveFileCommand,
@@ -451,7 +452,7 @@ async function handleSimplexEvent(params: {
 
     const route = core.channel.routing.resolveAgentRoute({
       cfg,
-      channel: "openclaw-simplex",
+      channel: SIMPLEX_CHANNEL_ID,
       accountId: account.accountId,
       peer: {
         kind: context.chatType === "group" ? "group" : "direct",
@@ -474,7 +475,7 @@ async function handleSimplexEvent(params: {
     const storeAllowFrom = shouldLoadAllowFromStore
       ? await core.channel.pairing
           .readAllowFromStore({
-            channel: "openclaw-simplex",
+            channel: SIMPLEX_CHANNEL_ID,
             accountId: account.accountId,
           })
           .catch(() => [])
@@ -539,7 +540,7 @@ async function handleSimplexEvent(params: {
           if (dmPolicy === "pairing") {
             const senderId = normalizedSenderId ?? String(context.chatId);
             const { code, created } = await core.channel.pairing.upsertPairingRequest({
-              channel: "openclaw-simplex",
+              channel: SIMPLEX_CHANNEL_ID,
               id: senderId,
               accountId: account.accountId,
               meta: { name: context.senderName },
@@ -554,7 +555,7 @@ async function handleSimplexEvent(params: {
                   accountId: account.accountId,
                   payload: {
                     text: core.channel.pairing.buildPairingReply({
-                      channel: "openclaw-simplex",
+                      channel: SIMPLEX_CHANNEL_ID,
                       idLine: `Your SimpleX contact id: ${senderId}`,
                       code,
                     }),
@@ -587,7 +588,7 @@ async function handleSimplexEvent(params: {
       const wasMentioned = core.channel.mentions.matchesMentionPatterns(rawBody, mentionRegexes);
       const allowTextCommands = core.channel.commands.shouldHandleTextCommands({
         cfg,
-        surface: "openclaw-simplex",
+        surface: SIMPLEX_CHANNEL_ID,
       });
       const mentionGate = resolveInboundMentionDecision({
         facts: {
@@ -649,12 +650,12 @@ async function handleSimplexEvent(params: {
       CommandBody: rawBody,
       From:
         context.chatType === "group"
-          ? `openclaw-simplex:group:${context.chatId}`
-          : `openclaw-simplex:${dmPeerId}`,
+          ? `${SIMPLEX_CHANNEL_ID}:group:${context.chatId}`
+          : `${SIMPLEX_CHANNEL_ID}:${dmPeerId}`,
       To:
         context.chatType === "group"
-          ? `openclaw-simplex:group:${context.chatId}`
-          : `openclaw-simplex:${dmPeerId}`,
+          ? `${SIMPLEX_CHANNEL_ID}:group:${context.chatId}`
+          : `${SIMPLEX_CHANNEL_ID}:${dmPeerId}`,
       SessionKey: route.sessionKey,
       AccountId: route.accountId,
       ChatType: context.chatType === "group" ? "group" : "direct",
@@ -662,19 +663,19 @@ async function handleSimplexEvent(params: {
       GroupSubject: context.chatType === "group" ? context.chatLabel : undefined,
       SenderName: context.senderName,
       SenderId: context.senderId,
-      Provider: "openclaw-simplex" as const,
-      Surface: "openclaw-simplex" as const,
+      Provider: SIMPLEX_CHANNEL_ID,
+      Surface: SIMPLEX_CHANNEL_ID,
       MessageSid:
         typeof item.chatItem?.meta?.itemId === "number"
           ? String(item.chatItem.meta.itemId)
           : undefined,
       WasMentioned: context.chatType === "group" ? effectiveWasMentioned : undefined,
       CommandAuthorized: commandAuthorized,
-      OriginatingChannel: "openclaw-simplex" as const,
+      OriginatingChannel: SIMPLEX_CHANNEL_ID,
       OriginatingTo:
         context.chatType === "group"
-          ? `openclaw-simplex:group:${context.chatId}`
-          : `openclaw-simplex:${dmPeerId}`,
+          ? `${SIMPLEX_CHANNEL_ID}:group:${context.chatId}`
+          : `${SIMPLEX_CHANNEL_ID}:${dmPeerId}`,
     });
 
     const fileId = item.chatItem?.file?.fileId;

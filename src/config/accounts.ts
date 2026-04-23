@@ -1,5 +1,6 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
 import type {
   ResolvedSimplexAccount,
@@ -24,15 +25,15 @@ function resolveRawSimplexAccountConfig(
   accountId: string
 ): SimplexAccountConfig {
   if (accountId === DEFAULT_ACCOUNT_ID) {
-    const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ??
+    const { accounts: _ignored, ...base } = (cfg.channels?.[SIMPLEX_CHANNEL_ID] ??
       {}) as SimplexChannelConfig;
     return base;
   }
-  return (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
+  return (cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
 }
 
 function listConfiguredAccountIds(cfg: OpenClawConfig): string[] {
-  const accounts = cfg.channels?.["openclaw-simplex"]?.accounts;
+  const accounts = cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts;
   if (!accounts || typeof accounts !== "object") {
     return [];
   }
@@ -75,9 +76,9 @@ function mergeConnection(
 }
 
 function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): SimplexAccountConfig {
-  const { accounts: _ignored, ...base } = (cfg.channels?.["openclaw-simplex"] ??
+  const { accounts: _ignored, ...base } = (cfg.channels?.[SIMPLEX_CHANNEL_ID] ??
     {}) as SimplexChannelConfig;
-  const account = (cfg.channels?.["openclaw-simplex"]?.accounts?.[accountId] ??
+  const account = (cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId] ??
     {}) as SimplexAccountConfig;
   return {
     ...base,
@@ -110,7 +111,7 @@ export function resolveSimplexAccount(params: {
   const accountId = normalizeAccountId(params.accountId);
   const merged = mergeSimplexAccountConfig(params.cfg, accountId);
   const hasMeaningfulConfig = hasMeaningfulSimplexConfig({ cfg: params.cfg, accountId });
-  const baseEnabled = params.cfg.channels?.["openclaw-simplex"]?.enabled !== false;
+  const baseEnabled = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.enabled !== false;
   const enabled = baseEnabled && merged.enabled !== false;
   const connection = merged.connection ?? {};
   const mode: SimplexConnectionMode = "external";

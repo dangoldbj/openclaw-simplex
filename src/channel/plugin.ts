@@ -1,12 +1,18 @@
-import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
+import { buildDmGroupAccountAllowlistAdapter } from "openclaw/plugin-sdk/allowlist-config-edit";
+import { createHybridChannelConfigAdapter } from "openclaw/plugin-sdk/channel-config-helpers";
+import type { ChannelPlugin, OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { simplexMessageActions } from "../actions/actions.js";
 import {
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
   resolveSimplexAccount,
 } from "../config/accounts.js";
-import { SimplexChannelConfigSchema } from "../config/config-schema.js";
+import {
+  SIMPLEX_ACCOUNT_CONFIG_CLEAR_FIELDS,
+  SimplexChannelConfigSchema,
+} from "../config/config-schema.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
 import { simplexSetupAdapter } from "./setup.js";
 import {
@@ -31,20 +37,24 @@ import { simplexDoctor } from "./simplex-doctor.js";
 import { buildSimplexGatewayRuntime } from "./simplex-gateway-runtime.js";
 import { buildSimplexOutbound } from "./simplex-outbound.js";
 import { buildSimplexPairing } from "./simplex-pairing.js";
-import { formatSimplexAllowFrom, resolveSimplexAllowFrom } from "./simplex-security.js";
+import { formatSimplexAllowFrom } from "./simplex-security.js";
 import { buildSimplexStatus } from "./simplex-status.js";
 
 const activeClients = new Map<string, SimplexWsClient>();
 
+function resolveSimplexConfigAccount(cfg: OpenClawConfig, accountId?: string | null) {
+  return resolveSimplexAccount({ cfg, accountId });
+}
+
 export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
-  id: "openclaw-simplex",
+  id: SIMPLEX_CHANNEL_ID,
   meta: {
-    id: "openclaw-simplex",
+    id: SIMPLEX_CHANNEL_ID,
     label: "SimpleX",
     selectionLabel: "SimpleX (WebSocket)",
     detailLabel: "SimpleX Chat",
     docsPath: "/channels/openclaw-simplex",
-    docsLabel: "openclaw-simplex",
+    docsLabel: SIMPLEX_CHANNEL_ID,
     blurb: "SimpleX Chat via external WebSocket API",
     aliases: ["simplex"],
     order: 95,
@@ -72,9 +82,17 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   setup: simplexSetupAdapter,
   configSchema: SimplexChannelConfigSchema,
   config: {
-    listAccountIds: (cfg) => listSimplexAccountIds(cfg),
-    resolveAccount: (cfg, accountId) => resolveSimplexAccount({ cfg, accountId }),
-    defaultAccountId: (cfg) => resolveDefaultSimplexAccountId(cfg),
+    ...createHybridChannelConfigAdapter<ResolvedSimplexAccount>({
+      sectionKey: SIMPLEX_CHANNEL_ID,
+      listAccountIds: (cfg) => listSimplexAccountIds(cfg),
+      resolveAccount: resolveSimplexConfigAccount,
+      defaultAccountId: (cfg) => resolveDefaultSimplexAccountId(cfg),
+      inspectAccount: (cfg, accountId) => resolveSimplexConfigAccount(cfg, accountId).config,
+      clearBaseFields: SIMPLEX_ACCOUNT_CONFIG_CLEAR_FIELDS,
+      preserveSectionOnDefaultDelete: true,
+      resolveAllowFrom: (account) => account.config.allowFrom,
+      formatAllowFrom: (allowFrom) => formatSimplexAllowFrom(allowFrom),
+    }),
     isConfigured: (account) => account.configured,
     describeAccount: (account) => ({
       accountId: account.accountId,
@@ -86,9 +104,16 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
         wsUrl: account.wsUrl,
       },
     }),
-    resolveAllowFrom: ({ cfg, accountId }) => resolveSimplexAllowFrom({ cfg, accountId }),
-    formatAllowFrom: ({ allowFrom }) => formatSimplexAllowFrom(allowFrom),
   },
+  allowlist: buildDmGroupAccountAllowlistAdapter({
+    channelId: SIMPLEX_CHANNEL_ID,
+    resolveAccount: ({ cfg, accountId }) => resolveSimplexConfigAccount(cfg, accountId),
+    normalize: ({ values }) => formatSimplexAllowFrom(values),
+    resolveDmAllowFrom: (account) => account.config.allowFrom,
+    resolveGroupAllowFrom: (account) => account.config.groupAllowFrom,
+    resolveDmPolicy: (account) => account.config.dmPolicy,
+    resolveGroupPolicy: (account) => account.config.groupPolicy,
+  }),
   messaging: {
     normalizeTarget: (raw) => stripSimplexPrefix(raw),
     parseExplicitTarget: ({ raw }) => parseSimplexExplicitTarget(raw),
@@ -121,17 +146,17 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     resolveDmPolicy: ({ cfg, accountId, account }) => {
       const resolvedAccountId = accountId ?? account.accountId ?? DEFAULT_ACCOUNT_ID;
       const useAccountPath = Boolean(
-        cfg.channels?.["openclaw-simplex"]?.accounts?.[resolvedAccountId]
+        cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[resolvedAccountId]
       );
       const basePath = useAccountPath
-        ? `channels.openclaw-simplex.accounts.${resolvedAccountId}.`
-        : "channels.openclaw-simplex.";
+        ? `channels.${SIMPLEX_CHANNEL_ID}.accounts.${resolvedAccountId}.`
+        : `channels.${SIMPLEX_CHANNEL_ID}.`;
       return {
         policy: account.config.dmPolicy ?? "pairing",
         allowFrom: account.config.allowFrom ?? [],
         policyPath: `${basePath}dmPolicy`,
         allowFromPath: basePath,
-        approveHint: formatPairingApproveHint("openclaw-simplex"),
+        approveHint: formatPairingApproveHint(SIMPLEX_CHANNEL_ID),
         normalizeEntry: (raw) => stripLeadingAt(stripSimplexPrefix(raw)),
       };
     },

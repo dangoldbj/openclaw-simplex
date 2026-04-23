@@ -57,6 +57,9 @@ export type SimplexConfig = z.infer<typeof SimplexConfigSchema>;
 export type SimplexChannelConfig = SimplexConfig & {
   accounts?: Record<string, SimplexAccountConfig | undefined>;
 };
+export const SIMPLEX_ACCOUNT_CONFIG_CLEAR_FIELDS = Object.keys(
+  SimplexAccountConfigSchema.shape
+) as Array<keyof SimplexAccountConfig>;
 
 export const SimplexChannelConfigSchema: ReturnType<typeof buildChannelConfigSchema> =
   buildChannelConfigSchema(SimplexConfigSchema);

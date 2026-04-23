@@ -1,14 +1,13 @@
 import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "../config/config-schema.js";
-
-const CHANNEL_ID = "openclaw-simplex";
+import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../constants.js";
 
 function isEmptyArray(value: unknown): boolean {
   return Array.isArray(value) && value.length === 0;
 }
 
 function readChannelConfig(cfg: { channels?: Record<string, unknown> }): SimplexChannelConfig {
-  return (cfg.channels?.[CHANNEL_ID] ?? {}) as SimplexChannelConfig;
+  return (cfg.channels?.[SIMPLEX_CHANNEL_ID] ?? {}) as SimplexChannelConfig;
 }
 
 function collectAccountWarnings(
@@ -47,10 +46,10 @@ export const simplexDoctor: ChannelDoctorAdapter = {
   warnOnEmptyGroupSenderAllowlist: true,
   collectPreviewWarnings: ({ cfg, doctorFixCommand }) => {
     const warnings: string[] = [];
-    const legacy = cfg.channels?.simplex;
+    const legacy = cfg.channels?.[LEGACY_SIMPLEX_CHANNEL_ID];
     if (legacy) {
       warnings.push(
-        `- Legacy channels.simplex config is present. Run openclaw-simplex migrate or ${doctorFixCommand} before relying on ${CHANNEL_ID}.`
+        `- Legacy channels.${LEGACY_SIMPLEX_CHANNEL_ID} config is present. Run openclaw-simplex migrate or ${doctorFixCommand} before relying on ${SIMPLEX_CHANNEL_ID}.`
       );
     }
 
