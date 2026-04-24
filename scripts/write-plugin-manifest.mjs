@@ -20,6 +20,23 @@ const channelId = channelPlugin?.id;
 const channelSchema = channelPlugin?.configSchema;
 const existingChannelConfig = manifest.channelConfigs?.[channelId] ?? {};
 
+function mergeUiHints(runtimeUiHints, existingUiHints) {
+  const keys = new Set([
+    ...Object.keys(existingUiHints ?? {}),
+    ...Object.keys(runtimeUiHints ?? {}),
+  ]);
+
+  return Object.fromEntries(
+    [...keys].map((key) => [
+      key,
+      {
+        ...(existingUiHints?.[key] ?? {}),
+        ...(runtimeUiHints?.[key] ?? {}),
+      },
+    ])
+  );
+}
+
 if (!channelId || !channelSchema?.schema || typeof channelSchema.schema !== "object") {
   throw new Error("Built plugin entry does not expose a channel config schema");
 }
@@ -33,10 +50,7 @@ manifest.channelConfigs = {
     schema: channelSchema.schema,
     ...((existingChannelConfig.uiHints ?? channelSchema.uiHints)
       ? {
-          uiHints: {
-            ...(channelSchema.uiHints ?? {}),
-            ...(existingChannelConfig.uiHints ?? {}),
-          },
+          uiHints: mergeUiHints(channelSchema.uiHints, existingChannelConfig.uiHints),
         }
       : {}),
     ...(packageChannelMeta?.label ? { label: packageChannelMeta.label } : {}),

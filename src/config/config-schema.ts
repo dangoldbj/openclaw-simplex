@@ -10,6 +10,7 @@ import {
   ToolPolicySchema,
 } from "openclaw/plugin-sdk/channel-config-schema";
 import { z } from "zod";
+import { simplexChannelConfigUiHints } from "./config-ui-hints.js";
 
 const SimplexAllowFromListSchema = AllowFromListSchema.pipe(z.array(z.string()).optional());
 
@@ -62,4 +63,6 @@ export const SIMPLEX_ACCOUNT_CONFIG_CLEAR_FIELDS = Object.keys(
 ) as Array<keyof SimplexAccountConfig>;
 
 export const SimplexChannelConfigSchema: ReturnType<typeof buildChannelConfigSchema> =
-  buildChannelConfigSchema(SimplexConfigSchema);
+  buildChannelConfigSchema(SimplexConfigSchema, {
+    uiHints: simplexChannelConfigUiHints,
+  });

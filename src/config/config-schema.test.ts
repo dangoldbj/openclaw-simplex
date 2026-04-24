@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SimplexChannelConfigSchema } from "./config-schema.js";
+import { simplexChannelConfigUiHints } from "./config-ui-hints.js";
 
 const manifest = JSON.parse(
   readFileSync(new URL("../../openclaw.plugin.json", import.meta.url), "utf8")
@@ -54,6 +55,7 @@ describe("simplex config schema manifest", () => {
     expect(manifest.channelConfigs?.[channelId ?? ""]?.schema).toEqual(
       SimplexChannelConfigSchema.schema
     );
+    expect(SimplexChannelConfigSchema.uiHints).toEqual(simplexChannelConfigUiHints);
   });
 
   it("keeps channel manifest metadata aligned with package metadata", () => {
@@ -97,17 +99,7 @@ describe("simplex config schema manifest", () => {
       | { uiHints?: Record<string, unknown> }
       | undefined;
 
-    expect(channelManifest?.uiHints).toMatchObject({
-      "": {
-        label: "SimpleX",
-      },
-      "connection.wsUrl": {
-        label: "WebSocket URL",
-      },
-      dmPolicy: {
-        label: "DM Policy",
-      },
-    });
+    expect(channelManifest?.uiHints).toEqual(simplexChannelConfigUiHints);
   });
 
   it("claims the legacy simplex CLI alias for newer OpenClaw CLI gating", () => {
