@@ -64,8 +64,8 @@ describe("simplex config schema manifest", () => {
     expect(channelManifest?.description).toBe(packageJson.openclaw?.channel?.blurb);
   });
 
-  it("advertises the 2026.4.21 channel selection metadata", () => {
-    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.4.21");
+  it("advertises the 2026.4.23 channel selection metadata", () => {
+    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.4.23");
     expect(packageJson.openclaw?.channel).toMatchObject({
       detailLabel: "SimpleX Chat",
       aliases: ["simplex"],

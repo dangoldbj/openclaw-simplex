@@ -1,7 +1,7 @@
 import { access, mkdir, readdir, rename } from "node:fs/promises";
 import path from "node:path";
+import { renderQrTerminal } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { toString as toQrString } from "qrcode";
 import {
   LEGACY_SIMPLEX_CHANNEL_ID,
   LEGACY_SIMPLEX_PLUGIN_ID,
@@ -43,7 +43,7 @@ function readOptionalAccountId(value?: string): string | null {
 }
 
 async function printTerminalQr(value: string): Promise<void> {
-  const qr = await toQrString(value, { type: "terminal", small: true, margin: 1 });
+  const qr = await renderQrTerminal(value, { small: true });
   console.log(qr);
 }
 

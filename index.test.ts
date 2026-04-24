@@ -162,6 +162,8 @@ function setupRegistration(
     registerMemoryEmbeddingProvider: () => {},
     registerMemoryPromptSection: () => {},
     registerCommand: () => {},
+    registerEmbeddedExtensionFactory: () => {},
+    registerCodexAppServerExtensionFactory: () => {},
     on: (hookName, handler) => {
       hooks.push({ events: hookName, handler });
     },

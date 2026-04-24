@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { type Static, Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { executeSimplexAction } from "../actions/execute.js";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
@@ -48,6 +48,16 @@ const InviteToolSchema = Type.Object({
     })
   ),
 });
+type InviteToolParams = Static<typeof InviteToolSchema>;
+
+const AccountScopedToolSchema = Type.Object({
+  accountId: Type.Optional(
+    Type.String({
+      description: "SimpleX account id. Defaults to the active/default account.",
+    })
+  ),
+});
+type AccountScopedToolParams = Static<typeof AccountScopedToolSchema>;
 
 const GroupParticipantToolSchema = Type.Object({
   accountId: Type.Optional(
@@ -64,6 +74,7 @@ const GroupParticipantToolSchema = Type.Object({
     Type.String({ description: "Alias for participant when removing a member." })
   ),
 });
+type GroupParticipantToolParams = Static<typeof GroupParticipantToolSchema>;
 
 const LeaveGroupToolSchema = Type.Object({
   accountId: Type.Optional(
@@ -73,6 +84,7 @@ const LeaveGroupToolSchema = Type.Object({
   chatRef: Type.Optional(Type.String({ description: "SimpleX group chat ref such as #group." })),
   to: Type.Optional(Type.String({ description: "Alias for group target." })),
 });
+type LeaveGroupToolParams = Static<typeof LeaveGroupToolSchema>;
 
 async function runInviteListTool(params: {
   api: OpenClawPluginApi;
@@ -117,7 +129,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       label: "SimpleX Invite Create",
       description: "Create a SimpleX one-time connect link or return the account address link.",
       parameters: InviteToolSchema,
-      async execute(_toolCallId, rawParams) {
+      async execute(_toolCallId, rawParams: InviteToolParams) {
         const mode = resolveInviteMode(rawParams?.mode) ?? "connect";
         return jsonResult(
           await createSimplexInvite({
@@ -137,14 +149,8 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       name: "simplex_invite_list",
       label: "SimpleX Invite List",
       description: "List the current SimpleX address link plus known invite/pending-contact hints.",
-      parameters: Type.Object({
-        accountId: Type.Optional(
-          Type.String({
-            description: "SimpleX account id. Defaults to the active/default account.",
-          })
-        ),
-      }),
-      async execute(_toolCallId, rawParams) {
+      parameters: AccountScopedToolSchema,
+      async execute(_toolCallId, rawParams: AccountScopedToolParams) {
         return await runInviteListTool({
           api,
           accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
@@ -160,14 +166,8 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       label: "SimpleX Invite Revoke",
       description: "Revoke the current SimpleX address/invite link for an account.",
       ownerOnly: true,
-      parameters: Type.Object({
-        accountId: Type.Optional(
-          Type.String({
-            description: "SimpleX account id. Defaults to the active/default account.",
-          })
-        ),
-      }),
-      async execute(_toolCallId, rawParams) {
+      parameters: AccountScopedToolSchema,
+      async execute(_toolCallId, rawParams: AccountScopedToolParams) {
         const result = await revokeSimplexInvite({
           cfg: api.config,
           accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
@@ -185,7 +185,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       label: "SimpleX Group Add Participant",
       description: "Add a participant to a SimpleX group.",
       parameters: GroupParticipantToolSchema,
-      async execute(_toolCallId, rawParams) {
+      async execute(_toolCallId, rawParams: GroupParticipantToolParams) {
         return await executeSimplexAction({
           action: "addParticipant",
           cfg: api.config,
@@ -204,7 +204,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       description: "Remove a participant from a SimpleX group.",
       ownerOnly: true,
       parameters: GroupParticipantToolSchema,
-      async execute(_toolCallId, rawParams) {
+      async execute(_toolCallId, rawParams: GroupParticipantToolParams) {
         return await executeSimplexAction({
           action: "removeParticipant",
           cfg: api.config,
@@ -223,7 +223,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
       description: "Leave a SimpleX group.",
       ownerOnly: true,
       parameters: LeaveGroupToolSchema,
-      async execute(_toolCallId, rawParams) {
+      async execute(_toolCallId, rawParams: LeaveGroupToolParams) {
         return await executeSimplexAction({
           action: "leaveGroup",
           cfg: api.config,

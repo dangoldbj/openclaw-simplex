@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Raised the minimum supported OpenClaw version to `2026.4.23` and aligned the package metadata/tests with the newer host release.
+- Switched terminal QR rendering to OpenClaw's shared QR helper so plugin CLI output follows the current bounded host-side QR path used by newer OpenClaw releases.
+
 ## [1.3.5] - 2026-04-20
 
 ### Fixed
