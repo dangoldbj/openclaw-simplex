@@ -1,11 +1,11 @@
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 import type { ChannelGroupContext } from "openclaw/plugin-sdk/channel-contract";
 import type { GroupToolPolicyConfig } from "openclaw/plugin-sdk/channel-policy";
-import { formatPairingApproveHint } from "openclaw/plugin-sdk/core";
 import { resolveSimplexAccount } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
+import { stripSimplexProviderPrefix } from "../constants.js";
 
-export { DEFAULT_ACCOUNT_ID, formatPairingApproveHint };
+export { DEFAULT_ACCOUNT_ID };
 
 export type SimplexExplicitTarget = {
   to: string;
@@ -60,12 +60,7 @@ export function normalizeSimplexMessageId(value: unknown): string | undefined {
 }
 
 export function stripSimplexPrefix(value: string): string {
-  const trimmed = value.trim();
-  const lower = trimmed.toLowerCase();
-  if (lower.startsWith("openclaw-simplex:")) {
-    return trimmed.slice("openclaw-simplex:".length).trim();
-  }
-  return lower.startsWith("simplex:") ? trimmed.slice("simplex:".length).trim() : trimmed;
+  return stripSimplexProviderPrefix(value);
 }
 
 export function stripLeadingAt(value: string): string {
@@ -143,7 +138,7 @@ export function formatSimplexTargetDisplay(params: {
 }
 
 export function normalizeSimplexContactRef(value: string): string {
-  const trimmed = value.trim();
+  const trimmed = stripSimplexPrefix(value);
   if (!trimmed) {
     return trimmed;
   }
@@ -154,9 +149,7 @@ export function normalizeSimplexContactRef(value: string): string {
   if (
     lowered.startsWith("contact:") ||
     lowered.startsWith("user:") ||
-    lowered.startsWith("member:") ||
-    lowered.startsWith("simplex:") ||
-    lowered.startsWith("openclaw-simplex:")
+    lowered.startsWith("member:")
   ) {
     return `@${trimmed.slice(trimmed.indexOf(":") + 1).trim()}`;
   }

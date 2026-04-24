@@ -13,6 +13,7 @@ import {
 import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
 import { SimplexWsClient, type SimplexWsEvent } from "../simplex/simplex-ws-client.js";
 import { getSimplexRuntime } from "./runtime.js";
+import { stripSimplexPrefix } from "./simplex-common.js";
 import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "./simplex-media.js";
 import { isSimplexAllowlisted } from "./simplex-security.js";
 
@@ -79,12 +80,7 @@ function normalizeSimplexSenderId(value?: string | null): string | undefined {
   if (!trimmed) {
     return undefined;
   }
-  const lower = trimmed.toLowerCase();
-  if (lower.startsWith("openclaw-simplex:")) {
-    trimmed = trimmed.slice("openclaw-simplex:".length).trim();
-  } else if (lower.startsWith("simplex:")) {
-    trimmed = trimmed.slice("simplex:".length).trim();
-  }
+  trimmed = stripSimplexPrefix(trimmed);
   if (!trimmed) {
     return undefined;
   }

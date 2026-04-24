@@ -1,3 +1,5 @@
+import { hasSimplexProviderPrefix, stripSimplexProviderPrefix } from "../constants.js";
+
 export type SimplexChatType = "direct" | "group" | "local";
 
 export type SimplexChatRef = {
@@ -58,12 +60,7 @@ function normalizeSimplexChatRef(raw: string): string {
     return trimmed;
   }
 
-  const lower = trimmed.toLowerCase();
-  const withoutPrefix = lower.startsWith("openclaw-simplex:")
-    ? trimmed.slice("openclaw-simplex:".length).trim()
-    : lower.startsWith("simplex:")
-      ? trimmed.slice("simplex:".length).trim()
-      : trimmed;
+  const withoutPrefix = stripSimplexProviderPrefix(trimmed);
   if (!withoutPrefix) {
     return withoutPrefix;
   }
@@ -90,8 +87,7 @@ function normalizeChatRefToken(value: string): string {
   const trimmed = value.trim();
   const lowered = trimmed.toLowerCase();
   const normalized =
-    lowered.startsWith("simplex:") ||
-    lowered.startsWith("openclaw-simplex:") ||
+    hasSimplexProviderPrefix(trimmed) ||
     lowered.startsWith("group:") ||
     lowered.startsWith("contact:") ||
     lowered.startsWith("user:") ||

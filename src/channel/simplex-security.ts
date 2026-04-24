@@ -2,6 +2,7 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
+import { stripSimplexPrefix } from "./simplex-common.js";
 
 export type SimplexAllowlistEntry = {
   kind: "any" | "sender" | "group";
@@ -10,15 +11,6 @@ export type SimplexAllowlistEntry = {
 
 function normalizeSimplexId(value: string): string {
   return value.trim().toLowerCase();
-}
-
-function stripSimplexPrefix(value: string): string {
-  const trimmed = value.trim();
-  const lower = trimmed.toLowerCase();
-  if (lower.startsWith("openclaw-simplex:")) {
-    return trimmed.slice("openclaw-simplex:".length).trim();
-  }
-  return lower.startsWith("simplex:") ? trimmed.slice("simplex:".length).trim() : trimmed;
 }
 
 export function parseSimplexAllowlistEntry(raw: string | number): SimplexAllowlistEntry | null {

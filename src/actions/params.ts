@@ -1,3 +1,4 @@
+import { stripSimplexPrefix } from "../channel/simplex-common.js";
 import type { DeleteMode, SimplexActionParams } from "./types.js";
 
 export function readStringParam(
@@ -54,12 +55,7 @@ export function normalizeSimplexChatRef(raw: string, chatType?: string | null): 
   if (!trimmed) {
     return trimmed;
   }
-  const lower = trimmed.toLowerCase();
-  const withoutPrefix = lower.startsWith("openclaw-simplex:")
-    ? trimmed.slice("openclaw-simplex:".length).trim()
-    : lower.startsWith("simplex:")
-      ? trimmed.slice("simplex:".length).trim()
-      : trimmed;
+  const withoutPrefix = stripSimplexPrefix(trimmed);
   if (!withoutPrefix) {
     return withoutPrefix;
   }

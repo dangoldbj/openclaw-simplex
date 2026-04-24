@@ -10,6 +10,7 @@ import {
   buildShowActiveUserCommand,
 } from "../simplex/simplex-commands.js";
 import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+import { stripSimplexPrefix } from "./simplex-common.js";
 
 type SimplexDirectoryParams = {
   cfg: OpenClawConfig;
@@ -137,12 +138,7 @@ function normalizeSimplexInputId(input: string): { id: string; explicit: boolean
   if (!trimmed) {
     return { id: "", explicit: false };
   }
-  const lower = trimmed.toLowerCase();
-  const withoutPrefix = lower.startsWith("openclaw-simplex:")
-    ? trimmed.slice("openclaw-simplex:".length).trim()
-    : lower.startsWith("simplex:")
-      ? trimmed.slice("simplex:".length).trim()
-      : trimmed;
+  const withoutPrefix = stripSimplexPrefix(trimmed);
   const lowered = withoutPrefix.toLowerCase();
   if (lowered.startsWith("#")) {
     return { id: withoutPrefix.slice(1).trim(), explicit: true };
