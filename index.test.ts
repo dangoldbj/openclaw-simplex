@@ -239,6 +239,12 @@ describe("plugin entry registration modes", () => {
   it("exposes approval capability for same-chat approvals", () => {
     expect(simplexPlugin.approvalCapability).toBeTruthy();
     expect(typeof simplexPlugin.approvalCapability?.authorizeActorAction).toBe("function");
+    expect(simplexPlugin.commands).toEqual({
+      skipWhenConfigEmpty: true,
+    });
+    expect(simplexPlugin.heartbeat).toBeTruthy();
+    expect(typeof simplexPlugin.heartbeat?.checkReady).toBe("function");
+    expect(typeof simplexPlugin.heartbeat?.resolveRecipients).toBe("function");
   });
 
   it("marks destructive simplex tools as owner-only", () => {

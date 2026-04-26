@@ -19,6 +19,7 @@ import type { ResolvedSimplexAccount } from "../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
 import { simplexApprovalAuth } from "./approval-auth.js";
+import { simplexCommandPolicy } from "./command-policy.js";
 import { simplexSetupAdapter } from "./setup.js";
 import {
   formatSimplexTargetDisplay,
@@ -38,6 +39,7 @@ import {
 } from "./simplex-directory.js";
 import { simplexDoctor } from "./simplex-doctor.js";
 import { buildSimplexGatewayRuntime } from "./simplex-gateway-runtime.js";
+import { buildSimplexHeartbeat } from "./simplex-heartbeat.js";
 import { buildSimplexOutbound } from "./simplex-outbound.js";
 import { buildSimplexPairing } from "./simplex-pairing.js";
 import { formatSimplexAllowFrom } from "./simplex-security.js";
@@ -151,6 +153,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
       '- SimpleX file upload: use `action="upload-file"` with `mediaUrl`, `filePath`, `path`, or `media` plus optional `caption`/`text`.',
     ],
   },
+  commands: simplexCommandPolicy,
   actions: simplexMessageActions,
   approvalCapability: simplexApprovalAuth,
   directory: {
@@ -183,6 +186,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   },
   gatewayMethods: ["simplex.invite.create", "simplex.invite.list", "simplex.invite.revoke"],
   outbound: buildSimplexOutbound(activeClients),
+  heartbeat: buildSimplexHeartbeat(activeClients),
   status: buildSimplexStatus(activeClients),
   doctor: simplexDoctor,
   gateway: buildSimplexGatewayRuntime(activeClients),
