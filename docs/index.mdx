@@ -8,10 +8,6 @@ Most agent chat channels in OpenClaw assume a platform bot identity: a bot usern
 
 Within OpenClaw's channel ecosystem, this plugin enables a communication model that does not rely on platform identity or bot registration. With <a href="https://simplex.chat/">SimpleX</a>, the invite or address link becomes the access boundary: generate it, share it intentionally, revoke it when needed, and the agent does not expose a platform-discoverable bot identity.
 
-<Info>
-  Breaking in <code>1.0.0</code>: the plugin id and channel id are now <code>openclaw-simplex</code>, managed mode was removed, and existing users should run <code>openclaw simplex migrate</code>. See <a href="/guide/migration">Migration</a>.
-</Info>
-
 The implementation keeps developer-facing boundaries explicit: OpenClaw enforces policy, the plugin translates channel events and actions, and a separately managed <code>simplex-chat</code> runtime handles the SimpleX WebSocket API.
 
 <Columns cols={2}>

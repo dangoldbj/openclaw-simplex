@@ -9,7 +9,6 @@ Use this guide only if you previously configured or paired the plugin under the 
 
 - plugin id: `simplex` -> `openclaw-simplex`
 - channel id: `simplex` -> `openclaw-simplex`
-- managed mode was removed; OpenClaw no longer starts `simplex-chat` for you
 - pairing approval commands now use `openclaw-simplex`
 
 <Info>
@@ -20,7 +19,7 @@ The migration helper updates config keys and stored pairing/allowlist state so e
 
 <Steps>
   <Step title="Start the external SimpleX runtime">
-    Managed mode is gone. Run <code>simplex-chat</code> yourself and expose the WebSocket endpoint the channel should use:
+    Run <code>simplex-chat</code> yourself and expose the WebSocket endpoint the channel should use:
 
     ```bash
     simplex-chat -p 5225

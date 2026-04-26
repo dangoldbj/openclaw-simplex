@@ -30,6 +30,11 @@ If <code>accounts</code> is not set, the root <code>channels.openclaw-simplex</c
     "openclaw-simplex": {
       "enabled": true,
       "name": "SimpleX",
+      "actions": {
+        "reactions": true,
+        "polls": true
+      },
+      "reactionLevel": "minimal",
       "dmPolicy": "pairing",
       "allowFrom": ["*"],
       "groupPolicy": "allowlist",
@@ -62,6 +67,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
         "ops": {
           "name": "Ops",
           "enabled": true,
+          "reactionLevel": "extensive",
           "allowFrom": ["alice", "bob"],
           "connection": {
             "wsUrl": "ws://127.0.0.1:7777"
@@ -79,6 +85,9 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | --- | --- |
 | `enabled` | Master toggle for the channel or account. |
 | `name` | Optional display name for an account. |
+| `actions.reactions` | Enable or disable agent reaction actions for this channel/account. |
+| `actions.polls` | Enable or disable poll-style message actions for this channel/account. |
+| `reactionLevel` | Agent reaction behavior: `off` \| `ack` \| `minimal` \| `extensive`. |
 | `dmPolicy` | Direct-message policy: `open` \| `allowlist` \| `pairing` \| `disabled`. Effective default: `pairing`. |
 | `allowFrom` | DM allowlist entries. |
 | `dmHistoryLimit` | Optional per-DM history limit. |

@@ -21,11 +21,11 @@ The invite or address link is the access boundary. Once a sender reaches the age
   </Step>
 
   <Step title="Policies are applied">
-    OpenClaw evaluates DM policy, allowlists, group policy, pairing state, and command authorization. In pairing mode, newly discovered contacts must be approved before they become trusted senders.
+    OpenClaw evaluates DM policy, allowlists, group policy, pairing state, command authorization, and same-chat exec approval authorization. In pairing mode, newly discovered contacts must be approved before they become trusted senders.
   </Step>
 
   <Step title="Replies go back through SimpleX">
-    Message actions, media sends, edits, deletes, reactions, and group operations are translated back into SimpleX commands and sent through the same WebSocket connection.
+    Message actions, media sends, polls, edits, deletes, reactions, and group operations are translated back into SimpleX commands and sent through the same WebSocket connection.
   </Step>
 </Steps>
 
@@ -46,9 +46,9 @@ The invite or address link is the access boundary. Once a sender reaches the age
 
 <Columns cols={2}>
   <Card title="Message actions" icon="send">
-    Send, react, edit, delete, upload-file, and group management actions.
+    Send, react, poll, edit, delete, upload-file, and group management actions.
   </Card>
   <Card title="Operational helpers" icon="bolt">
-    Directory lookups, target resolution, and gateway invite methods for developer-controlled onboarding and automation flows.
+    Directory lookups, target resolution, heartbeat readiness, and gateway invite methods for developer-controlled onboarding and automation flows.
   </Card>
 </Columns>

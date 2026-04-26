@@ -2,8 +2,6 @@
 
 > **TL;DR:** An OpenClaw channel for SimpleX Chat: invite-based reachability, end-to-end encrypted messaging, and no public bot account or hosted bot platform in the middle.
 
-> **Breaking in `1.0.0`:** the plugin id and channel id are now `openclaw-simplex`, managed mode was removed, and existing users should run `openclaw simplex migrate`. See the [migration guide](https://openclaw-simplex.mintlify.app/guide/migration).
-
 ---
 
 Most agent chat channels in OpenClaw assume a platform bot identity: a bot username, a phone number, an app registration, or some other platform-managed endpoint.
@@ -109,7 +107,7 @@ Full docs: https://openclaw-simplex.mintlify.app/
 
 The plugin connects OpenClaw to a locally running `simplex-chat` process via its WebSocket API. Incoming messages are normalized into the standard OpenClaw message context. OpenClaw applies your policies (`dmPolicy`, `allowFrom`, group policy), runs the agent, and sends the response back through SimpleX.
 
-The key difference from managed-mode channels: OpenClaw does not own or supervise the `simplex-chat` process. You run it separately, point OpenClaw at its WebSocket endpoint, and the channel becomes operational. This gives you full control over the runtime lifecycle.
+The key runtime boundary is explicit: OpenClaw does not own or supervise the `simplex-chat` process. You run it separately, point OpenClaw at its WebSocket endpoint, and the channel becomes operational. This gives you full control over the runtime lifecycle.
 
 ---
 
@@ -117,11 +115,11 @@ The key difference from managed-mode channels: OpenClaw does not own or supervis
 
 - Direct and group messaging over SimpleX
 - Media send/receive support
-- Pairing approval and allowlist enforcement
+- Pairing approval, exec approval auth, and allowlist enforcement
 - Invite link, address link, and QR generation
-- Shared `message` actions including `upload-file`, reactions, edits, deletes, and group actions
+- Shared `message` actions including `upload-file`, reactions, polls, edits, deletes, and group actions
 - Plugin tools and gateway methods for invite and group administration
-- Runtime status reporting and Control UI configuration
+- Runtime status reporting, command handling, heartbeat readiness, and Control UI configuration
 - External WebSocket runtime integration with explicit operator-managed lifecycle
 
 ---
@@ -256,7 +254,7 @@ For automation and integrations, OpenClaw exposes gateway methods:
 
 ## Migration from `simplex`
 
-`1.0.0` renames both the plugin id and the channel id from `simplex` to `openclaw-simplex`.
+Older `0.x` installs used the `simplex` plugin and channel ids.
 
 If you are upgrading from `0.x`, run:
 
@@ -278,13 +276,11 @@ This migrates:
 - `channels.simplex` → `channels.openclaw-simplex`
 - OpenClaw pairing and allowlist state files under the OpenClaw state directory
 
-**Breaking changes in `1.0.0`:**
+Current note:
 
-- Managed mode was removed; run `simplex-chat` separately and configure `wsUrl`
-- The plugin id is now `openclaw-simplex`
-- The channel id is now `openclaw-simplex`
-- Pairing approval commands now use `openclaw-simplex`
-- Gateway method names remain `simplex.invite.*`; they were not renamed in this release
+- The current plugin id is `openclaw-simplex`
+- The current channel id is `openclaw-simplex`
+- Gateway method names remain `simplex.invite.*`
 
 ---
 
@@ -293,6 +289,7 @@ This migrates:
 - Reachability starts with a SimpleX invite or address link
 - OpenClaw applies sender gating via `dmPolicy`, `allowFrom`, and group policy
 - Pairing-based approval can require explicit acceptance before a new contact can trigger the agent
+- Same-chat exec approvals are supported for authorized SimpleX senders
 - OpenClaw does not auto-spawn `simplex-chat`; runtime control stays explicit
 - The plugin does not depend on a platform bot registry or hosted messaging API
 

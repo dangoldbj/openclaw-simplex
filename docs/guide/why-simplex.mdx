@@ -25,7 +25,7 @@ The point is not that this channel replaces every platform-backed integration. I
     Run <code>simplex-chat</code> yourself, choose where the runtime and relay path live, and keep OpenClaw policy enforcement local.
   </Card>
   <Card title="OpenClaw-native operations" icon="message-circle">
-    Pairing approval, allowlists, invite helpers, media support, and channel status all exist in the plugin, not in ad hoc glue code.
+    Pairing approval, exec approvals, allowlists, invite helpers, media support, reactions, polls, and channel status all exist in the plugin, not in ad hoc glue code.
   </Card>
 </Columns>
 
@@ -34,11 +34,11 @@ The point is not that this channel replaces every platform-backed integration. I
 A SimpleX channel backed by a local <code>simplex-chat</code> WebSocket runtime:
 
 - send/receive (text and media)
-- pairing with allowlist enforcement
-- shared `message` actions, including `upload-file`, reactions, edits, deletes, and group actions
+- pairing with allowlist enforcement and same-chat exec approvals
+- shared `message` actions, including `upload-file`, reactions, polls, edits, deletes, and group actions
 - plugin tools for invite generation/list/revoke and group administration
 - invite link and QR generation
-- runtime status support
+- runtime status and heartbeat readiness support
 - Control UI configuration
 
 ## Why teams choose it
