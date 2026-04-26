@@ -9,6 +9,26 @@ Use this page after you already have a working first setup and want to make the 
 
 If you want the SimpleX runtime to start automatically on login or machine boot, let the host OS supervise it and keep OpenClaw focused on the channel connection itself.
 
+## Decide which settings go where
+
+Use this rule:
+
+- put OpenClaw channel behavior in <code>channels.openclaw-simplex</code>
+- put <code>simplex-chat</code> process startup flags in the supervised service command line
+
+Examples of plugin-side settings:
+
+- <code>connection.wsUrl</code>
+- <code>connection.connectTimeoutMs</code>
+- <code>connection.autoAcceptFiles</code>
+- <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>
+
+Examples of runtime-side startup flags:
+
+- relay and proxy selection: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--host-mode</code>, <code>--smp-proxy</code>
+- local storage/layout: <code>--database</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
+- runtime process behavior: <code>--device-name</code>, <code>--maintenance</code>, <code>--mute</code>, <code>--mark-read</code>
+
 ### Create the service
 
 <Tabs>
@@ -21,7 +41,7 @@ If you want the SimpleX runtime to start automatically on login or machine boot,
     After=network-online.target
 
     [Service]
-    ExecStart=%h/.local/bin/simplex-chat -p 5225
+    ExecStart=%h/.local/bin/simplex-chat -p 5225 --device-name "OpenClaw SimpleX" --files-folder %h/.simplex/files --temp-folder %h/.simplex/tmp
     Restart=on-failure
     RestartSec=5
 
@@ -31,7 +51,7 @@ If you want the SimpleX runtime to start automatically on login or machine boot,
     ```
 
     <Note>
-      Adjust the <code>ExecStart</code> path if <code>simplex-chat</code> is installed somewhere other than <code>%h/.local/bin/simplex-chat</code>.
+      Adjust the <code>ExecStart</code> path if <code>simplex-chat</code> is installed somewhere other than <code>%h/.local/bin/simplex-chat</code>. The extra flags above are examples of runtime-owned settings that do not belong in OpenClaw channel config.
     </Note>
   </Tab>
   <Tab title="macOS">
@@ -46,21 +66,27 @@ If you want the SimpleX runtime to start automatically on login or machine boot,
         <string>ai.openclaw.simplex-chat</string>
         <key>ProgramArguments</key>
         <array>
-          <string>/usr/local/bin/simplex-chat</string>
-          <string>-p</string>
-          <string>5225</string>
-        </array>
-        <key>RunAtLoad</key>
-        <true/>
-        <key>KeepAlive</key>
-        <true/>
+        <string>/usr/local/bin/simplex-chat</string>
+        <string>-p</string>
+        <string>5225</string>
+        <string>--device-name</string>
+        <string>OpenClaw SimpleX</string>
+        <string>--files-folder</string>
+        <string>/Users/YOUR_USER/.simplex/files</string>
+        <string>--temp-folder</string>
+        <string>/Users/YOUR_USER/.simplex/tmp</string>
+      </array>
+      <key>RunAtLoad</key>
+      <true/>
+      <key>KeepAlive</key>
+      <true/>
       </dict>
     </plist>
     EOF
     ```
 
     <Note>
-      Adjust <code>/usr/local/bin/simplex-chat</code> if the binary is installed elsewhere on your system.
+      Adjust <code>/usr/local/bin/simplex-chat</code> if the binary is installed elsewhere on your system, and replace <code>YOUR_USER</code> in the folder paths.
     </Note>
   </Tab>
 </Tabs>
@@ -100,3 +126,28 @@ If you want the SimpleX runtime to start automatically on login or machine boot,
     Expected result: the launch agent should appear under that label and report a running PID.
   </Tab>
 </Tabs>
+
+## Common startup flag patterns
+
+These are examples worth considering when you run <code>simplex-chat</code> as an external service:
+
+- fixed local identity label:
+  <code>--device-name "OpenClaw SimpleX"</code>
+- explicit file locations:
+  <code>--files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp</code>
+- custom relay policy:
+  <code>--server "smp1.example.com smp2.example.com" --xftp-server "xftp1.example.com"</code>
+- SOCKS/Tor routing:
+  <code>--socks-proxy :9050 --host-mode onion --required-host-mode</code>
+- stricter message routing:
+  <code>--smp-proxy always --smp-proxy-fallback no</code>
+
+<Warning>
+  Do not copy every CLI flag into the service blindly. Flags such as proxy mode, relay selection, maintenance mode, and custom database paths materially change runtime behavior and should be chosen deliberately for your deployment.
+</Warning>
+
+## Maintenance mode
+
+If you need to bring up the runtime without immediately serving chat traffic, run it with <code>--maintenance</code> and start chat manually inside the runtime later.
+
+This is a <code>simplex-chat</code> operational mode, not an OpenClaw channel config field, so it belongs in the service command only when you intentionally want that behavior.

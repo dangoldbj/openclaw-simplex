@@ -102,3 +102,24 @@ If <code>accounts</code> is set, each account entry can override the shared root
 <Note>
   A channel/account is considered configured only when <code>connection.wsUrl</code>, <code>connection.wsHost</code>, or <code>connection.wsPort</code> is present. If none of those are set, OpenClaw will not treat the channel as startup-ready.
 </Note>
+
+## What belongs in plugin config vs runtime startup
+
+This plugin talks to an already running external <code>simplex-chat</code> process. That means the OpenClaw config only models settings the plugin can truthfully use at runtime.
+
+### Good fit for plugin config
+
+- <code>connection.wsUrl</code>, <code>wsHost</code>, <code>wsPort</code>
+- <code>connection.connectTimeoutMs</code>
+- <code>connection.autoAcceptFiles</code>
+- OpenClaw policy and UX settings such as <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, <code>actions</code>, and <code>reactionLevel</code>
+
+### Intentionally not mirrored into plugin config
+
+These are primarily <code>simplex-chat</code> startup or environment flags, so they belong in the host-managed service command line, not in <code>channels.openclaw-simplex</code>:
+
+- transport/bootstrap: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--socks-mode</code>, <code>--host-mode</code>, <code>--required-host-mode</code>, <code>--smp-proxy</code>, <code>--smp-proxy-fallback</code>, <code>--smp-web-port</code>
+- local process/file layout: <code>-d/--database</code>, <code>-k/--key</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
+- runtime process behavior: <code>--device-name</code>, <code>--maintenance</code>, <code>--mute</code>, <code>--mark-read</code>, <code>--reactions</code>, <code>--create-bot-display-name</code>
+
+Those flags can still be valuable, but the right place to set them is the supervised <code>simplex-chat</code> service definition described in [Runtime Setup](/guide/runtime-setup).

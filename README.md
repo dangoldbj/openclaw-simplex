@@ -210,7 +210,12 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 
 OpenClaw does not supervise `simplex-chat` for external plugins. If you want it to start automatically, run it as a host-managed user service such as `systemd --user` or `launchd`.
 
-For full persistent runtime examples: https://openclaw-simplex.mintlify.app/guide/runtime-setup
+Keep the split clear:
+
+- `channels.openclaw-simplex` is for OpenClaw-side channel behavior and the WebSocket endpoint
+- `simplex-chat` CLI flags such as `--device-name`, `--files-folder`, `--temp-folder`, proxy settings, relay selection, and `--maintenance` belong in the external runtime service definition
+
+For full persistent runtime examples and recommended startup-flag placement: https://openclaw-simplex.mintlify.app/guide/runtime-setup
 
 ---
 
