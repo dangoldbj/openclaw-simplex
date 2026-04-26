@@ -51,6 +51,22 @@
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
           },
+          "actions": {
+            "type": "object",
+            "properties": {
+              "reactions": {
+                "type": "boolean"
+              },
+              "polls": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "reactionLevel": {
+            "type": "string",
+            "enum": ["off", "ack", "minimal", "extensive"]
+          },
           "dmPolicy": {
             "type": "string",
             "enum": ["pairing", "allowlist", "open", "disabled"]
@@ -210,6 +226,22 @@
                   "type": "integer",
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
+                },
+                "actions": {
+                  "type": "object",
+                  "properties": {
+                    "reactions": {
+                      "type": "boolean"
+                    },
+                    "polls": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "reactionLevel": {
+                  "type": "string",
+                  "enum": ["off", "ack", "minimal", "extensive"]
                 },
                 "dmPolicy": {
                   "type": "string",
@@ -607,6 +639,52 @@
           "help": "WebSocket connection timeout in milliseconds.",
           "advanced": true,
           "tags": ["transport"]
+        },
+        "actions": {
+          "label": "Actions",
+          "help": "Optional per-account action toggles for SimpleX message features.",
+          "advanced": true
+        },
+        "accounts.*.actions": {
+          "label": "Actions",
+          "help": "Optional per-account action toggles for SimpleX message features.",
+          "advanced": true
+        },
+        "actions.reactions": {
+          "label": "Enable Reactions",
+          "help": "Allow the agent to add or remove emoji reactions through the SimpleX runtime.",
+          "advanced": true,
+          "tags": ["actions"]
+        },
+        "accounts.*.actions.reactions": {
+          "label": "Enable Reactions",
+          "help": "Allow the agent to add or remove emoji reactions through the SimpleX runtime.",
+          "advanced": true,
+          "tags": ["actions"]
+        },
+        "actions.polls": {
+          "label": "Enable Polls",
+          "help": "Allow the agent to send OpenClaw poll prompts into SimpleX chats.",
+          "advanced": true,
+          "tags": ["actions"]
+        },
+        "accounts.*.actions.polls": {
+          "label": "Enable Polls",
+          "help": "Allow the agent to send OpenClaw poll prompts into SimpleX chats.",
+          "advanced": true,
+          "tags": ["actions"]
+        },
+        "reactionLevel": {
+          "label": "Reaction Level",
+          "help": "Controls agent reaction behavior. Use \"minimal\" for restrained reactions, \"extensive\" for more expressive use, \"ack\" for non-agent acknowledgements only, and \"off\" to disable reactions entirely.",
+          "advanced": true,
+          "tags": ["actions"]
+        },
+        "accounts.*.reactionLevel": {
+          "label": "Reaction Level",
+          "help": "Controls agent reaction behavior. Use \"minimal\" for restrained reactions, \"extensive\" for more expressive use, \"ack\" for non-agent acknowledgements only, and \"off\" to disable reactions entirely.",
+          "advanced": true,
+          "tags": ["actions"]
         }
       },
       "label": "SimpleX",

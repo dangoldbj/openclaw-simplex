@@ -294,9 +294,19 @@ describe("simplex channel SDK metadata", () => {
     ).toEqual(
       expect.arrayContaining([
         expect.stringContaining("@contactId"),
+        expect.stringContaining('action="poll"'),
         expect.stringContaining("upload-file"),
       ])
     );
+    expect(
+      simplexPlugin.agentPrompt?.reactionGuidance?.({
+        cfg: simplexConfiguredChannel,
+        accountId: "default",
+      })
+    ).toEqual({
+      level: "minimal",
+      channelLabel: "SimpleX",
+    });
     expect(simplexPlugin.actions?.messageActionTargetAliases).toMatchObject({
       send: { aliases: expect.arrayContaining(["chatRef", "chatId"]) },
       addParticipant: { aliases: expect.arrayContaining(["groupId", "chatRef", "chatId"]) },

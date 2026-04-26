@@ -19,6 +19,15 @@ const groupConfigSchema = z.object({
   tools: ToolPolicySchema.optional(),
 });
 
+const SimplexActionConfigSchema = z
+  .object({
+    reactions: z.boolean().optional(),
+    polls: z.boolean().optional(),
+  })
+  .strict();
+
+const SimplexReactionLevelSchema = z.enum(["off", "ack", "minimal", "extensive"]).optional();
+
 const SimplexConnectionSchema = z
   .object({
     mode: z.literal("external").optional(),
@@ -36,6 +45,8 @@ export const SimplexAccountConfigSchema = z
     enabled: z.boolean().optional(),
     markdown: MarkdownConfigSchema,
     mediaMaxMb: z.number().int().positive().optional(),
+    actions: SimplexActionConfigSchema.optional(),
+    reactionLevel: SimplexReactionLevelSchema,
     dmPolicy: DmPolicySchema.optional(),
     dmHistoryLimit: z.number().int().min(0).optional(),
     dms: z.record(z.string(), DmConfigSchema.optional()).optional(),

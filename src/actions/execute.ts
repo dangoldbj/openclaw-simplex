@@ -16,6 +16,7 @@ import {
 } from "../simplex/simplex-commands.js";
 import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
 import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+import { assertSimplexReactActionAllowed } from "./discovery.js";
 import {
   normalizeSimplexGroupRef,
   readChatRef,
@@ -161,6 +162,7 @@ export async function executeSimplexAction(params: {
   }
 
   if (action === "react") {
+    assertSimplexReactActionAllowed({ cfg, accountId: account.accountId });
     const messageId =
       readNumberParam(toolParams, "messageId", { integer: true }) ??
       readNumberParam(toolParams, "chatItemId", { integer: true });

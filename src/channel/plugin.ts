@@ -5,6 +5,7 @@ import {
 } from "openclaw/plugin-sdk/channel-config-helpers";
 import type { ChannelPlugin, OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { simplexMessageActions } from "../actions/actions.js";
+import { resolveSimplexAgentReactionGuidance } from "../actions/discovery.js";
 import {
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
@@ -137,8 +138,16 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     },
   },
   agentPrompt: {
+    reactionGuidance: ({ cfg, accountId }) => {
+      const level = resolveSimplexAgentReactionGuidance({
+        cfg,
+        accountId: accountId ?? undefined,
+      });
+      return level ? { level, channelLabel: "SimpleX" } : undefined;
+    },
     messageToolHints: () => [
       "- SimpleX targets: use `to`/`chatRef` as `@contactId` for DMs or `#groupId` for groups; `contact:<id>` and `group:<id>` are accepted aliases.",
+      '- SimpleX polls: use `action="poll"` with a clear question and concise option labels; replies stay as normal chat messages.',
       '- SimpleX file upload: use `action="upload-file"` with `mediaUrl`, `filePath`, `path`, or `media` plus optional `caption`/`text`.',
     ],
   },

@@ -1,11 +1,7 @@
 import type { ChannelMessageActionAdapter } from "openclaw/plugin-sdk/channel-contract";
-import { listEnabledSimplexAccounts } from "../config/accounts.js";
+import { describeSimplexMessageActions } from "./discovery.js";
 import { executeSimplexAction } from "./execute.js";
-import {
-  buildSimplexMessageToolSchema,
-  SIMPLEX_MESSAGE_TOOL_ACTIONS,
-  SIMPLEX_SUPPORTED_ACTIONS,
-} from "./schema.js";
+import { buildSimplexMessageToolSchema, SIMPLEX_SUPPORTED_ACTIONS } from "./schema.js";
 
 function readString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
@@ -27,13 +23,13 @@ function extractSimplexToolSend(args: Record<string, unknown>) {
 }
 
 export const simplexMessageActions: ChannelMessageActionAdapter = {
-  describeMessageTool: ({ cfg }) => {
-    const actions = listEnabledSimplexAccounts(cfg).filter((account) => account.configured);
-    if (actions.length === 0) {
+  describeMessageTool: ({ cfg, accountId }) => {
+    const actions = describeSimplexMessageActions({ cfg, accountId });
+    if (!actions || actions.length === 0) {
       return null;
     }
     return {
-      actions: ["poll", ...SIMPLEX_MESSAGE_TOOL_ACTIONS],
+      actions,
       capabilities: ["presentation"],
       schema: buildSimplexMessageToolSchema(),
       mediaSourceParams: {

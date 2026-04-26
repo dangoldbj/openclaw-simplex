@@ -26,6 +26,29 @@ const accountScopedUiHints = withAccountScope({
     advanced: true,
     tags: ["media"],
   },
+  actions: {
+    label: "Actions",
+    help: "Optional per-account action toggles for SimpleX message features.",
+    advanced: true,
+  },
+  "actions.reactions": {
+    label: "Enable Reactions",
+    help: "Allow the agent to add or remove emoji reactions through the SimpleX runtime.",
+    advanced: true,
+    tags: ["actions"],
+  },
+  "actions.polls": {
+    label: "Enable Polls",
+    help: "Allow the agent to send OpenClaw poll prompts into SimpleX chats.",
+    advanced: true,
+    tags: ["actions"],
+  },
+  reactionLevel: {
+    label: "Reaction Level",
+    help: 'Controls agent reaction behavior. Use "minimal" for restrained reactions, "extensive" for more expressive use, "ack" for non-agent acknowledgements only, and "off" to disable reactions entirely.',
+    advanced: true,
+    tags: ["actions"],
+  },
   dmPolicy: {
     label: "DM Policy",
     help: 'Direct-message access policy. "pairing" is the safest default; "open" should stay paired with a deliberate allowFrom policy.',
