@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-04-26
+
+### Changed
+
+- Added richer SimpleX channel parity surfaces on current OpenClaw releases, including same-chat exec approval auth, text-first presentation fallback, poll delivery support, command-policy wiring, heartbeat readiness, and heartbeat recipient resolution.
+- Added channel action controls and reaction-level configuration for SimpleX so reactions and polls can be discovered and governed through the same OpenClaw-native patterns used by richer bundled channels.
+- Refreshed README and docs to match the current external-runtime model and current channel capabilities, while removing stale release-era migration warnings from the main docs surfaces.
+
 ## [1.4.0] - 2026-04-24
 
 ### Changed
