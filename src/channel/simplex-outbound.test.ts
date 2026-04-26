@@ -1,7 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildSimplexOutbound } from "./simplex-outbound.js";
 
+const sendMocks = vi.hoisted(() => ({
+  buildAndSendSimplexMessages: vi.fn(async () => ({ messageId: "poll-1" })),
+}));
+
+vi.mock("./simplex-send.js", () => ({
+  buildAndSendSimplexMessages: sendMocks.buildAndSendSimplexMessages,
+}));
+
 describe("simplex outbound presentation support", () => {
+  afterEach(() => {
+    sendMocks.buildAndSendSimplexMessages.mockClear();
+  });
+
   it("advertises presentation support with text fallback only", () => {
     const outbound = buildSimplexOutbound(new Map());
 
@@ -42,5 +54,44 @@ describe("simplex outbound presentation support", () => {
     expect(rendered?.text).toContain("Choose an option");
     expect(rendered?.text).toContain("Approve");
     expect(rendered?.text).toContain("Deny");
+  });
+
+  it("renders polls into numbered text prompts", async () => {
+    const outbound = buildSimplexOutbound(new Map());
+
+    const result = await outbound.sendPoll?.({
+      cfg: {
+        channels: {
+          "openclaw-simplex": {
+            connection: {
+              wsUrl: "ws://127.0.0.1:5225",
+            },
+          },
+        },
+      },
+      to: "@alice",
+      poll: {
+        question: "Deploy now?",
+        options: ["Yes", "No", "Ask later"],
+        maxSelections: 1,
+      },
+    });
+
+    expect(sendMocks.buildAndSendSimplexMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chatRef: "@alice",
+        text: expect.stringContaining("1. Yes"),
+      })
+    );
+    expect(sendMocks.buildAndSendSimplexMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining("Reply with the option number or label."),
+      })
+    );
+    expect(result).toEqual({
+      channel: "openclaw-simplex",
+      messageId: "poll-1",
+      chatId: "@alice",
+    });
   });
 });

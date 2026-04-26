@@ -33,7 +33,7 @@ export const simplexMessageActions: ChannelMessageActionAdapter = {
       return null;
     }
     return {
-      actions: SIMPLEX_MESSAGE_TOOL_ACTIONS,
+      actions: ["poll", ...SIMPLEX_MESSAGE_TOOL_ACTIONS],
       capabilities: ["presentation"],
       schema: buildSimplexMessageToolSchema(),
       mediaSourceParams: {

@@ -22,6 +22,7 @@ describe("simplex message tool discovery", () => {
     expect(result).toBeTruthy();
     expect(result?.actions).toEqual(
       expect.arrayContaining([
+        "poll",
         "send",
         "upload-file",
         "react",

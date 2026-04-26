@@ -82,6 +82,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   pairing: buildSimplexPairing(activeClients),
   capabilities: {
     chatTypes: ["direct", "group"],
+    polls: true,
     media: true,
     reactions: true,
     edit: true,
