@@ -49,6 +49,9 @@ export function buildSimplexOutbound(
   return {
     deliveryMode: "direct" as const,
     textChunkLimit: 4000,
+    shouldTreatDeliveredTextAsVisible: ({ kind, text }) =>
+      kind === "block" && typeof text === "string" && text.trim().length > 0,
+    preferFinalAssistantVisibleText: true,
     presentationCapabilities: {
       supported: true,
       buttons: false,

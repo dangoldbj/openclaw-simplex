@@ -17,6 +17,19 @@ describe("simplex outbound presentation support", () => {
   it("advertises presentation support with text fallback only", () => {
     const outbound = buildSimplexOutbound(new Map());
 
+    expect(
+      outbound.shouldTreatDeliveredTextAsVisible?.({
+        kind: "block",
+        text: "working...",
+      })
+    ).toBe(true);
+    expect(
+      outbound.shouldTreatDeliveredTextAsVisible?.({
+        kind: "tool",
+        text: "working...",
+      })
+    ).toBe(false);
+    expect(outbound.preferFinalAssistantVisibleText).toBe(true);
     expect(outbound.presentationCapabilities).toEqual({
       supported: true,
       buttons: false,
