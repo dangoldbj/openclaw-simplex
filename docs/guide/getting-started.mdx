@@ -64,9 +64,6 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     )" --strict-json
     ```
 
-    <Info>
-      This release no longer needs the unsafe-install override because the plugin no longer starts <code>simplex-chat</code> itself.
-    </Info>
   </Step>
 
   <Step title="Configure the channel">
@@ -151,7 +148,7 @@ For recurring address links, invite listing, revoke flows, and automation APIs, 
 
 ## Upgrading from an older `simplex` install
 
-If you are upgrading from the pre-`1.0.0` `simplex` plugin/channel IDs, run the migration helper before switching your config and commands to `openclaw-simplex`:
+If you are upgrading from an older `simplex` plugin/channel install, run the migration helper before switching your config and commands to `openclaw-simplex`:
 
 ```bash
 openclaw simplex migrate

@@ -5,10 +5,6 @@ description: Diagnose and fix common OpenClaw SimpleX problems including WebSock
 
 Most failures fall into one of three buckets: the plugin is not trusted/enabled, OpenClaw cannot reach the external <code>simplex-chat</code> WebSocket endpoint, or policy settings are correctly rejecting a sender you expected to allow.
 
-<Note>
-  When the runtime is down, OpenClaw will not start it for you. The channel stays disconnected until <code>simplex-chat</code> is running at the configured endpoint.
-</Note>
-
 <Tip>
   Two common mistakes: <code>simplex-chat</code> is listening on one port but <code>wsUrl</code> points to another, or <code>dmPolicy: "pairing"</code> is enabled but the sender has not been approved yet.
 </Tip>
@@ -138,4 +134,4 @@ openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 - Use <code>openclaw plugins info openclaw-simplex</code> to verify plugin enable/allow state.
 - Check the terminal or service logs for the <code>simplex-chat</code> process itself, especially if the WebSocket runtime exits or cannot bind the expected port.
 
-If you need persistent runtime startup, see [Runtime Setup](/guide/runtime-setup).
+For persistent runtime startup and service examples, see [Runtime Setup](/guide/runtime-setup).

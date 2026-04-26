@@ -3,7 +3,7 @@ title: Runtime Setup
 description: Configure simplex-chat as a persistent systemd or launchd service, set the WebSocket endpoint, and connect multiple SimpleX accounts to OpenClaw.
 ---
 
-Use this page after you already have a working first setup and want to make the SimpleX runtime persistent or split multiple accounts across separate runtimes. For the first install and first pairing flow, start with [Getting Started](/guide/getting-started).
+Use this page after the first setup is already working and you want to make the SimpleX runtime persistent or split multiple accounts across separate runtimes. For the first install and pairing flow, start with [Getting Started](/guide/getting-started).
 
 ## Keep `simplex-chat` running
 
@@ -16,14 +16,14 @@ Use this rule:
 - put OpenClaw channel behavior in <code>channels.openclaw-simplex</code>
 - put <code>simplex-chat</code> process startup flags in the supervised service command line
 
-Examples of plugin-side settings:
+Plugin-side settings:
 
 - <code>connection.wsUrl</code>
 - <code>connection.connectTimeoutMs</code>
 - <code>connection.autoAcceptFiles</code>
 - <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>
 
-Examples of runtime-side startup flags:
+Runtime-side startup flags:
 
 - relay and proxy selection: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--host-mode</code>, <code>--smp-proxy</code>
 - local storage/layout: <code>--database</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
@@ -66,20 +66,20 @@ Examples of runtime-side startup flags:
         <string>ai.openclaw.simplex-chat</string>
         <key>ProgramArguments</key>
         <array>
-        <string>/usr/local/bin/simplex-chat</string>
-        <string>-p</string>
-        <string>5225</string>
-        <string>--device-name</string>
-        <string>OpenClaw SimpleX</string>
-        <string>--files-folder</string>
-        <string>/Users/YOUR_USER/.simplex/files</string>
-        <string>--temp-folder</string>
-        <string>/Users/YOUR_USER/.simplex/tmp</string>
-      </array>
-      <key>RunAtLoad</key>
-      <true/>
-      <key>KeepAlive</key>
-      <true/>
+          <string>/usr/local/bin/simplex-chat</string>
+          <string>-p</string>
+          <string>5225</string>
+          <string>--device-name</string>
+          <string>OpenClaw SimpleX</string>
+          <string>--files-folder</string>
+          <string>/Users/YOUR_USER/.simplex/files</string>
+          <string>--temp-folder</string>
+          <string>/Users/YOUR_USER/.simplex/tmp</string>
+        </array>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>KeepAlive</key>
+        <true/>
       </dict>
     </plist>
     EOF
@@ -129,7 +129,7 @@ Examples of runtime-side startup flags:
 
 ## Common startup flag patterns
 
-These are examples worth considering when you run <code>simplex-chat</code> as an external service:
+These are reasonable patterns to consider when you run <code>simplex-chat</code> as an external service:
 
 - fixed local identity label:
   <code>--device-name "OpenClaw SimpleX"</code>
