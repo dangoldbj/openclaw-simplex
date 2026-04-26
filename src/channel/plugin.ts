@@ -17,6 +17,7 @@ import {
 import type { ResolvedSimplexAccount } from "../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+import { simplexApprovalAuth } from "./approval-auth.js";
 import { simplexSetupAdapter } from "./setup.js";
 import {
   formatSimplexTargetDisplay,
@@ -141,6 +142,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     ],
   },
   actions: simplexMessageActions,
+  approvalCapability: simplexApprovalAuth,
   directory: {
     self: async ({ cfg, accountId, runtime }) => resolveSimplexSelf({ cfg, accountId, runtime }),
     listPeers: async (params) => listSimplexDirectoryPeers(params),

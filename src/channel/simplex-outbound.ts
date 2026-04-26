@@ -1,4 +1,5 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
+import { renderMessagePresentationFallbackText } from "openclaw/plugin-sdk/interactive-runtime";
 import { resolveSimplexAccount } from "../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
@@ -12,6 +13,20 @@ export function buildSimplexOutbound(
   return {
     deliveryMode: "direct" as const,
     textChunkLimit: 4000,
+    presentationCapabilities: {
+      supported: true,
+      buttons: false,
+      selects: false,
+      context: true,
+      divider: true,
+    },
+    renderPresentation: ({ payload, presentation }) => ({
+      ...payload,
+      text: renderMessagePresentationFallbackText({
+        text: payload.text,
+        presentation,
+      }),
+    }),
     sendPayload: async ({ cfg, to, payload, accountId }) => {
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);

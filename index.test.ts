@@ -236,6 +236,11 @@ describe("plugin entry registration modes", () => {
     expect(full.hooks.some((entry) => entry.events === "before_tool_call")).toBe(true);
   });
 
+  it("exposes approval capability for same-chat approvals", () => {
+    expect(simplexPlugin.approvalCapability).toBeTruthy();
+    expect(typeof simplexPlugin.approvalCapability?.authorizeActorAction).toBe("function");
+  });
+
   it("marks destructive simplex tools as owner-only", () => {
     const full = setupRegistration(simplexConfiguredChannel, "full");
 

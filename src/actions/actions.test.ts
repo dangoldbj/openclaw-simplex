@@ -34,6 +34,7 @@ describe("simplex message tool discovery", () => {
         "leaveGroup",
       ])
     );
+    expect(result?.capabilities).toEqual(["presentation"]);
     expect(result?.mediaSourceParams).toEqual({
       "upload-file": ["mediaUrl", "media", "path", "filePath"],
     });
