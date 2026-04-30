@@ -3,6 +3,7 @@
   "kind": "channel",
   "channels": ["openclaw-simplex"],
   "activation": {
+    "onStartup": false,
     "onChannels": ["openclaw-simplex"],
     "onCapabilities": ["channel", "tool"]
   },

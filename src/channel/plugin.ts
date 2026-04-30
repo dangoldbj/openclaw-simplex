@@ -41,6 +41,7 @@ import {
   parseSimplexExplicitTarget,
   resolveSimplexGroupRequireMention,
   resolveSimplexGroupToolPolicy,
+  resolveSimplexRouteTarget,
   stripLeadingAt,
   stripSimplexPrefix,
 } from "./shared/simplex-common.js";
@@ -132,6 +133,13 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   messaging: {
     normalizeTarget: (raw) => stripSimplexPrefix(raw),
     parseExplicitTarget: ({ raw }) => parseSimplexExplicitTarget(raw),
+    resolveSessionConversation: ({ kind, rawId }) => {
+      const target =
+        kind === "group" || kind === "channel"
+          ? resolveSimplexRouteTarget({ rawTarget: rawId })
+          : null;
+      return target ? { id: target.to, threadId: target.threadId ?? null } : null;
+    },
     inferTargetChatType: ({ to }) => inferSimplexTargetChatType(to),
     formatTargetDisplay: (params) => formatSimplexTargetDisplay(params),
     targetResolver: {

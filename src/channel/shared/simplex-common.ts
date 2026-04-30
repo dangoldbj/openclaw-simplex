@@ -1,6 +1,7 @@
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 import type { ChannelGroupContext } from "openclaw/plugin-sdk/channel-contract";
 import type { GroupToolPolicyConfig } from "openclaw/plugin-sdk/channel-policy";
+import { resolveChannelRouteTargetWithParser } from "openclaw/plugin-sdk/channel-route";
 import { resolveSimplexAccount } from "../../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../../config/types.js";
 import { stripSimplexProviderPrefix } from "../../constants.js";
@@ -114,6 +115,34 @@ export function parseSimplexExplicitTarget(raw: string): SimplexExplicitTarget |
     return { to: `@${value}`, chatType: "direct" };
   }
   return null;
+}
+
+export function resolveSimplexRouteTarget(params: {
+  rawTarget?: string | null;
+  accountId?: string | null;
+  fallbackThreadId?: string | number | null;
+}): {
+  to: string;
+  accountId?: string;
+  threadId?: string;
+  chatType?: "direct" | "group";
+} | null {
+  const route = resolveChannelRouteTargetWithParser({
+    channel: "openclaw-simplex",
+    rawTarget: params.rawTarget,
+    fallbackThreadId: params.fallbackThreadId,
+    parseExplicitTarget: (_channel, rawTarget) => parseSimplexExplicitTarget(rawTarget),
+  });
+  if (!route) {
+    return null;
+  }
+  return {
+    to: route.to,
+    accountId:
+      params.accountId ?? (typeof route.accountId === "string" ? route.accountId : undefined),
+    threadId: route.threadId === undefined ? undefined : String(route.threadId),
+    chatType: route.chatType === "group" ? "group" : "direct",
+  };
 }
 
 export function inferSimplexTargetChatType(
