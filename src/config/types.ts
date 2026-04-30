@@ -9,6 +9,7 @@ export type SimplexConnectionConfig = {
   wsPort?: number;
   autoAcceptFiles?: boolean;
   connectTimeoutMs?: number;
+  allowUnsafeRemoteWs?: boolean;
 };
 
 export type ResolvedSimplexAccount = {

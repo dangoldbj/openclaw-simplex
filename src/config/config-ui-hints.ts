@@ -155,6 +155,12 @@ const accountScopedUiHints = withAccountScope({
     advanced: true,
     tags: ["transport"],
   },
+  "connection.allowUnsafeRemoteWs": {
+    label: "Allow Unsafe Remote WS",
+    help: "Permit plaintext ws:// connections to non-loopback hosts. Leave off unless the endpoint is protected by a private network, firewall, or authenticated TLS proxy.",
+    advanced: true,
+    tags: ["transport", "security"],
+  },
 });
 
 export const simplexChannelConfigUiHints = {

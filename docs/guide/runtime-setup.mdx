@@ -5,6 +5,8 @@ description: Configure simplex-chat as a persistent systemd or launchd service, 
 
 Use this page after the first setup is already working and you want to make the SimpleX runtime persistent or split multiple accounts across separate runtimes. For the first install and pairing flow, start with [Getting Started](/guide/getting-started).
 
+For containerized or production deployments, also read [Production Sidecar](/guide/production-sidecar).
+
 ## Keep `simplex-chat` running
 
 If you want the SimpleX runtime to start automatically on login or machine boot, let the host OS supervise it and keep OpenClaw focused on the channel connection itself.
@@ -21,6 +23,7 @@ Plugin-side settings:
 - <code>connection.wsUrl</code>
 - <code>connection.connectTimeoutMs</code>
 - <code>connection.autoAcceptFiles</code>
+- <code>connection.allowUnsafeRemoteWs</code> only for private sidecar networks or authenticated proxy deployments
 - <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>
 
 Runtime-side startup flags:

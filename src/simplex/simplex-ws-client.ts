@@ -18,6 +18,7 @@ export type SimplexWsEvent = {
 export type SimplexWsClientOptions = {
   url: string;
   connectTimeoutMs?: number;
+  maxPayloadBytes?: number;
   logger?: {
     info?: (message: string) => void;
     warn?: (message: string) => void;
@@ -42,6 +43,7 @@ type PendingCommand = {
 export class SimplexWsClient {
   private readonly url: string;
   private readonly connectTimeoutMs: number;
+  private readonly maxPayloadBytes: number;
   private readonly logger?: SimplexWsClientOptions["logger"];
   private ws: WebSocket | null = null;
   private connectPromise: Promise<void> | null = null;
@@ -53,6 +55,7 @@ export class SimplexWsClient {
   constructor(options: SimplexWsClientOptions) {
     this.url = options.url;
     this.connectTimeoutMs = options.connectTimeoutMs ?? 15_000;
+    this.maxPayloadBytes = options.maxPayloadBytes ?? 16 * 1024 * 1024;
     this.logger = options.logger;
   }
 
@@ -98,7 +101,7 @@ export class SimplexWsClient {
         reject(error);
       };
 
-      const ws = new WebSocket(this.url);
+      const ws = new WebSocket(this.url, { maxPayload: this.maxPayloadBytes });
       this.ws = ws;
       this.closing = false;
 

@@ -1,0 +1,92 @@
+---
+title: Production Sidecar
+description: Run openclaw-simplex with a hardened external simplex-chat runtime while keeping the plugin MIT and the SimpleX runtime isolated.
+---
+
+The recommended production shape for this plugin is a local sidecar:
+
+```text
+OpenClaw gateway
+  -> private WebSocket
+    -> simplex-chat runtime
+      -> SimpleX relays
+```
+
+This keeps AGPL SimpleX runtime code out of the MIT plugin, preserves process isolation, and avoids embedding the SimpleX native runtime inside the OpenClaw gateway process.
+
+## Security goals
+
+- Keep the <code>simplex-chat</code> WebSocket API off the public internet.
+- Prefer <code>ws://127.0.0.1:5225</code> when OpenClaw and <code>simplex-chat</code> share a host.
+- Use a private container network when they run as separate containers.
+- Do not publish port <code>5225</code> from Docker, Kubernetes, or a VM.
+- Treat the SimpleX database and files directory as sensitive local state.
+- Let OpenClaw policy handle pairing, allowlists, group gating, and tool authorization after messages arrive.
+
+<Warning>
+  SimpleX Chat CLI's WebSocket bot API does not provide native authentication. If you expose it beyond loopback/private networking, put an authenticated TLS proxy in front and restrict access with firewall rules.
+</Warning>
+
+## Docker sidecar
+
+Use [examples/docker-compose.sidecar.yml](https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/docker-compose.sidecar.yml) as a template.
+
+The important details:
+
+- <code>simplex-chat</code> uses <code>expose</code>, not <code>ports</code>.
+- Both services join a compose-only network, and <code>simplex-chat</code> does not publish host ports.
+- OpenClaw connects to <code>ws://simplex-chat:5225</code>.
+- Because <code>simplex-chat</code> is a non-loopback Docker hostname, set <code>connection.allowUnsafeRemoteWs: true</code> only for this private network case.
+
+Example channel config:
+
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "enabled": true,
+      "connection": {
+        "wsUrl": "ws://simplex-chat:5225",
+        "allowUnsafeRemoteWs": true
+      },
+      "dmPolicy": "pairing",
+      "groupPolicy": "allowlist"
+    }
+  }
+}
+```
+
+## systemd sidecar
+
+Use [examples/systemd/simplex-chat.service](https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/systemd/simplex-chat.service) as a starting point.
+
+The service profile:
+
+- restarts on failure
+- keeps files under explicit state directories
+- uses <code>NoNewPrivileges</code>
+- restricts writable paths to SimpleX/OpenClaw SimpleX state
+- leaves OpenClaw responsible for connecting to <code>ws://127.0.0.1:5225</code>
+
+Copy the service into <code>~/.config/systemd/user/simplex-chat.service</code>, adjust the binary path, then run:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now simplex-chat.service
+systemctl --user status simplex-chat.service
+```
+
+## Remote exception
+
+Remote WebSocket access is not the default. If you must place OpenClaw and <code>simplex-chat</code> on different machines:
+
+- terminate TLS at Caddy, Nginx, or another WebSocket-capable proxy
+- require HTTP Basic Auth or equivalent proxy authentication
+- firewall the runtime host to the OpenClaw host where possible
+- configure the plugin with a <code>wss://</code> URL
+
+See [examples/caddy/Caddyfile](https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/caddy/Caddyfile).
+
+## Why not the Node library by default?
+
+SimpleX recommends its Node.js FFI library for a single-process integration. That is a good operational model, but the package is AGPL. This plugin keeps the main package MIT by using the external runtime boundary. A native AGPL package can still be added separately if users want the official single-process path.

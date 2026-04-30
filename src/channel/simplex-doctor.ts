@@ -1,6 +1,7 @@
 import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "../config/config-schema.js";
 import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../constants.js";
+import { describeSimplexWsEndpointSecurity } from "./simplex-transport-security.js";
 
 function isEmptyArray(value: unknown): boolean {
   return Array.isArray(value) && value.length === 0;
@@ -18,10 +19,13 @@ function collectAccountWarnings(
 ): string[] {
   const warnings: string[] = [];
   const wsUrl = account.connection?.wsUrl ?? "";
-  if (wsUrl && !/^wss?:\/\//i.test(wsUrl)) {
-    warnings.push(
-      `- SimpleX account "${accountId}" has connection.wsUrl="${wsUrl}". Use ws:// or wss://, then run ${doctorFixCommand}.`
-    );
+  if (wsUrl) {
+    const security = describeSimplexWsEndpointSecurity(wsUrl, {
+      allowUnsafeRemoteWs: account.connection?.allowUnsafeRemoteWs === true,
+    });
+    for (const warning of security.warnings) {
+      warnings.push(`- SimpleX account "${accountId}" has ${warning} Run ${doctorFixCommand}.`);
+    }
   }
 
   const inheritedAllowFrom = account.allowFrom ?? channel.allowFrom;
@@ -55,8 +59,13 @@ export const simplexDoctor: ChannelDoctorAdapter = {
 
     const channel = readChannelConfig(cfg);
     const baseWsUrl = typeof channel.connection?.wsUrl === "string" ? channel.connection.wsUrl : "";
-    if (baseWsUrl && !/^wss?:\/\//i.test(baseWsUrl)) {
-      warnings.push(`- SimpleX connection.wsUrl="${baseWsUrl}" must start with ws:// or wss://.`);
+    if (baseWsUrl) {
+      const security = describeSimplexWsEndpointSecurity(baseWsUrl, {
+        allowUnsafeRemoteWs: channel.connection?.allowUnsafeRemoteWs === true,
+      });
+      for (const warning of security.warnings) {
+        warnings.push(`- SimpleX ${warning}`);
+      }
     }
 
     if (channel.dmPolicy === "allowlist" && isEmptyArray(channel.allowFrom)) {

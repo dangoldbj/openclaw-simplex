@@ -106,6 +106,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `connection.wsPort` | Optional port fallback when `wsUrl` is not set. Default: `5225`. |
 | `connection.autoAcceptFiles` | Whether incoming file transfers should be auto-accepted by the SimpleX runtime. |
 | `connection.connectTimeoutMs` | WebSocket connection timeout in milliseconds. |
+| `connection.allowUnsafeRemoteWs` | Explicitly allow plaintext `ws://` to a non-loopback host. Use only for private sidecar networks or firewall-protected deployments. |
 | `accounts.<accountId>` | Per-account overrides for the same schema. |
 
 <Note>
@@ -121,6 +122,7 @@ This plugin talks to an already running external <code>simplex-chat</code> proce
 - <code>connection.wsUrl</code>, <code>wsHost</code>, <code>wsPort</code>
 - <code>connection.connectTimeoutMs</code>
 - <code>connection.autoAcceptFiles</code>
+- <code>connection.allowUnsafeRemoteWs</code> when a private sidecar network requires a non-loopback host such as <code>simplex-chat</code>
 - OpenClaw policy and UX settings such as <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, <code>actions</code>, and <code>reactionLevel</code>
 
 ### Intentionally not mirrored into plugin config

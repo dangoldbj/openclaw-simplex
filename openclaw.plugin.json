@@ -196,6 +196,9 @@
                 "type": "integer",
                 "exclusiveMinimum": 0,
                 "maximum": 9007199254740991
+              },
+              "allowUnsafeRemoteWs": {
+                "type": "boolean"
               }
             },
             "additionalProperties": false
@@ -372,6 +375,9 @@
                       "type": "integer",
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "allowUnsafeRemoteWs": {
+                      "type": "boolean"
                     }
                   },
                   "additionalProperties": false
@@ -685,6 +691,18 @@
           "help": "Controls agent reaction behavior. Use \"minimal\" for restrained reactions, \"extensive\" for more expressive use, \"ack\" for non-agent acknowledgements only, and \"off\" to disable reactions entirely.",
           "advanced": true,
           "tags": ["actions"]
+        },
+        "connection.allowUnsafeRemoteWs": {
+          "label": "Allow Unsafe Remote WS",
+          "help": "Permit plaintext ws:// connections to non-loopback hosts. Leave off unless the endpoint is protected by a private network, firewall, or authenticated TLS proxy.",
+          "advanced": true,
+          "tags": ["transport", "security"]
+        },
+        "accounts.*.connection.allowUnsafeRemoteWs": {
+          "label": "Allow Unsafe Remote WS",
+          "help": "Permit plaintext ws:// connections to non-loopback hosts. Leave off unless the endpoint is protected by a private network, firewall, or authenticated TLS proxy.",
+          "advanced": true,
+          "tags": ["transport", "security"]
         }
       },
       "label": "SimpleX",

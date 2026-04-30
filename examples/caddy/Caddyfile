@@ -1,0 +1,14 @@
+# Remote WebSocket access should be exceptional. Prefer loopback or a private
+# sidecar network. If remote access is unavoidable, terminate TLS and require
+# authentication at the proxy because simplex-chat's WebSocket API has no
+# native authentication.
+
+simplex.example.com {
+  encode zstd gzip
+
+  basicauth {
+    openclaw $2a$14$REPLACE_WITH_CADDY_HASHED_PASSWORD
+  }
+
+  reverse_proxy 127.0.0.1:5225
+}

@@ -208,6 +208,8 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 
 OpenClaw does not supervise `simplex-chat` for external plugins. If you want it to start automatically, run it as a host-managed user service such as `systemd --user` or `launchd`.
 
+For production, treat `simplex-chat` as a private sidecar: keep the WebSocket on loopback or a private container network, do not publish port `5225`, and use `connection.allowUnsafeRemoteWs: true` only when a non-loopback host is protected by that private boundary. See the Production Sidecar docs for Docker, systemd, and remote-proxy examples.
+
 Keep the split clear:
 
 - `channels.openclaw-simplex` is for OpenClaw-side channel behavior and the WebSocket endpoint

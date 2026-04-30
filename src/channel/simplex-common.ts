@@ -26,6 +26,17 @@ export function extractSimplexWsUrlFromApplication(application: unknown): string
   return trimmed ? trimmed : undefined;
 }
 
+export function extractSimplexTransportWarningsFromApplication(application: unknown): string[] {
+  if (!application || typeof application !== "object") {
+    return [];
+  }
+  const value = (application as { transportWarnings?: unknown }).transportWarnings;
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.map((entry) => (typeof entry === "string" ? entry.trim() : "")).filter(Boolean);
+}
+
 export function resolveSimplexHealthState(params: {
   configured: boolean;
   running?: boolean;

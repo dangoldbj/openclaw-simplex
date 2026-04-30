@@ -55,4 +55,56 @@ describe("simplex doctor", () => {
       'account "alt" has connection.wsUrl="tcp://127.0.0.1:5225"'
     );
   });
+
+  it("warns about unsafe SimpleX websocket endpoint exposure", async () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          connection: {
+            wsUrl: "ws://0.0.0.0:5225?token=secret",
+          },
+          accounts: {
+            remote: {
+              connection: {
+                wsUrl: "ws://192.168.1.20:5225",
+              },
+            },
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    const warnings = await (simplexDoctor.collectPreviewWarnings?.({
+      cfg,
+      doctorFixCommand: "openclaw doctor --fix",
+    }) ?? []);
+    const text = warnings.join("\n");
+
+    expect(text).toContain('connection.wsUrl="ws://0.0.0.0:5225?redacted" targets 0.0.0.0');
+    expect(text).not.toContain("secret");
+    expect(text).toContain("plaintext WebSocket to a non-loopback host");
+    expect(text).toContain('account "remote"');
+  });
+
+  it("keeps warning when unsafe remote websocket is explicitly allowed", async () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          connection: {
+            wsUrl: "ws://simplex-chat:5225",
+            allowUnsafeRemoteWs: true,
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    const warnings = await (simplexDoctor.collectPreviewWarnings?.({
+      cfg,
+      doctorFixCommand: "openclaw doctor --fix",
+    }) ?? []);
+    const text = warnings.join("\n");
+
+    expect(text).toContain("plaintext WebSocket to a non-loopback host");
+    expect(text).not.toContain("allowUnsafeRemoteWs=true");
+  });
 });

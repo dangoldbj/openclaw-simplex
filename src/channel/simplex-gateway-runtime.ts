@@ -2,6 +2,11 @@ import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import type { ResolvedSimplexAccount } from "../config/types.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 import { startSimplexMonitor } from "./simplex-monitor.js";
+import {
+  assertSimplexWsEndpointAllowed,
+  describeSimplexWsEndpointSecurity,
+  redactSimplexWsUrl,
+} from "./simplex-transport-security.js";
 
 export function buildSimplexGatewayRuntime(
   activeClients: SimplexClientRegistry
@@ -9,11 +14,27 @@ export function buildSimplexGatewayRuntime(
   return {
     startAccount: async (ctx) => {
       const account = ctx.account;
-      ctx.log?.info?.(`[${account.accountId}] SimpleX start requested (wsUrl=${account.wsUrl})`);
+      const redactedWsUrl = redactSimplexWsUrl(account.wsUrl);
+      ctx.log?.info?.(`[${account.accountId}] SimpleX start requested (wsUrl=${redactedWsUrl})`);
+      const allowUnsafeRemoteWs = account.config.connection?.allowUnsafeRemoteWs === true;
+      const endpointSecurity = describeSimplexWsEndpointSecurity(account.wsUrl, {
+        allowUnsafeRemoteWs,
+      });
+      for (const warning of endpointSecurity.warnings) {
+        ctx.log?.warn?.(`[${account.accountId}] SimpleX transport warning: ${warning}`);
+      }
       ctx.setStatus({
         accountId: account.accountId,
         mode: account.mode,
-        application: { wsUrl: account.wsUrl },
+        application: {
+          wsUrl: redactedWsUrl,
+          transportWarnings: endpointSecurity.warnings,
+          transportBlocked: endpointSecurity.blockingWarnings.length > 0,
+        },
+      });
+      assertSimplexWsEndpointAllowed({
+        wsUrl: account.wsUrl,
+        allowUnsafeRemoteWs,
       });
 
       ctx.log?.info?.(`[${account.accountId}] Starting SimpleX monitor`);

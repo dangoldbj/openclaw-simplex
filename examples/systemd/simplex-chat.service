@@ -1,0 +1,21 @@
+[Unit]
+Description=SimpleX Chat WebSocket Runtime for OpenClaw
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/simplex-chat -p 5225 --device-name "OpenClaw SimpleX" --files-folder %h/.local/state/openclaw-simplex/files --temp-folder %h/.local/state/openclaw-simplex/tmp --log-file %h/.local/state/openclaw-simplex/simplex-chat.log
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=10
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.simplex %h/.local/state/openclaw-simplex
+
+[Install]
+WantedBy=default.target
