@@ -60,6 +60,14 @@ Example channel config:
 
 Use [examples/systemd/simplex-chat.service](https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/systemd/simplex-chat.service) as a starting point.
 
+The plugin CLI can generate and install the user service:
+
+```bash
+openclaw simplex runtime install-service --manager systemd-user --start
+```
+
+It prints the planned file and commands first, then asks for confirmation before writing anything. Use <code>--dry-run</code> to inspect without changing the machine.
+
 The service profile:
 
 - restarts on failure

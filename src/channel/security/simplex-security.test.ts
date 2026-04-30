@@ -1,6 +1,6 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { describe, expect, it } from "vitest";
-import type { ResolvedSimplexAccount } from "../config/types.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
 import {
   formatSimplexAllowFrom,
   isSimplexAllowlisted,

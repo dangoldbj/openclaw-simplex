@@ -18,8 +18,22 @@ import {
 import type { ResolvedSimplexAccount } from "../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
-import { simplexApprovalAuth } from "./approval-auth.js";
-import { simplexCommandPolicy } from "./command-policy.js";
+import {
+  listSimplexDirectoryGroups,
+  listSimplexDirectoryPeers,
+  listSimplexGroupMembers,
+  resolveSimplexSelf,
+  resolveSimplexTargets,
+} from "./contacts/simplex-directory.js";
+import { buildSimplexPairing } from "./contacts/simplex-pairing.js";
+import { simplexDoctor } from "./diagnostics/simplex-doctor.js";
+import { buildSimplexStatus } from "./diagnostics/simplex-status.js";
+import { buildSimplexGatewayRuntime } from "./gateway/simplex-gateway-runtime.js";
+import { buildSimplexHeartbeat } from "./gateway/simplex-heartbeat.js";
+import { buildSimplexOutbound } from "./messaging/simplex-outbound.js";
+import { simplexApprovalAuth } from "./security/approval-auth.js";
+import { simplexCommandPolicy } from "./security/command-policy.js";
+import { formatSimplexAllowFrom } from "./security/simplex-security.js";
 import { simplexSetupAdapter } from "./setup.js";
 import {
   formatSimplexTargetDisplay,
@@ -29,21 +43,7 @@ import {
   resolveSimplexGroupToolPolicy,
   stripLeadingAt,
   stripSimplexPrefix,
-} from "./simplex-common.js";
-import {
-  listSimplexDirectoryGroups,
-  listSimplexDirectoryPeers,
-  listSimplexGroupMembers,
-  resolveSimplexSelf,
-  resolveSimplexTargets,
-} from "./simplex-directory.js";
-import { simplexDoctor } from "./simplex-doctor.js";
-import { buildSimplexGatewayRuntime } from "./simplex-gateway-runtime.js";
-import { buildSimplexHeartbeat } from "./simplex-heartbeat.js";
-import { buildSimplexOutbound } from "./simplex-outbound.js";
-import { buildSimplexPairing } from "./simplex-pairing.js";
-import { formatSimplexAllowFrom } from "./simplex-security.js";
-import { buildSimplexStatus } from "./simplex-status.js";
+} from "./shared/simplex-common.js";
 
 const activeClients = new Map<string, SimplexWsClient>();
 

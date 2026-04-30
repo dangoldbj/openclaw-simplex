@@ -11,6 +11,20 @@ For containerized or production deployments, also read [Production Sidecar](/gui
 
 If you want the SimpleX runtime to start automatically on login or machine boot, let the host OS supervise it and keep OpenClaw focused on the channel connection itself.
 
+The plugin CLI can generate the local service for you:
+
+```bash
+openclaw simplex runtime install-service --dry-run
+```
+
+After reviewing the plan, apply it interactively:
+
+```bash
+openclaw simplex runtime install-service --start
+```
+
+For non-interactive setup, use <code>--yes</code>. The command refuses to overwrite an existing service file unless <code>--force</code> is set.
+
 ## Decide which settings go where
 
 Use this rule:
@@ -32,84 +46,24 @@ Runtime-side startup flags:
 - local storage/layout: <code>--database</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
 - runtime process behavior: <code>--device-name</code>, <code>--maintenance</code>, <code>--mute</code>, <code>--mark-read</code>
 
-### Create the service
+## Service installation options
 
-<Tabs>
-  <Tab title="Linux">
-    ```bash
-    mkdir -p ~/.config/systemd/user
-    cat > ~/.config/systemd/user/simplex-chat.service <<'EOF'
-    [Unit]
-    Description=SimpleX Chat WebSocket Runtime
-    After=network-online.target
+Prefer the plugin CLI for normal installs. It detects Linux <code>systemd --user</code> or macOS <code>launchd</code>, prints the planned service file and commands, and asks for confirmation before writing.
 
-    [Service]
-    ExecStart=%h/.local/bin/simplex-chat -p 5225 --device-name "OpenClaw SimpleX" --files-folder %h/.simplex/files --temp-folder %h/.simplex/tmp
-    Restart=on-failure
-    RestartSec=5
+Useful options:
 
-    [Install]
-    WantedBy=default.target
-    EOF
-    ```
+- <code>--manager systemd-user|launchd</code> to override detection
+- <code>--binary /path/to/simplex-chat</code> when the CLI is not in the default location
+- <code>--port 5225</code> to change the WebSocket port
+- <code>--state-dir ~/path</code> to choose where files, temp files, and logs live
+- <code>--yes</code> for non-interactive setup
+- <code>--force</code> to overwrite an existing service file
 
-    <Note>
-      Adjust the <code>ExecStart</code> path if <code>simplex-chat</code> is installed somewhere other than <code>%h/.local/bin/simplex-chat</code>. The extra flags above are examples of runtime-owned settings that do not belong in OpenClaw channel config.
-    </Note>
-  </Tab>
-  <Tab title="macOS">
-    ```bash
-    mkdir -p ~/Library/LaunchAgents
-    cat > ~/Library/LaunchAgents/ai.openclaw.simplex-chat.plist <<'EOF'
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-      <dict>
-        <key>Label</key>
-        <string>ai.openclaw.simplex-chat</string>
-        <key>ProgramArguments</key>
-        <array>
-          <string>/usr/local/bin/simplex-chat</string>
-          <string>-p</string>
-          <string>5225</string>
-          <string>--device-name</string>
-          <string>OpenClaw SimpleX</string>
-          <string>--files-folder</string>
-          <string>/Users/YOUR_USER/.simplex/files</string>
-          <string>--temp-folder</string>
-          <string>/Users/YOUR_USER/.simplex/tmp</string>
-        </array>
-        <key>RunAtLoad</key>
-        <true/>
-        <key>KeepAlive</key>
-        <true/>
-      </dict>
-    </plist>
-    EOF
-    ```
+If you want to manage the service manually, use the checked-in templates as a starting point:
 
-    <Note>
-      Adjust <code>/usr/local/bin/simplex-chat</code> if the binary is installed elsewhere on your system, and replace <code>YOUR_USER</code> in the folder paths.
-    </Note>
-  </Tab>
-</Tabs>
-
-### Start it
-
-<Tabs>
-  <Tab title="Linux">
-    ```bash
-    systemctl --user daemon-reload
-    systemctl --user enable --now simplex-chat.service
-    ```
-  </Tab>
-  <Tab title="macOS">
-    ```bash
-    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.openclaw.simplex-chat.plist
-    launchctl kickstart -k gui/$(id -u)/ai.openclaw.simplex-chat
-    ```
-  </Tab>
-</Tabs>
+- Linux: <a href="https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/systemd/simplex-chat.service">examples/systemd/simplex-chat.service</a>
+- Docker sidecar: <a href="https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/docker-compose.sidecar.yml">examples/docker-compose.sidecar.yml</a>
+- Remote proxy exception: <a href="https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/caddy/Caddyfile">examples/caddy/Caddyfile</a>
 
 ### Check status
 

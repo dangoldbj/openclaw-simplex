@@ -13,6 +13,15 @@ import {
   listSimplexInvites,
   revokeSimplexInvite,
 } from "../simplex/simplex-invite-service.js";
+import {
+  buildRuntimeServicePlan,
+  detectRuntimeServiceManager,
+  type RuntimeServiceOptions,
+  type RuntimeServicePlan,
+  runRuntimeServiceInstallCli,
+} from "./runtime/service.js";
+
+export { buildRuntimeServicePlan, detectRuntimeServiceManager, type RuntimeServicePlan };
 
 export const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
 export const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
@@ -330,6 +339,24 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
         .option("--dry-run", "Show planned changes without writing files", false)
         .action(async (opts: { dryRun?: boolean }) => {
           await runMigration(api, opts.dryRun === true);
+        });
+
+      const runtime = command.command("runtime").description("SimpleX runtime service helpers");
+
+      runtime
+        .command("install-service")
+        .description("Install a supervised simplex-chat runtime service for this user")
+        .option("--manager <manager>", "Service manager: systemd-user or launchd")
+        .option("--binary <path>", "Path to simplex-chat binary")
+        .option("--port <port>", "WebSocket port for simplex-chat", "5225")
+        .option("--device-name <name>", "SimpleX device name", "OpenClaw SimpleX")
+        .option("--state-dir <path>", "Runtime state directory")
+        .option("--start", "Start/enable the service after writing it", false)
+        .option("--dry-run", "Print the plan without writing files or running commands", false)
+        .option("--yes", "Apply without interactive confirmation", false)
+        .option("--force", "Overwrite an existing service file", false)
+        .action(async (opts: RuntimeServiceOptions) => {
+          await runRuntimeServiceInstallCli(opts);
         });
 
       const invite = command.command("invite").description("SimpleX invite helpers");

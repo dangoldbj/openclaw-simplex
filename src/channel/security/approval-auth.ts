@@ -2,8 +2,8 @@ import {
   createResolvedApproverActionAuthAdapter,
   resolveApprovalApprovers,
 } from "openclaw/plugin-sdk/approval-auth-runtime";
-import { resolveSimplexAccount } from "../config/accounts.js";
-import { normalizeSimplexContactRef } from "./simplex-common.js";
+import { resolveSimplexAccount } from "../../config/accounts.js";
+import { normalizeSimplexContactRef } from "../shared/simplex-common.js";
 
 function normalizeSimplexApproverId(value: string | number): string | undefined {
   const normalized = normalizeSimplexContactRef(String(value));

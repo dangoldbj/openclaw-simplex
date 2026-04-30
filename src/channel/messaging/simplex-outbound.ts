@@ -1,11 +1,11 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { renderMessagePresentationFallbackText } from "openclaw/plugin-sdk/interactive-runtime";
 import { normalizePollInput } from "openclaw/plugin-sdk/poll-runtime";
-import { resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
-import { SIMPLEX_CHANNEL_ID } from "../constants.js";
-import type { SimplexClientRegistry } from "./simplex-client-registry.js";
-import { assertSimplexOutboundAccountReady } from "./simplex-common.js";
+import { resolveSimplexAccount } from "../../config/accounts.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import type { SimplexClientRegistry } from "../gateway/simplex-client-registry.js";
+import { assertSimplexOutboundAccountReady } from "../shared/simplex-common.js";
 import { buildAndSendSimplexMessages } from "./simplex-send.js";
 
 function renderSimplexPollText(params: {

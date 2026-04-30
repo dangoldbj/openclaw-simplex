@@ -1,12 +1,12 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
-import type { ResolvedSimplexAccount } from "../config/types.js";
-import type { SimplexClientRegistry } from "./simplex-client-registry.js";
-import { startSimplexMonitor } from "./simplex-monitor.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
+import { startSimplexMonitor } from "../events/simplex-monitor.js";
 import {
   assertSimplexWsEndpointAllowed,
   describeSimplexWsEndpointSecurity,
   redactSimplexWsUrl,
-} from "./simplex-transport-security.js";
+} from "../transport/simplex-transport-security.js";
+import type { SimplexClientRegistry } from "./simplex-client-registry.js";
 
 export function buildSimplexGatewayRuntime(
   activeClients: SimplexClientRegistry

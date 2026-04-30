@@ -1,7 +1,7 @@
 import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
-import type { SimplexAccountConfig, SimplexChannelConfig } from "../config/config-schema.js";
-import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../constants.js";
-import { describeSimplexWsEndpointSecurity } from "./simplex-transport-security.js";
+import type { SimplexAccountConfig, SimplexChannelConfig } from "../../config/config-schema.js";
+import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import { describeSimplexWsEndpointSecurity } from "../transport/simplex-transport-security.js";
 
 function isEmptyArray(value: unknown): boolean {
   return Array.isArray(value) && value.length === 0;

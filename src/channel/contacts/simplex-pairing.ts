@@ -1,15 +1,15 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { PAIRING_APPROVED_MESSAGE } from "openclaw/plugin-sdk/channel-status";
-import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
-import type { SimplexClientRegistry } from "./simplex-client-registry.js";
+import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../../config/accounts.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
+import type { SimplexClientRegistry } from "../gateway/simplex-client-registry.js";
+import { buildAndSendSimplexMessages } from "../messaging/simplex-send.js";
 import {
   assertSimplexOutboundAccountReady,
   normalizeSimplexContactRef,
   stripLeadingAt,
   stripSimplexPrefix,
-} from "./simplex-common.js";
-import { buildAndSendSimplexMessages } from "./simplex-send.js";
+} from "../shared/simplex-common.js";
 
 export function buildSimplexPairing(
   registry: SimplexClientRegistry

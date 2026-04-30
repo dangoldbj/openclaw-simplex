@@ -2,20 +2,27 @@ import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contrac
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveInboundMentionDecision } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
-import type { ResolvedSimplexAccount } from "../config/types.js";
-import { SIMPLEX_CHANNEL_ID } from "../constants.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import {
   buildCancelFileCommand,
   buildReceiveFileCommand,
   buildSendMessagesCommand,
   formatChatRef,
-} from "../simplex/simplex-commands.js";
-import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
-import { SimplexWsClient, type SimplexWsEvent } from "../simplex/simplex-ws-client.js";
-import { getSimplexRuntime } from "./runtime.js";
-import { stripSimplexPrefix } from "./simplex-common.js";
-import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "./simplex-media.js";
-import { isSimplexAllowlisted } from "./simplex-security.js";
+} from "../../simplex/simplex-commands.js";
+import { resolveSimplexCommandError } from "../../simplex/simplex-errors.js";
+import { SimplexWsClient, type SimplexWsEvent } from "../../simplex/simplex-ws-client.js";
+import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "../media/simplex-media.js";
+import { getSimplexRuntime } from "../runtime.js";
+import { isSimplexAllowlisted } from "../security/simplex-security.js";
+import { connectSimplexWithRetry } from "../transport/simplex-connect.js";
+import {
+  isInboundSimplexChatItem,
+  normalizeSimplexSenderId,
+  resolveSimplexChatContext,
+  resolveSimplexMessageText,
+  type SimplexChatItem,
+} from "./simplex-event-parser.js";
 
 export type SimplexMonitorOpts = {
   account: ResolvedSimplexAccount;
@@ -25,34 +32,6 @@ export type SimplexMonitorOpts = {
   statusSink?: (patch: Partial<ChannelAccountSnapshot>) => void;
 };
 
-type SimplexChatItem = {
-  chatInfo?: {
-    type?: string;
-    contact?: { contactId?: number; localDisplayName?: string; profile?: { displayName?: string } };
-    groupInfo?: { groupId?: number; localDisplayName?: string };
-  };
-  chatItem?: {
-    chatDir?: {
-      type?: string;
-      groupMember?: {
-        memberId?: string;
-        groupMemberId?: number;
-        contactId?: number | string;
-        localDisplayName?: string;
-      };
-    };
-    meta?: { itemId?: number; itemTs?: string };
-    content?: { type?: string; msgContent?: { type?: string; text?: string } };
-    file?: {
-      fileId?: number;
-      fileName?: string;
-      fileSize?: number;
-      fileSource?: { filePath?: string };
-    };
-  };
-};
-
-const INBOUND_DIRS = new Set(["directRcv", "groupRcv"]);
 const PENDING_FILE_TIMEOUT_MS = 90_000;
 
 type PendingInboundFile = {
@@ -73,121 +52,6 @@ const pendingFiles = new Map<string, PendingInboundFile>();
 
 function pendingKey(accountId: string, fileId: number): string {
   return `${accountId}:${fileId}`;
-}
-
-function normalizeSimplexSenderId(value?: string | null): string | undefined {
-  let trimmed = value?.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-  trimmed = stripSimplexPrefix(trimmed);
-  if (!trimmed) {
-    return undefined;
-  }
-  if (trimmed.startsWith("@")) {
-    trimmed = trimmed.slice(1).trim();
-  } else {
-    const kindLower = trimmed.toLowerCase();
-    if (kindLower.startsWith("contact:")) {
-      trimmed = trimmed.slice("contact:".length).trim();
-    } else if (kindLower.startsWith("user:")) {
-      trimmed = trimmed.slice("user:".length).trim();
-    } else if (kindLower.startsWith("member:")) {
-      trimmed = trimmed.slice("member:".length).trim();
-    }
-  }
-  return trimmed || undefined;
-}
-
-function resolveMessageText(
-  content: { type?: string; text?: string } | undefined,
-  fileName?: string
-): string {
-  if (!content) {
-    return "";
-  }
-  const text = content.text?.trim() ?? "";
-  if (text) {
-    return text;
-  }
-  switch (content.type) {
-    case "image":
-      return "[image]";
-    case "video":
-      return "[video]";
-    case "voice":
-      return "[voice message]";
-    case "file":
-      return fileName ? `[file: ${fileName}]` : "[file]";
-    case "link":
-      return "[link]";
-    case "report":
-      return "[report]";
-    case "chat":
-      return "[chat]";
-    default:
-      return "[message]";
-  }
-}
-
-function isInboundChatItem(item: SimplexChatItem): boolean {
-  const dir = item.chatItem?.chatDir?.type;
-  return Boolean(dir && INBOUND_DIRS.has(dir));
-}
-
-function resolveChatContext(item: SimplexChatItem): {
-  chatType: "direct" | "group";
-  chatId: number;
-  chatLabel: string;
-  senderId?: string;
-  senderName?: string;
-} | null {
-  const info = item.chatInfo;
-  if (!info || !item.chatItem) {
-    return null;
-  }
-  if (info.type === "direct") {
-    const contactId = info.contact?.contactId;
-    if (typeof contactId !== "number") {
-      return null;
-    }
-    const senderName =
-      info.contact?.localDisplayName?.trim() ||
-      info.contact?.profile?.displayName?.trim() ||
-      undefined;
-    return {
-      chatType: "direct",
-      chatId: contactId,
-      chatLabel: senderName || `contact:${contactId}`,
-      senderId: String(contactId),
-      senderName,
-    };
-  }
-  if (info.type === "group") {
-    const groupId = info.groupInfo?.groupId;
-    if (typeof groupId !== "number") {
-      return null;
-    }
-    const member = item.chatItem?.chatDir?.groupMember;
-    const contactId =
-      typeof member?.contactId === "number"
-        ? String(member.contactId)
-        : member?.contactId?.trim() || undefined;
-    const senderId =
-      contactId ??
-      member?.memberId?.trim() ??
-      (typeof member?.groupMemberId === "number" ? String(member.groupMemberId) : undefined);
-    const senderName = member?.localDisplayName?.trim() || undefined;
-    const groupLabel = info.groupInfo?.localDisplayName?.trim() || `group:${groupId}`;
-    return {
-      chatType: "group",
-      chatId: groupId,
-      chatLabel: groupLabel,
-      senderId: senderId || undefined,
-      senderName,
-    };
-  }
-  return null;
 }
 
 function resolveSimplexGroupRequireMention(params: {
@@ -287,7 +151,7 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
     });
   });
 
-  await connectWithRetry({
+  await connectSimplexWithRetry({
     client,
     runtime,
     accountId: account.accountId,
@@ -315,60 +179,6 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
   );
 
   return { client };
-}
-
-async function connectWithRetry(params: {
-  client: SimplexWsClient;
-  runtime: RuntimeEnv;
-  accountId: string;
-  abortSignal: AbortSignal;
-  attempts?: number;
-  baseDelayMs?: number;
-  maxDelayMs?: number;
-}): Promise<void> {
-  const attempts = params.attempts ?? 10;
-  let delayMs = params.baseDelayMs ?? 500;
-  const maxDelayMs = params.maxDelayMs ?? 5_000;
-
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    if (params.abortSignal.aborted) {
-      throw new Error("SimpleX connect aborted");
-    }
-    try {
-      await params.client.connect();
-      return;
-    } catch (err) {
-      if (attempt >= attempts) {
-        throw err;
-      }
-      params.runtime.error?.(
-        `[${params.accountId}] SimpleX connect failed (attempt ${attempt}/${attempts}): ${String(err)}; retrying in ${delayMs}ms`
-      );
-      await sleep(delayMs, params.abortSignal);
-      delayMs = Math.min(maxDelayMs, delayMs * 2);
-    }
-  }
-}
-
-function sleep(ms: number, abortSignal: AbortSignal): Promise<void> {
-  if (abortSignal.aborted) {
-    return Promise.reject(new Error("SimpleX connect aborted"));
-  }
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      cleanup();
-      resolve();
-    }, ms);
-    const onAbort = () => {
-      cleanup();
-      reject(new Error("SimpleX connect aborted"));
-    };
-    const cleanup = () => {
-      clearTimeout(timer);
-      abortSignal.removeEventListener("abort", onAbort);
-    };
-    abortSignal.addEventListener("abort", onAbort, { once: true });
-  });
 }
 
 async function handleSimplexEvent(params: {
@@ -414,11 +224,11 @@ async function handleSimplexEvent(params: {
   const items = Array.isArray(chatItems) ? (chatItems as SimplexChatItem[]) : [];
 
   for (const item of items) {
-    if (!isInboundChatItem(item)) {
+    if (!isInboundSimplexChatItem(item)) {
       continue;
     }
 
-    const context = resolveChatContext(item);
+    const context = resolveSimplexChatContext(item);
     if (!context) {
       continue;
     }
@@ -432,7 +242,7 @@ async function handleSimplexEvent(params: {
       continue;
     }
 
-    const rawBody = resolveMessageText(content, item.chatItem?.file?.fileName);
+    const rawBody = resolveSimplexMessageText(content, item.chatItem?.file?.fileName);
     if (!rawBody) {
       continue;
     }

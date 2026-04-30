@@ -1,7 +1,7 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
-import { resolveSimplexAccount } from "../config/accounts.js";
+import { resolveSimplexAccount } from "../../config/accounts.js";
+import { parseSimplexAllowlistEntry } from "../security/simplex-security.js";
 import type { SimplexClientRegistry } from "./simplex-client-registry.js";
-import { parseSimplexAllowlistEntry } from "./simplex-security.js";
 
 function normalizeHeartbeatRecipient(raw: string): string {
   const trimmed = raw.trim();

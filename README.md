@@ -109,6 +109,13 @@ The plugin connects OpenClaw to a locally running `simplex-chat` process via its
 
 The key runtime boundary is explicit: OpenClaw does not own or supervise the `simplex-chat` process. You run it separately, point OpenClaw at its WebSocket endpoint, and the channel becomes operational. This gives you full control over the runtime lifecycle.
 
+For persistent startup, the plugin CLI can install a user-level `systemd` or `launchd` service after showing a confirmation plan:
+
+```bash
+openclaw simplex runtime install-service --dry-run
+openclaw simplex runtime install-service --start
+```
+
 ---
 
 ## What this plugin provides
@@ -206,16 +213,19 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 }
 ```
 
-OpenClaw does not supervise `simplex-chat` for external plugins. If you want it to start automatically, run it as a host-managed user service such as `systemd --user` or `launchd`.
+OpenClaw does not own the `simplex-chat` process for this plugin. If you want it to start automatically, use the plugin CLI service installer or run it as a host-managed service.
 
-For production, treat `simplex-chat` as a private sidecar: keep the WebSocket on loopback or a private container network, do not publish port `5225`, and use `connection.allowUnsafeRemoteWs: true` only when a non-loopback host is protected by that private boundary. See the Production Sidecar docs for Docker, systemd, and remote-proxy examples.
+For production, treat `simplex-chat` as a private sidecar: keep the WebSocket on loopback or a private container network, do not publish port `5225`, and use `connection.allowUnsafeRemoteWs: true` only when a non-loopback host is protected by that private boundary.
 
 Keep the split clear:
 
 - `channels.openclaw-simplex` is for OpenClaw-side channel behavior and the WebSocket endpoint
 - `simplex-chat` CLI flags such as `--device-name`, `--files-folder`, `--temp-folder`, proxy settings, relay selection, and `--maintenance` belong in the external runtime service definition
 
-For full persistent runtime examples and recommended startup-flag placement: https://openclaw-simplex.mintlify.app/guide/runtime-setup
+Docs:
+
+- Runtime setup: https://openclaw-simplex.mintlify.app/guide/runtime-setup
+- Production sidecar: https://openclaw-simplex.mintlify.app/guide/production-sidecar
 
 ---
 
@@ -229,6 +239,10 @@ openclaw simplex invite create --qr
 
 # List current invite and address state
 openclaw simplex invite list
+
+# Install a supervised simplex-chat service after reviewing the plan
+openclaw simplex runtime install-service --dry-run
+openclaw simplex runtime install-service --start
 
 # Show the current address link
 openclaw simplex address show --qr
@@ -292,7 +306,8 @@ Current note:
 - OpenClaw applies sender gating via `dmPolicy`, `allowFrom`, and group policy
 - Pairing-based approval can require explicit acceptance before a new contact can trigger the agent
 - Same-chat exec approvals are supported for authorized SimpleX senders
-- OpenClaw does not auto-spawn `simplex-chat`; runtime control stays explicit
+- OpenClaw does not embed the SimpleX runtime; runtime control stays explicit and can be delegated to `systemd`, `launchd`, Docker, or another supervisor
+- Plaintext non-loopback `ws://` endpoints are blocked unless `connection.allowUnsafeRemoteWs` is explicitly set for a private sidecar/proxy deployment
 - The plugin does not depend on a platform bot registry or hosted messaging API
 
 ---
@@ -303,6 +318,7 @@ Current note:
 openclaw plugins list
 openclaw plugins info openclaw-simplex
 openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw simplex runtime install-service --dry-run
 openclaw simplex migrate --dry-run
 openclaw simplex invite create --qr
 openclaw pairing list

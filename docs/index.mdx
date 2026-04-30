@@ -15,7 +15,7 @@ The implementation keeps developer-facing boundaries explicit: OpenClaw enforces
     Install the runtime and plugin, configure <code>wsUrl</code>, generate the first invite, and verify end-to-end messaging.
   </Card>
   <Card title="Runtime Setup" icon="settings" href="/guide/runtime-setup" cta="Run the runtime">
-    Run <code>simplex-chat</code> yourself, wire OpenClaw to its WebSocket endpoint, and optionally move it under <code>systemd</code> or <code>launchd</code>.
+    Run <code>simplex-chat</code>, wire OpenClaw to its WebSocket endpoint, and install a supervised local service with the plugin CLI.
   </Card>
 </Columns>
 
@@ -34,5 +34,14 @@ The implementation keeps developer-facing boundaries explicit: OpenClaw enforces
   </Card>
   <Card title="Troubleshooting" icon="wrench" href="/guide/troubleshooting" cta="Debug issues">
     Diagnose startup, runtime, invite, and policy issues quickly.
+  </Card>
+</Columns>
+
+<Columns cols={2}>
+  <Card title="Production Sidecar" icon="lock-keyhole" href="/guide/production-sidecar" cta="Harden deployment">
+    Keep the WebSocket private, use sidecar/container patterns safely, and understand the MIT external-runtime boundary.
+  </Card>
+  <Card title="Configuration" icon="sliders-horizontal" href="/reference/config" cta="View fields">
+    See every channel field, including <code>allowUnsafeRemoteWs</code>, media limits, and multi-account settings.
   </Card>
 </Columns>

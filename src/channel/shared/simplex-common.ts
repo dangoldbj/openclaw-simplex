@@ -1,9 +1,9 @@
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 import type { ChannelGroupContext } from "openclaw/plugin-sdk/channel-contract";
 import type { GroupToolPolicyConfig } from "openclaw/plugin-sdk/channel-policy";
-import { resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
-import { stripSimplexProviderPrefix } from "../constants.js";
+import { resolveSimplexAccount } from "../../config/accounts.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
+import { stripSimplexProviderPrefix } from "../../constants.js";
 
 export { DEFAULT_ACCOUNT_ID };
 

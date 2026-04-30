@@ -1,16 +1,16 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { ChannelDirectoryEntry } from "openclaw/plugin-sdk/directory-runtime";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
-import { resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
+import { resolveSimplexAccount } from "../../config/accounts.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
 import {
   buildListContactsCommand,
   buildListGroupMembersCommand,
   buildListGroupsCommand,
   buildShowActiveUserCommand,
-} from "../simplex/simplex-commands.js";
-import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
-import { stripSimplexPrefix } from "./simplex-common.js";
+} from "../../simplex/simplex-commands.js";
+import { SimplexWsClient } from "../../simplex/simplex-ws-client.js";
+import { stripSimplexPrefix } from "../shared/simplex-common.js";
 
 type SimplexDirectoryParams = {
   cfg: OpenClawConfig;

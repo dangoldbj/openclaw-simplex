@@ -44,6 +44,18 @@ Configure the WebSocket endpoint:
 openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
 ```
 
+Preview a supervised local runtime service:
+
+```bash
+openclaw simplex runtime install-service --dry-run
+```
+
+Install and start that service after reviewing the plan:
+
+```bash
+openclaw simplex runtime install-service --start
+```
+
 Verify that OpenClaw sees and trusts the plugin:
 
 ```bash

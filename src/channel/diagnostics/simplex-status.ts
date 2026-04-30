@@ -1,14 +1,14 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
-import type { ResolvedSimplexAccount } from "../config/types.js";
-import { SIMPLEX_CHANNEL_ID } from "../constants.js";
-import type { SimplexClientRegistry } from "./simplex-client-registry.js";
+import type { ResolvedSimplexAccount } from "../../config/types.js";
+import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import type { SimplexClientRegistry } from "../gateway/simplex-client-registry.js";
 import {
   DEFAULT_ACCOUNT_ID,
   extractSimplexTransportWarningsFromApplication,
   extractSimplexWsUrlFromApplication,
   resolveSimplexHealthState,
-} from "./simplex-common.js";
-import { describeSimplexWsEndpointSecurity } from "./simplex-transport-security.js";
+} from "../shared/simplex-common.js";
+import { describeSimplexWsEndpointSecurity } from "../transport/simplex-transport-security.js";
 
 export function buildSimplexStatus(
   _registry: SimplexClientRegistry
