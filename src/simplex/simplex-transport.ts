@@ -5,6 +5,7 @@ import { SimplexNodeClient } from "./simplex-node-client.js";
 type SharedSimplexNodeClientKey = `${string}|${string}|${number}`;
 
 export const activeSimplexNodeClients = new Map<string, SimplexNodeClient>();
+const activeSimplexNodeClientsByKey = new Map<SharedSimplexNodeClientKey, SimplexNodeClient>();
 const sharedSimplexNodeClients = new Map<SharedSimplexNodeClientKey, SimplexNodeClient>();
 
 function sharedClientKey(account: ResolvedSimplexAccount): SharedSimplexNodeClientKey {
@@ -16,12 +17,14 @@ export async function registerActiveSimplexNodeClient(
   account: ResolvedSimplexAccount,
   client: SimplexNodeClient
 ): Promise<void> {
-  const shared = sharedSimplexNodeClients.get(sharedClientKey(account));
+  const key = sharedClientKey(account);
+  const shared = sharedSimplexNodeClients.get(key);
   if (shared && shared !== client) {
-    sharedSimplexNodeClients.delete(sharedClientKey(account));
+    sharedSimplexNodeClients.delete(key);
     await shared.close().catch(() => undefined);
   }
   activeSimplexNodeClients.set(account.accountId, client);
+  activeSimplexNodeClientsByKey.set(key, client);
 }
 
 export function unregisterActiveSimplexNodeClient(
@@ -30,6 +33,10 @@ export function unregisterActiveSimplexNodeClient(
 ): void {
   if (activeSimplexNodeClients.get(account.accountId) === client) {
     activeSimplexNodeClients.delete(account.accountId);
+  }
+  const key = sharedClientKey(account);
+  if (activeSimplexNodeClientsByKey.get(key) === client) {
+    activeSimplexNodeClientsByKey.delete(key);
   }
 }
 
@@ -55,6 +62,10 @@ export async function withSimplexApi<T>(params: {
   const activeClient = activeSimplexNodeClients.get(params.account.accountId);
   if (activeClient) {
     return await activeClient.withApi(params.run);
+  }
+  const sharedActiveClient = activeSimplexNodeClientsByKey.get(sharedClientKey(params.account));
+  if (sharedActiveClient) {
+    return await sharedActiveClient.withApi(params.run);
   }
   const client = getSharedSimplexNodeClient(params);
   return await client.withApi(params.run);
