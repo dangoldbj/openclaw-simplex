@@ -3,20 +3,15 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveInboundMentionDecision } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
-import {
-  formatSimplexChatRef,
-  parseSimplexApiChatRef,
-  parseSimplexNumericId,
-  resolveSimplexChatItemId,
-  toSimplexApiChatRef,
-} from "../../simplex/runtime/api.js";
+import { formatSimplexChatRef, parseSimplexNumericId } from "../../simplex/runtime/api.js";
 import { SimplexClient } from "../../simplex/runtime/client.js";
 import { recordSimplexContactRequest } from "../../simplex/state/contact-requests.js";
 import { markSimplexEventSeen } from "../../simplex/state/event-dedupe.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexChatItem } from "../../types/events.js";
-import type { SimplexApiComposedMessage, SimplexChatEvent } from "../../types/simplex.js";
+import type { SimplexChatEvent } from "../../types/simplex.js";
 import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "../media/simplex-media.js";
+import { sendSimplexComposedMessages } from "../messaging/simplex-send.js";
 import { getSimplexRuntime } from "../runtime.js";
 import { isSimplexAllowlisted } from "../security/simplex-security.js";
 import { connectSimplexWithRetry } from "../transport/simplex-connect.js";
@@ -72,7 +67,7 @@ async function sendSimplexPayload(params: {
     audioAsVoice?: boolean;
     replyToId?: string | number | null;
   };
-}): Promise<{ messageId?: number }> {
+}): Promise<{ messageId?: string }> {
   const quotedItemId =
     params.payload.replyToId === undefined || params.payload.replyToId === null
       ? undefined
@@ -89,18 +84,12 @@ async function sendSimplexPayload(params: {
   if (composedMessages.length === 0) {
     return {};
   }
-  const apiChatRef = parseSimplexApiChatRef(params.chatRef);
-  if (!apiChatRef) {
-    throw new Error(`SimpleX chat ref must be numeric for runtime API: ${params.chatRef}`);
-  }
-  const chatItems = await params.client.withApi((api) =>
-    api.apiSendMessages(
-      toSimplexApiChatRef(apiChatRef),
-      composedMessages as SimplexApiComposedMessage[]
-    )
-  );
-  const messageId = resolveSimplexChatItemId(chatItems[0]);
-  return { messageId: messageId ? Number(messageId) : undefined };
+  return await sendSimplexComposedMessages({
+    chatRef: params.chatRef,
+    composedMessages,
+    send: (apiChatRef, messages) =>
+      params.client.withApi((api) => api.apiSendMessages(apiChatRef, messages)),
+  });
 }
 
 export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
