@@ -6,7 +6,7 @@ description: Diagnose and fix common OpenClaw SimpleX problems including runtime
 Most failures fall into one of three buckets: the plugin is not trusted/enabled, the SimpleX Node runtime cannot start, or policy settings are correctly rejecting a sender you expected to allow.
 
 <Tip>
-  Two common mistakes: <code>channels.openclaw-simplex.dbFilePrefix</code> is missing, or <code>dmPolicy: "pairing"</code> is enabled but the sender has not been approved yet.
+  Two common mistakes: the channel section is missing, or <code>dmPolicy: "pairing"</code> is enabled but the sender has not been approved yet.
 </Tip>
 
 ## Plugin not listed
@@ -34,14 +34,13 @@ If the package is installed but not allowlisted, OpenClaw may still refuse to lo
 
 ## Channel fails to start
 
-What to check first: <code>channels.openclaw-simplex.dbFilePrefix</code> must exist. The simplest valid config is:
+What to check first: <code>channels.openclaw-simplex</code> must exist. The simplest valid config is:
 
 ```json
 {
   "channels": {
     "openclaw-simplex": {
-      "enabled": true,
-      "dbFilePrefix": "~/.simplex/openclaw-bot"
+      "enabled": true
     }
   }
 }
@@ -49,7 +48,7 @@ What to check first: <code>channels.openclaw-simplex.dbFilePrefix</code> must ex
 
 What to verify:
 
-- the Node runtime has a writable <code>dbFilePrefix</code>
+- the SimpleX default database path is writable, or <code>dbFilePrefix</code> points to a writable prefix
 - the <code>simplex-chat</code> package native build was approved by your package manager
 - channel status shows the latest runtime startup error
 
@@ -129,7 +128,6 @@ Write Node runtime channel config explicitly:
 
 ```bash
 openclaw channels add --channel openclaw-simplex
-openclaw config set channels.openclaw-simplex.dbFilePrefix "~/.simplex/openclaw-bot"
 ```
 
 Show runtime status:

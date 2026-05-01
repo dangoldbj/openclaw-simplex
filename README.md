@@ -143,10 +143,9 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 
 ```bash
 openclaw channels add --channel openclaw-simplex
-openclaw config set channels.openclaw-simplex.dbFilePrefix "~/.simplex/openclaw-bot"
 ```
 
-The official SimpleX Node API requires an explicit database file prefix. The plugin does not force an OpenClaw-owned default; choose the SimpleX profile/database prefix you want the bot runtime to use.
+By default, the plugin uses the same database prefix as the SimpleX terminal CLI: `~/.simplex/simplex_v1` on Linux/macOS and `%APPDATA%/simplex/simplex_v1` on Windows. Override `dbFilePrefix` only when you want a separate bot identity or a named account.
 
 If your package manager blocks native dependency build scripts, approve the `simplex-chat` package build before starting OpenClaw. With pnpm, run:
 
@@ -157,7 +156,7 @@ pnpm approve-builds
 **Important:**
 
 - `openclaw plugins enable openclaw-simplex` only enables the plugin
-- OpenClaw will not start the SimpleX channel until `channels.openclaw-simplex.dbFilePrefix` is configured
+- OpenClaw uses the SimpleX terminal CLI database prefix by default; set `channels.openclaw-simplex.dbFilePrefix` only for a separate profile
 - The official Node runtime is the only supported runtime
 - The interactive `openclaw channels add` picker may not list this external plugin yet
 - The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
@@ -171,7 +170,6 @@ pnpm approve-builds
   "channels": {
     "openclaw-simplex": {
       "enabled": true,
-      "dbFilePrefix": "~/.simplex/openclaw-bot",
       "allowFrom": ["*"]
     }
   }
@@ -295,8 +293,8 @@ openclaw pairing list
 | Symptom | Fix |
 |---|---|
 | Plugin not visible | Check `plugins.allow` and run `openclaw plugins list` |
-| Channel not starting | Verify `channels.openclaw-simplex.dbFilePrefix` exists and the Node runtime can write its database path |
-| `Configured No` | Add explicit `channels.openclaw-simplex.dbFilePrefix`; plugin defaults alone are not enough for startup |
+| Channel not starting | Verify the SimpleX database path is writable and the native runtime can start |
+| `Configured No` | Add the channel section with `openclaw channels add --channel openclaw-simplex` |
 | Inbound issues | Review `allowFrom`, `dmPolicy`, and group policy settings |
 | Media issues | Validate URLs and check size limits |
 

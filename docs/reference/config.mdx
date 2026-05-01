@@ -11,8 +11,7 @@ The plugin reads configuration from <code>channels.openclaw-simplex</code>.
 {
   "channels": {
     "openclaw-simplex": {
-      "enabled": true,
-      "dbFilePrefix": "~/.simplex/openclaw-bot"
+      "enabled": true
     }
   }
 }
@@ -38,7 +37,6 @@ If <code>accounts</code> is not set, the root <code>channels.openclaw-simplex</c
       "groupPolicy": "allowlist",
       "groupAllowFrom": [],
       "mediaMaxMb": 5,
-      "dbFilePrefix": "~/.simplex/openclaw-bot",
       "connectTimeoutMs": 15000
     }
   }
@@ -92,7 +90,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `markdown` | Markdown rendering config from OpenClaw's shared channel schema. |
 | `blockStreaming` | If true, buffer the response instead of streaming partial output. |
 | `blockStreamingCoalesce` | Optional response coalescing behavior for blocked streaming. |
-| `dbFilePrefix` | SQLite database file prefix for the Node runtime. Required; the plugin does not force a default. |
+| `dbFilePrefix` | Optional SQLite database file prefix for the Node runtime. Defaults to the SimpleX terminal CLI prefix: `~/.simplex/simplex_v1` on Linux/macOS and `%APPDATA%/simplex/simplex_v1` on Windows. |
 | `displayName` | Display name used when the Node runtime creates its SimpleX profile. |
 | `fullName` | Full name used when the Node runtime creates its SimpleX profile. |
 | `migrationConfirmation` | Database migration confirmation mode: `yesUp` \| `yesUpDown` \| `console` \| `error`. |
@@ -101,7 +99,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `accounts.<accountId>` | Per-account overrides for the same schema. |
 
 <Note>
-  A channel/account is considered configured when <code>dbFilePrefix</code> is set. The official SimpleX Node API requires this database prefix.
+  The default account is considered configured when <code>channels.openclaw-simplex</code> exists. Named accounts should set <code>dbFilePrefix</code> unless they intentionally inherit an explicit root prefix.
 </Note>
 
 ## Runtime config scope

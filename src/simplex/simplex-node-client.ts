@@ -1,5 +1,3 @@
-import os from "node:os";
-import path from "node:path";
 import type { ResolvedSimplexAccount } from "../types/config.js";
 import type {
   SimplexChatApi,
@@ -8,6 +6,7 @@ import type {
   SimplexMigrationConfirmation,
   SimplexMigrationConfirmationSetting,
 } from "../types/simplex.js";
+import { resolveSimplexDbFilePrefix } from "./simplex-db-path.js";
 
 type SimplexNodeConnectionState = {
   connected: boolean;
@@ -116,7 +115,7 @@ export class SimplexNodeClient {
       );
     }
     const chat = await simplex.api.ChatApi.init(
-      { type: "sqlite", filePrefix: resolveDbFilePrefix(this.account.dbFilePrefix) },
+      { type: "sqlite", filePrefix: resolveSimplexDbFilePrefix(this.account.dbFilePrefix) },
       confirm
     );
     this.chat = chat;
@@ -149,16 +148,6 @@ export class SimplexNodeClient {
       handler(state);
     }
   }
-}
-
-function resolveDbFilePrefix(value: string): string {
-  if (value === "~") {
-    return os.homedir();
-  }
-  if (value.startsWith("~/")) {
-    return path.join(os.homedir(), value.slice(2));
-  }
-  return path.resolve(value);
 }
 
 function resolveMigrationConfirmation(

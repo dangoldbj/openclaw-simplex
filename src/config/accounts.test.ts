@@ -6,6 +6,7 @@ import {
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
   resolveSimplexAccount,
+  SIMPLEX_CLI_DEFAULT_DB_PREFIX,
 } from "./accounts.js";
 
 describe("simplex accounts", () => {
@@ -125,6 +126,20 @@ describe("simplex accounts", () => {
     expect(account.dbFilePrefix).toBe("~/.simplex/openclaw-bot");
   });
 
+  it("uses the SimpleX CLI default database prefix for the default account", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          enabled: true,
+        },
+      },
+    } as OpenClawConfig;
+
+    const account = resolveSimplexAccount({ cfg, accountId: "default" });
+    expect(account.configured).toBe(true);
+    expect(account.dbFilePrefix).toBe(SIMPLEX_CLI_DEFAULT_DB_PREFIX);
+  });
+
   it("does not derive database prefixes for named accounts", () => {
     const cfg = {
       channels: {
@@ -170,7 +185,7 @@ describe("simplex accounts", () => {
     expect(resolveSimplexAccount({ cfg, accountId: "default" }).configured).toBe(false);
   });
 
-  it("requires an explicit dbFilePrefix to be configured", () => {
+  it("treats the default account as configured when the channel section exists", () => {
     const cfg = {
       channels: {
         "openclaw-simplex": {
@@ -179,8 +194,11 @@ describe("simplex accounts", () => {
       },
     } as OpenClawConfig;
 
-    expect(hasMeaningfulSimplexConfig({ cfg })).toBe(false);
-    expect(resolveSimplexAccount({ cfg, accountId: "default" }).configured).toBe(false);
+    expect(hasMeaningfulSimplexConfig({ cfg })).toBe(true);
+    expect(resolveSimplexAccount({ cfg, accountId: "default" }).configured).toBe(true);
+    expect(resolveSimplexAccount({ cfg, accountId: "default" }).dbFilePrefix).toBe(
+      SIMPLEX_CLI_DEFAULT_DB_PREFIX
+    );
   });
 
   it("still reads legacy nested connection config before migration", () => {

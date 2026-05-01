@@ -401,14 +401,14 @@
         },
         "dbFilePrefix": {
           "label": "SimpleX DB File Prefix",
-          "help": "SQLite database file prefix for the SimpleX Node runtime. Required by the official Node API; leave unset until you choose the profile/database the bot should use.",
-          "placeholder": "~/.simplex/openclaw-bot",
+          "help": "SQLite database file prefix for the SimpleX Node runtime. Defaults to the SimpleX terminal CLI prefix: ~/.simplex/simplex_v1 on Linux/macOS or %APPDATA%/simplex/simplex_v1 on Windows.",
+          "placeholder": "~/.simplex/simplex_v1",
           "tags": ["runtime", "storage"]
         },
         "accounts.*.dbFilePrefix": {
           "label": "SimpleX DB File Prefix",
-          "help": "SQLite database file prefix for the SimpleX Node runtime. Required by the official Node API; leave unset until you choose the profile/database the bot should use.",
-          "placeholder": "~/.simplex/openclaw-bot",
+          "help": "SQLite database file prefix for the SimpleX Node runtime. Defaults to the SimpleX terminal CLI prefix: ~/.simplex/simplex_v1 on Linux/macOS or %APPDATA%/simplex/simplex_v1 on Windows.",
+          "placeholder": "~/.simplex/simplex_v1",
           "tags": ["runtime", "storage"]
         },
         "displayName": {

@@ -13,14 +13,13 @@ This plugin uses the official <code>simplex-chat</code> Node package in the Open
 {
   "channels": {
     "openclaw-simplex": {
-      "enabled": true,
-      "dbFilePrefix": "~/.simplex/openclaw-bot"
+      "enabled": true
     }
   }
 }
 ```
 
-The plugin does not force a database prefix. Set `dbFilePrefix` to the SimpleX database prefix you want the bot runtime to use. The official Node API stores SQLite databases as `<prefix>_chat.db` and `<prefix>_agent.db`.
+By default, the plugin uses the same database prefix as the SimpleX terminal CLI: `~/.simplex/simplex_v1` on Linux/macOS and `%APPDATA%/simplex/simplex_v1` on Windows. The official Node API stores SQLite databases as `<prefix>_chat.db` and `<prefix>_agent.db`, so the default Linux/macOS files are `~/.simplex/simplex_v1_chat.db` and `~/.simplex/simplex_v1_agent.db`.
 
 ## Multiple accounts
 
@@ -50,7 +49,7 @@ Give each account its own database file prefix so each SimpleX identity has isol
 
 ## Runtime fields
 
-- <code>dbFilePrefix</code>: SQLite database file prefix used by the SimpleX Node runtime.
+- <code>dbFilePrefix</code>: optional SQLite database file prefix used by the SimpleX Node runtime. Omit it for the SimpleX terminal CLI default.
 - <code>displayName</code>: display name used when the runtime creates a SimpleX profile.
 - <code>fullName</code>: full name used when the runtime creates a SimpleX profile.
 - <code>migrationConfirmation</code>: database migration behavior, one of <code>yesUp</code>, <code>yesUpDown</code>, <code>console</code>, or <code>error</code>.

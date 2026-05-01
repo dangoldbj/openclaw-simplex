@@ -31,11 +31,10 @@ This path gets you from zero to the first invited contact talking to your OpenCl
   </Step>
 
   <Step title="Configure the channel">
-    Add the channel and choose the SimpleX database prefix the Node runtime should use:
+    Add the channel:
 
     ```bash
     openclaw channels add --channel openclaw-simplex
-    openclaw config set channels.openclaw-simplex.dbFilePrefix "~/.simplex/openclaw-bot"
     ```
 
     That writes channel config equivalent to:
@@ -45,7 +44,6 @@ This path gets you from zero to the first invited contact talking to your OpenCl
       "channels": {
         "openclaw-simplex": {
           "enabled": true,
-          "dbFilePrefix": "~/.simplex/openclaw-bot",
           "dmPolicy": "pairing",
           "allowFrom": ["*"]
         }
@@ -54,7 +52,7 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     ```
 
     <Info>
-      The official <code>simplex-chat</code> Node API requires an explicit database file prefix. The plugin does not force an OpenClaw-owned default; choose the SimpleX profile/database prefix you want the bot runtime to use.
+      By default, the plugin uses the same database prefix as the SimpleX terminal CLI: <code>~/.simplex/simplex_v1</code> on Linux/macOS and <code>%APPDATA%/simplex/simplex_v1</code> on Windows. Set <code>dbFilePrefix</code> only when you want a separate bot identity or a named account.
     </Info>
   </Step>
 

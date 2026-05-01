@@ -1,8 +1,11 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
+import { resolveSimplexCliDefaultDbPrefix } from "../simplex/simplex-db-path.js";
 import type { ResolvedSimplexAccount, SimplexConnectionConfig } from "../types/config.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
+
+export const SIMPLEX_CLI_DEFAULT_DB_PREFIX = resolveSimplexCliDefaultDbPrefix();
 
 type LegacySimplexAccountConfig = SimplexAccountConfig & {
   connection?: SimplexConnectionConfig;
@@ -68,13 +71,16 @@ export function hasMeaningfulSimplexConfig(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;
 }): boolean {
+  if (!params.cfg.channels || !(SIMPLEX_CHANNEL_ID in params.cfg.channels)) {
+    return false;
+  }
   const accountId = normalizeAccountId(params.accountId);
   const raw = resolveRawSimplexAccountConfig(params.cfg, accountId);
   if (raw.dbFilePrefix?.trim()) {
     return true;
   }
   if (accountId === DEFAULT_ACCOUNT_ID) {
-    return false;
+    return true;
   }
   return Boolean(
     resolveRawSimplexAccountConfig(params.cfg, DEFAULT_ACCOUNT_ID).dbFilePrefix?.trim()
@@ -92,8 +98,15 @@ function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): Simp
   };
 }
 
-function resolveNodeDbFilePrefix(config: SimplexAccountConfig): string | undefined {
-  return config.dbFilePrefix?.trim() || undefined;
+function resolveNodeDbFilePrefix(
+  config: SimplexAccountConfig,
+  accountId: string
+): string | undefined {
+  const configured = config.dbFilePrefix?.trim();
+  if (configured) {
+    return configured;
+  }
+  return accountId === DEFAULT_ACCOUNT_ID ? SIMPLEX_CLI_DEFAULT_DB_PREFIX : undefined;
 }
 
 export function resolveSimplexAccount(params: {
@@ -112,7 +125,7 @@ export function resolveSimplexAccount(params: {
     name: merged.name?.trim() || undefined,
     configured,
     mode: "node",
-    dbFilePrefix: resolveNodeDbFilePrefix(merged),
+    dbFilePrefix: resolveNodeDbFilePrefix(merged, accountId),
     config: merged,
   };
 }
