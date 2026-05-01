@@ -41,7 +41,7 @@ export async function requestFileDownload(params: {
   runtime: RuntimeEnv;
 }): Promise<boolean> {
   const { fileId, account, client, runtime } = params;
-  const autoAccept = account.config.connection?.autoAcceptFiles !== false;
+  const autoAccept = account.config.autoAcceptFiles !== false;
   if (!autoAccept) {
     return false;
   }

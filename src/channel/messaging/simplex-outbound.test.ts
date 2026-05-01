@@ -76,7 +76,7 @@ describe("simplex outbound presentation support", () => {
       cfg: {
         channels: {
           "openclaw-simplex": {
-            connection: {},
+            dbFilePrefix: "/tmp/openclaw-simplex-test",
           },
         },
       },

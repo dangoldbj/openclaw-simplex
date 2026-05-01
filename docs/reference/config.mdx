@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Complete reference for every OpenClaw SimpleX channel configuration field including connection settings, DM and group policies, and multi-account setup.
+description: Complete reference for every OpenClaw SimpleX channel configuration field including runtime storage, DM and group policies, and multi-account setup.
 ---
 
 The plugin reads configuration from <code>channels.openclaw-simplex</code>.
@@ -12,7 +12,7 @@ The plugin reads configuration from <code>channels.openclaw-simplex</code>.
   "channels": {
     "openclaw-simplex": {
       "enabled": true,
-      "connection": {}
+      "dbFilePrefix": "~/.simplex/openclaw-bot"
     }
   }
 }
@@ -38,9 +38,8 @@ If <code>accounts</code> is not set, the root <code>channels.openclaw-simplex</c
       "groupPolicy": "allowlist",
       "groupAllowFrom": [],
       "mediaMaxMb": 5,
-      "connection": {
-        "connectTimeoutMs": 15000
-      }
+      "dbFilePrefix": "~/.simplex/openclaw-bot",
+      "connectTimeoutMs": 15000
     }
   }
 }
@@ -57,16 +56,14 @@ If <code>accounts</code> is set, each account entry can override the shared root
       "enabled": true,
       "dmPolicy": "pairing",
       "groupPolicy": "allowlist",
-      "connection": {},
+      "dbFilePrefix": "~/.simplex/openclaw-default",
       "accounts": {
         "ops": {
           "name": "Ops",
           "enabled": true,
           "reactionLevel": "extensive",
           "allowFrom": ["alice", "bob"],
-          "connection": {
-            "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex-ops"
-          }
+          "dbFilePrefix": "~/.simplex/openclaw-ops"
         }
       }
     }
@@ -95,20 +92,20 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `markdown` | Markdown rendering config from OpenClaw's shared channel schema. |
 | `blockStreaming` | If true, buffer the response instead of streaming partial output. |
 | `blockStreamingCoalesce` | Optional response coalescing behavior for blocked streaming. |
-| `connection.dbFilePrefix` | SQLite database file prefix for the Node runtime. Default: `~/.openclaw/simplex/openclaw-simplex` with account-specific suffixes for named accounts. |
-| `connection.displayName` | Display name used when the Node runtime creates its SimpleX profile. |
-| `connection.fullName` | Full name used when the Node runtime creates its SimpleX profile. |
-| `connection.migrationConfirmation` | Database migration confirmation mode: `yesUp` \| `yesUpDown` \| `console` \| `error`. |
-| `connection.autoAcceptFiles` | Whether incoming file transfers should be auto-accepted by the SimpleX runtime. |
-| `connection.connectTimeoutMs` | Runtime connection/start timeout in milliseconds. |
+| `dbFilePrefix` | SQLite database file prefix for the Node runtime. Required; the plugin does not force a default. |
+| `displayName` | Display name used when the Node runtime creates its SimpleX profile. |
+| `fullName` | Full name used when the Node runtime creates its SimpleX profile. |
+| `migrationConfirmation` | Database migration confirmation mode: `yesUp` \| `yesUpDown` \| `console` \| `error`. |
+| `autoAcceptFiles` | Whether incoming file transfers should be auto-accepted by the SimpleX runtime. |
+| `connectTimeoutMs` | Runtime connection/start timeout in milliseconds. |
 | `accounts.<accountId>` | Per-account overrides for the same schema. |
 
 <Note>
-  A channel/account is considered configured when <code>connection</code> exists. If it is omitted, OpenClaw will not treat the channel as startup-ready.
+  A channel/account is considered configured when <code>dbFilePrefix</code> is set. The official SimpleX Node API requires this database prefix.
 </Note>
 
 ## Runtime config scope
 
 The runtime is the official <code>simplex-chat</code> Node package. There is no separate <code>simplex-chat</code> CLI process and no local WebSocket endpoint.
 
-The config surface is intentionally small: local database prefix, initial profile labels, migration behavior, file auto-accept, timeout, and OpenClaw policy/UX fields. Legacy CLI/WebSocket fields such as <code>wsUrl</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code> are not supported and are removed by <code>openclaw simplex migrate</code>.
+The config surface is intentionally small: local database prefix, initial profile labels, migration behavior, file auto-accept, timeout, and OpenClaw policy/UX fields. Legacy nested <code>connection.*</code> fields and CLI/WebSocket fields such as <code>wsUrl</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code> are migrated or removed by <code>openclaw simplex migrate</code>.

@@ -39,9 +39,7 @@ function account(accountId = "default"): ResolvedSimplexAccount {
     mode: "node",
     dbFilePrefix: `/tmp/openclaw-simplex-${accountId}`,
     config: {
-      connection: {
-        dbFilePrefix: `/tmp/openclaw-simplex-${accountId}`,
-      },
+      dbFilePrefix: `/tmp/openclaw-simplex-${accountId}`,
     },
   };
 }

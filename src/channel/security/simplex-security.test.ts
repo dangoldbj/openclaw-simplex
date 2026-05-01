@@ -72,7 +72,7 @@ describe("simplex allowlist", () => {
           accounts: {
             beta: {
               allowFrom: ["beta-only"],
-              connection: {},
+              dbFilePrefix: "/tmp/openclaw-simplex-test",
             },
           },
         },

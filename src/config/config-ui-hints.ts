@@ -20,6 +20,40 @@ const accountScopedUiHints = withAccountScope({
     label: "Enabled",
     help: "Disable an account without deleting its SimpleX configuration.",
   },
+  dbFilePrefix: {
+    label: "SimpleX DB File Prefix",
+    help: "SQLite database file prefix for the SimpleX Node runtime. Required by the official Node API; leave unset until you choose the profile/database the bot should use.",
+    placeholder: "~/.simplex/openclaw-bot",
+    tags: ["runtime", "storage"],
+  },
+  displayName: {
+    label: "SimpleX Profile Name",
+    help: "Display name used when the Node runtime creates a SimpleX profile for this database.",
+    advanced: true,
+  },
+  fullName: {
+    label: "SimpleX Full Name",
+    help: "Full name used when the Node runtime creates a SimpleX profile for this database.",
+    advanced: true,
+  },
+  migrationConfirmation: {
+    label: "DB Migration Mode",
+    help: "SimpleX database migration confirmation mode for the Node runtime.",
+    advanced: true,
+    tags: ["runtime", "storage"],
+  },
+  autoAcceptFiles: {
+    label: "Auto Accept Files",
+    help: "Automatically accept incoming file transfers from the SimpleX runtime.",
+    advanced: true,
+    tags: ["media"],
+  },
+  connectTimeoutMs: {
+    label: "Connect Timeout (ms)",
+    help: "Runtime connection/start timeout in milliseconds.",
+    advanced: true,
+    tags: ["transport"],
+  },
   mediaMaxMb: {
     label: "Max Media Size (MB)",
     help: "Optional media size cap for files sent through this SimpleX account.",
@@ -113,44 +147,6 @@ const accountScopedUiHints = withAccountScope({
     label: "Tool Policy",
     help: "Optional per-group tool policy override for this SimpleX group.",
     advanced: true,
-  },
-  connection: {
-    label: "Connection",
-    help: "Runtime settings for the official SimpleX Node runtime.",
-  },
-  "connection.dbFilePrefix": {
-    label: "Node DB File Prefix",
-    help: "SQLite database file prefix for the SimpleX Node runtime. Defaults to ~/.openclaw/simplex/openclaw-simplex.",
-    placeholder: "~/.openclaw/simplex/openclaw-simplex",
-    tags: ["runtime", "storage"],
-  },
-  "connection.displayName": {
-    label: "SimpleX Profile Name",
-    help: "Display name used when the Node runtime creates its SimpleX profile.",
-    advanced: true,
-  },
-  "connection.fullName": {
-    label: "SimpleX Full Name",
-    help: "Full name used when the Node runtime creates its SimpleX profile.",
-    advanced: true,
-  },
-  "connection.migrationConfirmation": {
-    label: "DB Migration Mode",
-    help: "SimpleX database migration confirmation mode for the Node runtime.",
-    advanced: true,
-    tags: ["runtime", "storage"],
-  },
-  "connection.autoAcceptFiles": {
-    label: "Auto Accept Files",
-    help: "Automatically accept incoming file transfers from the SimpleX runtime.",
-    advanced: true,
-    tags: ["media"],
-  },
-  "connection.connectTimeoutMs": {
-    label: "Connect Timeout (ms)",
-    help: "Runtime connection/start timeout in milliseconds.",
-    advanced: true,
-    tags: ["transport"],
   },
 });
 

@@ -11,7 +11,7 @@ describe("simplex action discovery helpers", () => {
     const cfg = {
       channels: {
         "openclaw-simplex": {
-          connection: {},
+          dbFilePrefix: "/tmp/openclaw-simplex-test",
         },
       },
     } as OpenClawConfig;
@@ -24,7 +24,7 @@ describe("simplex action discovery helpers", () => {
     const cfg = {
       channels: {
         "openclaw-simplex": {
-          connection: {},
+          dbFilePrefix: "/tmp/openclaw-simplex-test",
           actions: { reactions: false },
         },
       },
@@ -39,7 +39,7 @@ describe("simplex action discovery helpers", () => {
     const cfg = {
       channels: {
         "openclaw-simplex": {
-          connection: {},
+          dbFilePrefix: "/tmp/openclaw-simplex-test",
           reactionLevel: "ack",
         },
       },

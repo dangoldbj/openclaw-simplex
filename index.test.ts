@@ -88,7 +88,7 @@ import { simplexPlugin } from "./src/channel/plugin.js";
 const simplexConfiguredChannel = {
   channels: {
     "openclaw-simplex": {
-      connection: {},
+      dbFilePrefix: "/tmp/openclaw-simplex-test",
     },
   },
 };
@@ -391,11 +391,11 @@ describe("simplex channel config and allowlist adapters", () => {
     const cfg = {
       channels: {
         "openclaw-simplex": {
-          connection: {},
+          dbFilePrefix: "/tmp/openclaw-simplex-test",
           allowFrom: ["@base"],
           accounts: {
             ops: {
-              connection: { dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops" },
+              dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops",
               allowFrom: ["@ops"],
             },
           },
@@ -427,7 +427,7 @@ describe("simplex channel config and allowlist adapters", () => {
       cfg,
       accountId: "default",
     });
-    expect(deletedDefault?.channels?.["openclaw-simplex"]?.connection).toBeUndefined();
+    expect(deletedDefault?.channels?.["openclaw-simplex"]?.dbFilePrefix).toBeUndefined();
     expect(deletedDefault?.channels?.["openclaw-simplex"]?.allowFrom).toBeUndefined();
     expect(deletedDefault?.channels?.["openclaw-simplex"]?.accounts?.ops).toBeDefined();
   });
@@ -676,7 +676,7 @@ describe("simplex invite gateway", () => {
         "openclaw-simplex": {
           accounts: {
             ops: {
-              connection: { dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops" },
+              dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops",
             },
           },
         },
@@ -712,7 +712,7 @@ describe("simplex invite gateway", () => {
         "openclaw-simplex": {
           accounts: {
             ops: {
-              connection: { dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops" },
+              dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops",
             },
           },
         },

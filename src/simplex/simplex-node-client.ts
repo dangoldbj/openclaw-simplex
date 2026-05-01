@@ -70,7 +70,7 @@ export class SimplexNodeClient {
     }
     const inFlight = withTimeout(
       this.connectInternal(),
-      this.account.config.connection?.connectTimeoutMs ?? 15_000,
+      this.account.config.connectTimeoutMs ?? 15_000,
       `SimpleX Node runtime connect timed out for account "${this.account.accountId}"`
     ).finally(() => {
       if (this.connectPromise === inFlight) {
@@ -108,8 +108,13 @@ export class SimplexNodeClient {
   private async connectInternal(): Promise<void> {
     const simplex = await import("simplex-chat");
     const confirm = resolveMigrationConfirmation(simplex.core.MigrationConfirmation, {
-      value: this.account.config.connection?.migrationConfirmation,
+      value: this.account.config.migrationConfirmation,
     });
+    if (!this.account.dbFilePrefix) {
+      throw new Error(
+        `SimpleX account "${this.account.accountId}" is missing dbFilePrefix; the official SimpleX Node API requires an explicit database file prefix`
+      );
+    }
     const chat = await simplex.api.ChatApi.init(
       { type: "sqlite", filePrefix: resolveDbFilePrefix(this.account.dbFilePrefix) },
       confirm
@@ -121,9 +126,8 @@ export class SimplexNodeClient {
     chat.onAny(this.eventReceiver as never);
     await ensureActiveUser({
       chat,
-      displayName:
-        this.account.config.connection?.displayName ?? this.account.name ?? "OpenClaw SimpleX",
-      fullName: this.account.config.connection?.fullName ?? "",
+      displayName: this.account.config.displayName ?? this.account.name ?? "OpenClaw SimpleX",
+      fullName: this.account.config.fullName ?? "",
     });
     await chat.startChat();
     this.logger?.info?.("SimpleX Node runtime started");

@@ -93,7 +93,7 @@ describe("simplex migration config", () => {
       channels: {
         [CHANNEL_ID]: {
           enabled: true,
-          connection: {},
+          dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex",
           accounts: {
             ops: {
               allowFrom: ["*"],
@@ -147,10 +147,8 @@ describe("simplex migration config", () => {
     expect(nextConfig.channels).toEqual({
       [CHANNEL_ID]: {
         enabled: true,
-        connection: {
-          dbFilePrefix: "~/.openclaw/simplex/kept",
-          connectTimeoutMs: 7000,
-        },
+        dbFilePrefix: "~/.openclaw/simplex/kept",
+        connectTimeoutMs: 7000,
         dmPolicy: "pairing",
         allowFrom: ["alice"],
         accounts: {
@@ -158,9 +156,8 @@ describe("simplex migration config", () => {
             name: "Ops",
             allowFrom: ["bob"],
             groupAllowFrom: ["group:ops"],
-            connection: {
-              displayName: "Ops Bot",
-            },
+            dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops",
+            displayName: "Ops Bot",
           },
         },
       },
@@ -202,14 +199,12 @@ describe("simplex migration config", () => {
 
     expect(nextConfig.channels).toEqual({
       [CHANNEL_ID]: {
-        connection: {
-          fullName: "SimpleX Agent",
-        },
+        dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex",
+        fullName: "SimpleX Agent",
         accounts: {
           support: {
-            connection: {
-              autoAcceptFiles: false,
-            },
+            autoAcceptFiles: false,
+            dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-support",
           },
         },
       },

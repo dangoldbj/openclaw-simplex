@@ -31,20 +31,21 @@ This path gets you from zero to the first invited contact talking to your OpenCl
   </Step>
 
   <Step title="Configure the channel">
-    Configure the default official Node runtime:
+    Add the channel and choose the SimpleX database prefix the Node runtime should use:
 
     ```bash
     openclaw channels add --channel openclaw-simplex
+    openclaw config set channels.openclaw-simplex.dbFilePrefix "~/.simplex/openclaw-bot"
     ```
 
-    That command writes channel config equivalent to:
+    That writes channel config equivalent to:
 
     ```json
     {
       "channels": {
         "openclaw-simplex": {
           "enabled": true,
-          "connection": {},
+          "dbFilePrefix": "~/.simplex/openclaw-bot",
           "dmPolicy": "pairing",
           "allowFrom": ["*"]
         }
@@ -53,7 +54,7 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     ```
 
     <Info>
-      The plugin uses the official <code>simplex-chat</code> Node package in the OpenClaw process. There is no separate SimpleX CLI process to start.
+      The official <code>simplex-chat</code> Node API requires an explicit database file prefix. The plugin does not force an OpenClaw-owned default; choose the SimpleX profile/database prefix you want the bot runtime to use.
     </Info>
   </Step>
 
@@ -103,8 +104,6 @@ openclaw pairing approve openclaw-simplex <pairingCode>
 ```
 
 5. Send another message in SimpleX and verify the agent responds.
-
-For a visual walkthrough, see [Screenshots](/reference/screenshots).
 
 For recurring address links, invite listing, revoke flows, and automation APIs, see [Example Commands](/reference/example-commands) and [Gateway Methods](/reference/gateway-methods).
 

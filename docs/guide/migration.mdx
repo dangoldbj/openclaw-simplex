@@ -69,8 +69,7 @@ After migration, the channel should be configured under <code>openclaw-simplex</
 {
   "channels": {
     "openclaw-simplex": {
-      "connection": {
-      }
+      "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex"
     }
   }
 }
@@ -82,5 +81,6 @@ After migration, the channel should be configured under <code>openclaw-simplex</
 - `plugins.installs.simplex` -> `plugins.installs.openclaw-simplex`
 - `plugins.allow` / `plugins.deny`
 - `channels.simplex` -> `channels.openclaw-simplex`
-- legacy SimpleX WebSocket/CLI runtime fields are removed from `channels.openclaw-simplex.connection` and from each `accounts.<id>.connection`
+- legacy nested `connection.*` runtime fields are moved to top-level account fields
+- legacy SimpleX WebSocket/CLI runtime fields are removed from root and per-account SimpleX config
 - OpenClaw pairing and allowlist state files under the OpenClaw state directory

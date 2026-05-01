@@ -8,8 +8,8 @@ export const activeSimplexNodeClients = new Map<string, SimplexNodeClient>();
 const sharedSimplexNodeClients = new Map<SharedSimplexNodeClientKey, SimplexNodeClient>();
 
 function sharedClientKey(account: ResolvedSimplexAccount): SharedSimplexNodeClientKey {
-  const timeoutMs = account.config.connection?.connectTimeoutMs ?? 15_000;
-  return `${account.mode}|${account.dbFilePrefix}|${timeoutMs}`;
+  const timeoutMs = account.config.connectTimeoutMs ?? 15_000;
+  return `${account.mode}|${account.dbFilePrefix ?? "unconfigured"}|${timeoutMs}`;
 }
 
 export async function registerActiveSimplexNodeClient(

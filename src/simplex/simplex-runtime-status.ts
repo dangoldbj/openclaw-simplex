@@ -11,7 +11,7 @@ export type SimplexRuntimeStatusResult = {
   enabled: boolean;
   configured: boolean;
   mode: string;
-  dbFilePrefix: string;
+  dbFilePrefix: string | null;
   packageVersion: string | null;
   runtime: {
     activeClient: boolean;
@@ -55,7 +55,7 @@ export async function getSimplexRuntimeStatus(params: {
     enabled: account.enabled,
     configured: account.configured,
     mode: account.mode,
-    dbFilePrefix: account.dbFilePrefix,
+    dbFilePrefix: account.dbFilePrefix ?? null,
     packageVersion: readSimplexPackageVersion(),
     runtime: {
       activeClient: Boolean(activeClient),

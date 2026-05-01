@@ -37,7 +37,6 @@ export const simplexSetupAdapter: ChannelSetupAdapter = {
       accountId,
       patch: {
         enabled: true,
-        connection: {},
       },
     });
   },

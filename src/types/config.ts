@@ -15,6 +15,6 @@ export type ResolvedSimplexAccount = {
   name?: string;
   configured: boolean;
   mode: "node";
-  dbFilePrefix: string;
+  dbFilePrefix?: string;
   config: SimplexAccountConfig;
 };

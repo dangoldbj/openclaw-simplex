@@ -38,9 +38,7 @@ import {
 const cfg = {
   channels: {
     "openclaw-simplex": {
-      connection: {
-        dbFilePrefix: "/tmp/openclaw-simplex-directory-test",
-      },
+      dbFilePrefix: "/tmp/openclaw-simplex-directory-test",
     },
   },
 } as OpenClawConfig;

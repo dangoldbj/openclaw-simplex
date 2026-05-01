@@ -14,15 +14,13 @@ This plugin uses the official <code>simplex-chat</code> Node package in the Open
   "channels": {
     "openclaw-simplex": {
       "enabled": true,
-      "connection": {
-        "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex"
-      }
+      "dbFilePrefix": "~/.simplex/openclaw-bot"
     }
   }
 }
 ```
 
-The default database file prefix is `~/.openclaw/simplex/openclaw-simplex`. For named accounts, the default suffix is the account id, for example `~/.openclaw/simplex/openclaw-simplex-ops`.
+The plugin does not force a database prefix. Set `dbFilePrefix` to the SimpleX database prefix you want the bot runtime to use. The official Node API stores SQLite databases as `<prefix>_chat.db` and `<prefix>_agent.db`.
 
 ## Multiple accounts
 
@@ -36,17 +34,13 @@ Give each account its own database file prefix so each SimpleX identity has isol
       "accounts": {
         "ops": {
           "enabled": true,
-          "connection": {
-            "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex-ops",
-            "displayName": "OpenClaw Ops"
-          }
+          "dbFilePrefix": "~/.simplex/openclaw-ops",
+          "displayName": "OpenClaw Ops"
         },
         "support": {
           "enabled": true,
-          "connection": {
-            "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex-support",
-            "displayName": "OpenClaw Support"
-          }
+          "dbFilePrefix": "~/.simplex/openclaw-support",
+          "displayName": "OpenClaw Support"
         }
       }
     }
@@ -56,12 +50,12 @@ Give each account its own database file prefix so each SimpleX identity has isol
 
 ## Runtime fields
 
-- <code>connection.dbFilePrefix</code>: SQLite database file prefix used by the SimpleX Node runtime.
-- <code>connection.displayName</code>: display name used when the runtime creates a SimpleX profile.
-- <code>connection.fullName</code>: full name used when the runtime creates a SimpleX profile.
-- <code>connection.migrationConfirmation</code>: database migration behavior, one of <code>yesUp</code>, <code>yesUpDown</code>, <code>console</code>, or <code>error</code>.
-- <code>connection.connectTimeoutMs</code>: runtime connection/start timeout.
-- <code>connection.autoAcceptFiles</code>: whether incoming file transfers should be auto-accepted.
+- <code>dbFilePrefix</code>: SQLite database file prefix used by the SimpleX Node runtime.
+- <code>displayName</code>: display name used when the runtime creates a SimpleX profile.
+- <code>fullName</code>: full name used when the runtime creates a SimpleX profile.
+- <code>migrationConfirmation</code>: database migration behavior, one of <code>yesUp</code>, <code>yesUpDown</code>, <code>console</code>, or <code>error</code>.
+- <code>connectTimeoutMs</code>: runtime connection/start timeout.
+- <code>autoAcceptFiles</code>: whether incoming file transfers should be auto-accepted.
 
 ## Operational notes
 
