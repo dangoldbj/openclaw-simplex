@@ -4,7 +4,7 @@ import {
   resolveRuntimeAccount,
   withActiveSimplexUser,
 } from "../runtime/account.js";
-import { activeSimplexClients } from "../runtime/transport.js";
+import { getActiveSimplexClient } from "../runtime/transport.js";
 
 export type SimplexRuntimeStatusResult = {
   accountId: string;
@@ -34,7 +34,7 @@ export async function getSimplexRuntimeStatus(params: {
   accountId?: string | null;
 }): Promise<SimplexRuntimeStatusResult> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
-  const activeClient = activeSimplexClients.get(account.accountId);
+  const activeClient = getActiveSimplexClient(account.accountId);
   const connection = activeClient?.getConnectionState();
   const details = await withActiveSimplexUser({
     account,

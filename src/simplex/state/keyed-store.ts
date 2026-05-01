@@ -2,10 +2,10 @@ import type { PluginRuntime } from "openclaw/plugin-sdk/channel-core";
 
 const memoryStores = new Map<string, Map<string, { value: unknown; expiresAt?: number }>>();
 
-function memoryStore<T>(namespace: string) {
+function memoryStore<T>(params: { namespace: string; maxEntries: number; defaultTtlMs?: number }) {
   const entries =
-    memoryStores.get(namespace) ?? new Map<string, { value: unknown; expiresAt?: number }>();
-  memoryStores.set(namespace, entries);
+    memoryStores.get(params.namespace) ?? new Map<string, { value: unknown; expiresAt?: number }>();
+  memoryStores.set(params.namespace, entries);
   function sweep(): void {
     const now = Date.now();
     for (const [key, entry] of entries) {
@@ -14,12 +14,25 @@ function memoryStore<T>(namespace: string) {
       }
     }
   }
+  function enforceMaxEntries(): void {
+    while (entries.size > params.maxEntries) {
+      const oldestKey = entries.keys().next().value as string | undefined;
+      if (!oldestKey) {
+        return;
+      }
+      entries.delete(oldestKey);
+    }
+  }
   return {
     async register(key: string, value: T, opts?: { ttlMs?: number }) {
+      sweep();
+      const ttlMs = opts?.ttlMs ?? params.defaultTtlMs;
+      entries.delete(key);
       entries.set(key, {
         value,
-        expiresAt: opts?.ttlMs ? Date.now() + opts.ttlMs : undefined,
+        expiresAt: ttlMs ? Date.now() + ttlMs : undefined,
       });
+      enforceMaxEntries();
     },
     async lookup(key: string): Promise<T | undefined> {
       sweep();
@@ -56,5 +69,5 @@ export function openSimplexKeyedStore<T>(params: {
       defaultTtlMs: params.defaultTtlMs,
     });
   }
-  return memoryStore<T>(params.namespace);
+  return memoryStore<T>(params);
 }

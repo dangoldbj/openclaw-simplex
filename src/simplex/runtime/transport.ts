@@ -4,7 +4,7 @@ import { SimplexClient } from "./client.js";
 
 type SharedSimplexClientKey = `${string}|${string}|${number}`;
 
-export const activeSimplexClients = new Map<string, SimplexClient>();
+const activeSimplexClients = new Map<string, SimplexClient>();
 const activeSimplexClientsByKey = new Map<SharedSimplexClientKey, SimplexClient>();
 const sharedSimplexClients = new Map<SharedSimplexClientKey, SimplexClient>();
 
@@ -38,6 +38,14 @@ export function unregisterActiveSimplexClient(
   if (activeSimplexClientsByKey.get(key) === client) {
     activeSimplexClientsByKey.delete(key);
   }
+}
+
+export function getActiveSimplexClient(accountId: string): SimplexClient | undefined {
+  return activeSimplexClients.get(accountId);
+}
+
+export function hasActiveSimplexClient(accountId: string): boolean {
+  return activeSimplexClients.has(accountId);
 }
 
 function getSharedSimplexClient(params: {

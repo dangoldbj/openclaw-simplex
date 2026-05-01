@@ -1,6 +1,6 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import {
-  activeSimplexClients,
+  getActiveSimplexClient,
   registerActiveSimplexClient,
   unregisterActiveSimplexClient,
 } from "../../simplex/runtime/transport.js";
@@ -48,7 +48,7 @@ export function buildSimplexGatewayRuntime(): NonNullable<
       await monitor.client.close().catch(() => undefined);
     },
     stopAccount: async (ctx) => {
-      const client = activeSimplexClients.get(ctx.account.accountId);
+      const client = getActiveSimplexClient(ctx.account.accountId);
       if (client) {
         await client.close();
         unregisterActiveSimplexClient(ctx.account, client);

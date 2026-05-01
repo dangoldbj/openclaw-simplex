@@ -24,7 +24,7 @@ vi.mock("./client.js", () => ({
 
 import type { SimplexClient } from "./client.js";
 import {
-  activeSimplexClients,
+  getActiveSimplexClient,
   registerActiveSimplexClient,
   unregisterActiveSimplexClient,
   withSimplexApi,
@@ -67,7 +67,6 @@ describe("simplex runtime transport", () => {
       unregisterActiveSimplexClient(registered.account, registered.client);
     }
     registeredAccounts.length = 0;
-    activeSimplexClients.clear();
     clientMock.reset();
   });
 
@@ -116,6 +115,6 @@ describe("simplex runtime transport", () => {
 
     unregisterActiveSimplexClient(cfg, oldClient);
 
-    expect(activeSimplexClients.get("gamma")).toBe(newClient);
+    expect(getActiveSimplexClient("gamma")).toBe(newClient);
   });
 });

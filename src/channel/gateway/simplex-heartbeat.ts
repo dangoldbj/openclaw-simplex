@@ -1,6 +1,6 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { resolveSimplexAccount } from "../../config/accounts.js";
-import { activeSimplexClients } from "../../simplex/runtime/transport.js";
+import { hasActiveSimplexClient } from "../../simplex/runtime/transport.js";
 import { parseSimplexAllowlistEntry } from "../security/simplex-security.js";
 
 function normalizeHeartbeatRecipient(raw: string): string {
@@ -36,7 +36,7 @@ export function buildSimplexHeartbeat(): NonNullable<ChannelPlugin["heartbeat"]>
       if (!account.configured) {
         return { ok: false as const, reason: "simplex-not-configured" as const };
       }
-      if (!activeSimplexClients.has(account.accountId)) {
+      if (!hasActiveSimplexClient(account.accountId)) {
         return { ok: false as const, reason: "simplex-not-running" as const };
       }
       return { ok: true as const, reason: "ok" as const };
