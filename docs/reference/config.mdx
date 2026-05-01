@@ -33,7 +33,7 @@ If <code>accounts</code> is not set, the root <code>channels.openclaw-simplex</c
       },
       "reactionLevel": "minimal",
       "dmPolicy": "pairing",
-      "allowFrom": ["*"],
+      "allowFrom": [],
       "groupPolicy": "allowlist",
       "groupAllowFrom": [],
       "mediaMaxMb": 5,
@@ -99,7 +99,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `accounts.<accountId>` | Per-account overrides for the same schema. |
 
 <Note>
-  The default account is considered configured when <code>channels.openclaw-simplex</code> exists. Named accounts should set <code>dbFilePrefix</code> unless they intentionally inherit an explicit root prefix.
+  The default account is considered configured when <code>channels.openclaw-simplex</code> exists. Named accounts should set <code>dbFilePrefix</code> unless they intentionally inherit an explicit root prefix. With <code>dmPolicy: "pairing"</code>, leave <code>allowFrom</code> empty or omit it when you want new contacts to go through pairing; set <code>allowFrom</code> only for pre-approved contacts.
 </Note>
 
 ## Runtime config scope

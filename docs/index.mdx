@@ -6,13 +6,13 @@ description: Connect your OpenClaw agent to SimpleX for invitation-first messagi
 
 Most agent chat channels in OpenClaw assume a platform bot identity: a bot username, a phone number, an app registration, or some other platform-managed endpoint.
 
-Within OpenClaw's channel ecosystem, this plugin enables a communication model that does not rely on platform identity or bot registration. With <a href="https://simplex.chat/">SimpleX</a>, the invite or address link becomes the access boundary: generate it, share it intentionally, revoke it when needed, and the agent does not expose a platform-discoverable bot identity.
+Within OpenClaw's channel ecosystem, this plugin enables a communication model that does not rely on platform identity or bot registration. With <a href="https://simplex.chat/">SimpleX</a>, reachability starts from either a one-time invite link or the account's reusable SimpleX address: generate the contact path, share it intentionally, revoke the SimpleX address when needed, and the agent does not expose a platform-discoverable bot identity.
 
 The implementation keeps developer-facing boundaries explicit: OpenClaw enforces policy, the plugin translates channel events and actions, and the SimpleX runtime is the official Node package loaded in the OpenClaw process.
 
 <Columns cols={2}>
   <Card title="Getting Started" icon="rocket" href="/guide/getting-started" cta="Open guide">
-    Install the plugin, use the default Node runtime, generate the first invite, and verify end-to-end messaging.
+    Install the plugin, use the default Node runtime, generate the first one-time invite, and verify end-to-end messaging.
   </Card>
   <Card title="Runtime Setup" icon="settings" href="/guide/runtime-setup" cta="Run the runtime">
     Configure Node runtime storage and multi-account SimpleX identities.

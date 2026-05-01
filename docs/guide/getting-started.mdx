@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Install the OpenClaw SimpleX plugin, start the official Node runtime, generate your first invite link, and pair your first contact with the agent step by step.
+description: Install the OpenClaw SimpleX plugin, start the official Node runtime, generate your first one-time invite link, and pair your first contact with the agent step by step.
 ---
 
 This path gets you from zero to the first invited contact talking to your OpenClaw agent over SimpleX.
@@ -43,20 +43,18 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     {
       "channels": {
         "openclaw-simplex": {
-          "enabled": true,
-          "dmPolicy": "pairing",
-          "allowFrom": ["*"]
+          "enabled": true
         }
       }
     }
     ```
 
     <Info>
-      By default, the plugin uses the same database prefix as the SimpleX terminal CLI: <code>~/.simplex/simplex_v1</code> on Linux/macOS and <code>%APPDATA%/simplex/simplex_v1</code> on Windows. Set <code>dbFilePrefix</code> only when you want a separate bot identity or a named account.
+      By default, direct messages use <code>dmPolicy: "pairing"</code>. A new SimpleX contact can reach the runtime, but OpenClaw will not run the agent until you approve the pairing request. The plugin also uses the same database prefix as the SimpleX terminal CLI: <code>~/.simplex/simplex_v1</code> on Linux/macOS and <code>%APPDATA%/simplex/simplex_v1</code> on Windows. Set <code>dbFilePrefix</code> only when you want a separate bot identity or a named account.
     </Info>
   </Step>
 
-  <Step title="Generate the first invite and verify">
+  <Step title="Generate the first one-time invite and verify">
     Confirm the plugin is installed and enabled:
 
     ```bash
@@ -75,7 +73,7 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     openclaw simplex invite create --qr
     ```
 
-    Expected result: the command prints a SimpleX invite link, and <code>--qr</code> renders a scannable QR code in the terminal.
+    Expected result: the command prints a SimpleX one-time invite link, and <code>--qr</code> renders a scannable QR code in the terminal.
 
     In Control UI, you can also open <code>Control -&gt; Channels -&gt; SimpleX</code> to inspect the channel config and runtime state.
 
@@ -103,7 +101,7 @@ openclaw pairing approve openclaw-simplex <pairingCode>
 
 5. Send another message in SimpleX and verify the agent responds.
 
-For recurring address links, invite listing, revoke flows, and automation APIs, see [Example Commands](/reference/example-commands) and [Gateway Methods](/reference/gateway-methods).
+For the reusable SimpleX address, address display, revoke flows, and automation APIs, see [Example Commands](/reference/example-commands) and [Gateway Methods](/reference/gateway-methods).
 
 ## Upgrading from an older `simplex` install
 

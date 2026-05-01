@@ -1,12 +1,12 @@
 ---
 title: Gateway Methods
-description: API reference for OpenClaw SimpleX gateway RPC methods used for runtime status, invite links, contact requests, group links, and operator-controlled SimpleX onboarding.
+description: API reference for OpenClaw SimpleX gateway RPC methods used for runtime status, one-time invite links, SimpleX addresses, contact requests, group links, and operator-controlled SimpleX onboarding.
 ---
 
-The plugin registers these gateway RPC methods for runtime diagnostics, invite/address automation, contact-request review, group-link lifecycle, and operator-controlled SimpleX link onboarding.
+The plugin registers these gateway RPC methods for runtime diagnostics, one-time invite and SimpleX address automation, contact-request review, group-link lifecycle, and operator-controlled SimpleX link onboarding.
 
 <Info>
-  For day-to-day invite/address workflows, prefer the plugin CLI commands in [Example Commands](/reference/example-commands). Use these gateway methods when another system needs programmatic access to runtime status, contact-request review, group-link lifecycle, or link onboarding.
+  For day-to-day one-time invite and SimpleX address workflows, prefer the plugin CLI commands in [Example Commands](/reference/example-commands). Use these gateway methods when another system needs programmatic access to runtime status, contact-request review, group-link lifecycle, or link onboarding.
 </Info>
 
 ## Prerequisites and behavior
@@ -18,7 +18,7 @@ The plugin registers these gateway RPC methods for runtime diagnostics, invite/a
 
 ## `simplex.invite.create`
 
-Create a one-time connect link or an address link.
+Create a one-time connect link or return/create the account's reusable SimpleX address.
 
 Request params:
 
@@ -32,7 +32,7 @@ Request params:
 `mode` supports:
 
 - `connect` -> creates a one-time invitation link
-- `address` -> returns or creates the account address link
+- `address` -> returns or creates the account's reusable SimpleX address
 
 Response highlights:
 
@@ -53,7 +53,7 @@ Example response shape:
 
 ## `simplex.invite.list`
 
-List the current address link and related contact state through the SimpleX runtime APIs.
+List the current SimpleX address and related contact state through the SimpleX runtime APIs.
 
 Request params:
 
@@ -65,8 +65,8 @@ Request params:
 
 Response highlights:
 
-- `addressLink`: current address link if available
-- `links`: extracted invite/address links seen in the responses
+- `addressLink`: current SimpleX address link if available
+- `links`: extracted SimpleX address links seen in the responses
 - `pendingHints`: pending contact hints, if exposed by the runtime
 - `addressQrDataUrl`: PNG QR image as a `data:` URL for `addressLink`
 
@@ -84,7 +84,7 @@ Example response shape:
 
 ## `simplex.invite.revoke`
 
-Revoke the active address link through the SimpleX runtime API.
+Revoke the active SimpleX address through the SimpleX runtime API.
 
 Request params:
 

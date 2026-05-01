@@ -1,6 +1,6 @@
 ---
 title: Example Commands
-description: Copy-paste CLI commands for common OpenClaw SimpleX tasks like setup, runtime diagnostics, invite links, contact requests, group links, pairing approval, and migration.
+description: Copy-paste CLI commands for common OpenClaw SimpleX tasks like setup, runtime diagnostics, one-time invites, SimpleX addresses, contact requests, group links, pairing approval, and migration.
 ---
 
 Use this page as a command cookbook after the first setup is working. For the full first-run flow, start with [Getting Started](/guide/getting-started).
@@ -66,7 +66,7 @@ Use a named account when the channel has multiple accounts:
 openclaw simplex runtime doctor --account-id support
 ```
 
-## Invite and address management
+## One-time invites and SimpleX addresses
 
 Create a one-time invite link and print a terminal QR code:
 
@@ -74,25 +74,25 @@ Create a one-time invite link and print a terminal QR code:
 openclaw simplex invite create --qr
 ```
 
-List current invite and address state:
+List current SimpleX address state:
 
 ```bash
 openclaw simplex invite list
 ```
 
-Show the current address link:
+Show the current SimpleX address:
 
 ```bash
 openclaw simplex address show --qr
 ```
 
-Create or return the current address link:
+Create or return the current SimpleX address:
 
 ```bash
 openclaw simplex address create --qr
 ```
 
-Revoke the current address link:
+Revoke the current SimpleX address:
 
 ```bash
 openclaw simplex address revoke
@@ -194,4 +194,4 @@ openclaw simplex migrate --dry-run
 
 ## Gateway method names
 
-For programmatic automation, the plugin exposes gateway methods for invite/address management, runtime diagnostics, contact-request review, group-link lifecycle, and SimpleX link onboarding. See [Gateway Methods](/reference/gateway-methods) for request and response shapes.
+For programmatic automation, the plugin exposes gateway methods for one-time invite and SimpleX address management, runtime diagnostics, contact-request review, group-link lifecycle, and SimpleX link onboarding. See [Gateway Methods](/reference/gateway-methods) for request and response shapes.

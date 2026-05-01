@@ -8,7 +8,7 @@ Most agent chat channels in OpenClaw assume a platform bot identity: a bot usern
 
 This plugin takes a different route.
 
-Within OpenClaw's channel ecosystem, it introduces a communication model where the contact path is created by a SimpleX invite or address link rather than by platform bot registration. You generate the link, you share it intentionally, and you revoke it when needed.
+Within OpenClaw's channel ecosystem, it introduces a communication model where the contact path is created by a SimpleX one-time invite link or by the account's reusable SimpleX address rather than by platform bot registration. You generate the contact path, share it intentionally, and revoke the SimpleX address when it should no longer be usable.
 
 That changes where reachability comes from. The agent does not depend on a public bot-facing identity, and OpenClaw policy sits on top of that link-based contact surface instead of depending on platform-native bot identity.
 
@@ -104,7 +104,7 @@ There is no separate `simplex-chat` CLI process and no local WebSocket API to ex
 - Direct and group messaging over SimpleX
 - Media send/receive support
 - Pairing approval, exec approval auth, and allowlist enforcement
-- Invite link, address link, and QR generation
+- One-time invite link, SimpleX address, and QR generation
 - Shared `message` actions including `upload-file`, reactions, polls, edits, deletes, and group actions
 - Plugin tools and gateway methods for invites, runtime diagnostics, contact requests, group links, and operator-controlled link onboarding
 - Runtime status reporting, command handling, heartbeat readiness, and Control UI configuration
@@ -169,14 +169,15 @@ pnpm approve-builds
 {
   "channels": {
     "openclaw-simplex": {
-      "enabled": true,
-      "allowFrom": ["*"]
+      "enabled": true
     }
   }
 }
 ```
 
 The SimpleX runtime runs inside the OpenClaw plugin process through the official Node library.
+
+With this minimal config, direct messages use the conservative default `dmPolicy: "pairing"`: a new contact can reach the SimpleX runtime, but OpenClaw will not run the agent for that sender until you approve the pairing request. Use `allowFrom` only when you want to pre-approve specific contacts, and use `allowFrom: ["*"]` only for deliberately broad reachability.
 
 Keep the split clear:
 
@@ -198,7 +199,7 @@ The cleanest operator path is the plugin CLI:
 openclaw simplex runtime status
 openclaw simplex runtime doctor
 
-# One-time invite and address links
+# One-time invite links and SimpleX addresses
 openclaw simplex invite create --qr
 openclaw simplex invite list
 openclaw simplex address show --qr
@@ -219,7 +220,7 @@ openclaw simplex connect plan --link "<simplex-link>"
 openclaw simplex connect run --link "<simplex-link>"
 ```
 
-For automation and integrations, OpenClaw exposes gateway methods for invite/address management, runtime diagnostics, pending contact requests, group links, and operator-controlled link onboarding. See the [Gateway Methods reference](https://openclaw-simplex.mintlify.app/reference/gateway-methods).
+For automation and integrations, OpenClaw exposes gateway methods for one-time invite and SimpleX address management, runtime diagnostics, pending contact requests, group links, and operator-controlled link onboarding. See the [Gateway Methods reference](https://openclaw-simplex.mintlify.app/reference/gateway-methods).
 
 ---
 
@@ -257,7 +258,7 @@ Current note:
 
 ## Security model
 
-- Reachability starts with a SimpleX invite or address link
+- Reachability starts with a SimpleX one-time invite link or SimpleX address
 - OpenClaw applies sender gating via `dmPolicy`, `allowFrom`, and group policy
 - Pairing-based approval can require explicit acceptance before a new contact can trigger the agent
 - Same-chat exec approvals are supported for authorized SimpleX senders
@@ -304,7 +305,7 @@ openclaw pairing list
 
 1. Open `Control → Channels → SimpleX`
 2. Configure OpenClaw with the Node runtime
-3. Run `openclaw simplex invite create --qr` to generate an invite
+3. Run `openclaw simplex invite create --qr` to generate a one-time invite
 4. Scan the QR code with the SimpleX app
 5. Approve pairing in OpenClaw
 6. Send a message and verify the response
