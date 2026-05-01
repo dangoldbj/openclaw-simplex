@@ -1,6 +1,6 @@
 ---
 title: Example Commands
-description: Copy-paste CLI commands for common OpenClaw SimpleX tasks like setup, invite links, pairing approval, address management, and migration.
+description: Copy-paste CLI commands for common OpenClaw SimpleX tasks like setup, runtime diagnostics, invite links, contact requests, group links, pairing approval, and migration.
 ---
 
 Use this page as a command cookbook after the first setup is working. For the full first-run flow, start with [Getting Started](/guide/getting-started).
@@ -44,7 +44,27 @@ openclaw plugins list
 openclaw plugins info openclaw-simplex
 ```
 
-If you already completed the first setup flow, you can skip this section and jump straight to invite, pairing, or migration commands below.
+If you already completed the first setup flow, you can skip this section and jump straight to runtime, invite, contact-request, group-link, pairing, or migration commands below.
+
+## Runtime diagnostics
+
+Show the active SimpleX runtime state:
+
+```bash
+openclaw simplex runtime status
+```
+
+Run the higher-level diagnostic summary:
+
+```bash
+openclaw simplex runtime doctor
+```
+
+Use a named account when the channel has multiple accounts:
+
+```bash
+openclaw simplex runtime doctor --account-id support
+```
 
 ## Invite and address management
 
@@ -76,6 +96,72 @@ Revoke the current address link:
 
 ```bash
 openclaw simplex address revoke
+```
+
+## Contact requests
+
+List pending SimpleX contact requests observed by the runtime:
+
+```bash
+openclaw simplex requests list
+```
+
+Accept a pending request:
+
+```bash
+openclaw simplex requests accept --contact-request-id <id>
+```
+
+Reject a pending request:
+
+```bash
+openclaw simplex requests reject --contact-request-id <id>
+```
+
+With multiple accounts:
+
+```bash
+openclaw simplex requests list --account-id support
+```
+
+## Groups and group links
+
+Create a SimpleX group:
+
+```bash
+openclaw simplex groups create --display-name "OpenClaw Ops"
+```
+
+Create a group invite link and print a terminal QR code:
+
+```bash
+openclaw simplex groups link create --group-id <id> --role member --qr
+```
+
+Show the current group invite link:
+
+```bash
+openclaw simplex groups link list --group-id <id> --qr
+```
+
+Revoke the current group invite link:
+
+```bash
+openclaw simplex groups link revoke --group-id <id>
+```
+
+## Link onboarding
+
+Preview what connecting to a SimpleX link would do:
+
+```bash
+openclaw simplex connect plan --link "<simplex-link>"
+```
+
+Connect the active SimpleX user to a contact, address, or group link:
+
+```bash
+openclaw simplex connect run --link "<simplex-link>"
 ```
 
 ## Pairing

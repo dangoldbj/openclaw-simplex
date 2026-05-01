@@ -1,6 +1,7 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { describe, expect, it } from "vitest";
 import {
   LEGACY_SIMPLEX_CHANNEL_ID,
@@ -8,12 +9,49 @@ import {
   SIMPLEX_CHANNEL_ID,
   SIMPLEX_PLUGIN_ID,
 } from "../constants.js";
-import { migrateConfigObject, migrateStateFiles } from "./plugin-cli.js";
+import {
+  migrateConfigObject,
+  migrateStateFiles,
+  registerSimplexCliMetadata,
+} from "./plugin-cli.js";
 
 const CHANNEL_ID = SIMPLEX_CHANNEL_ID;
 const LEGACY_CHANNEL_ID = LEGACY_SIMPLEX_CHANNEL_ID;
 const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
 const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
+
+class FakeCliCommand {
+  constructor(
+    private readonly path: string[],
+    private readonly commands: string[][]
+  ) {}
+
+  command(name: string): FakeCliCommand {
+    const commandPath = [...this.path, name];
+    this.commands.push(commandPath);
+    return new FakeCliCommand(commandPath, this.commands);
+  }
+
+  alias(): this {
+    return this;
+  }
+
+  description(): this {
+    return this;
+  }
+
+  option(): this {
+    return this;
+  }
+
+  requiredOption(): this {
+    return this;
+  }
+
+  action(): this {
+    return this;
+  }
+}
 
 describe("simplex migration config", () => {
   it("migrates legacy plugin and channel ids", () => {
@@ -268,5 +306,48 @@ describe("simplex migration state", () => {
     ]);
     const files = (await readdir(credentialsDir)).sort();
     expect(files).toEqual([`${LEGACY_CHANNEL_ID}-pairing.json`]);
+  });
+});
+
+describe("simplex cli metadata", () => {
+  it("registers operator commands for runtime, requests, groups, links, and migration", () => {
+    const commands: string[][] = [];
+    const api = {
+      registerCli: (registrar: (ctx: { program: FakeCliCommand }) => void) => {
+        registrar({ program: new FakeCliCommand([], commands) });
+      },
+    } as unknown as OpenClawPluginApi;
+
+    registerSimplexCliMetadata(api);
+
+    expect(commands).toEqual(
+      expect.arrayContaining([
+        [PLUGIN_ID],
+        [PLUGIN_ID, "migrate"],
+        [PLUGIN_ID, "invite"],
+        [PLUGIN_ID, "invite", "create"],
+        [PLUGIN_ID, "invite", "list"],
+        [PLUGIN_ID, "address"],
+        [PLUGIN_ID, "address", "show"],
+        [PLUGIN_ID, "address", "create"],
+        [PLUGIN_ID, "address", "revoke"],
+        [PLUGIN_ID, "runtime"],
+        [PLUGIN_ID, "runtime", "status"],
+        [PLUGIN_ID, "runtime", "doctor"],
+        [PLUGIN_ID, "requests"],
+        [PLUGIN_ID, "requests", "list"],
+        [PLUGIN_ID, "requests", "accept"],
+        [PLUGIN_ID, "requests", "reject"],
+        [PLUGIN_ID, "groups"],
+        [PLUGIN_ID, "groups", "create"],
+        [PLUGIN_ID, "groups", "link"],
+        [PLUGIN_ID, "groups", "link", "create"],
+        [PLUGIN_ID, "groups", "link", "list"],
+        [PLUGIN_ID, "groups", "link", "revoke"],
+        [PLUGIN_ID, "connect"],
+        [PLUGIN_ID, "connect", "plan"],
+        [PLUGIN_ID, "connect", "run"],
+      ])
+    );
   });
 });

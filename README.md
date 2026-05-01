@@ -190,22 +190,34 @@ Docs:
 
 ---
 
-## Invite and address management
+## Operator CLI
 
-The cleanest path is the plugin CLI:
+The cleanest operator path is the plugin CLI:
 
 ```bash
-# Create a one-time invite link (prints terminal QR with --qr)
+# Runtime diagnostics
+openclaw simplex runtime status
+openclaw simplex runtime doctor
+
+# One-time invite and address links
 openclaw simplex invite create --qr
-
-# List current invite and address state
 openclaw simplex invite list
-
-# Show the current address link
 openclaw simplex address show --qr
-
-# Revoke the current address link
 openclaw simplex address revoke
+
+# Pending SimpleX contact requests
+openclaw simplex requests list
+openclaw simplex requests accept --contact-request-id <id>
+openclaw simplex requests reject --contact-request-id <id>
+
+# SimpleX groups and group invite links
+openclaw simplex groups create --display-name "OpenClaw Ops"
+openclaw simplex groups link create --group-id <id> --role member --qr
+openclaw simplex groups link revoke --group-id <id>
+
+# Operator-controlled link onboarding
+openclaw simplex connect plan --link "<simplex-link>"
+openclaw simplex connect run --link "<simplex-link>"
 ```
 
 For automation and integrations, OpenClaw exposes gateway methods for invite/address management, runtime diagnostics, pending contact requests, group links, and operator-controlled link onboarding. See the [Gateway Methods reference](https://openclaw-simplex.mintlify.app/reference/gateway-methods).
@@ -261,6 +273,7 @@ Current note:
 openclaw plugins list
 openclaw plugins info openclaw-simplex
 openclaw channels add --channel openclaw-simplex
+openclaw simplex runtime doctor
 openclaw simplex migrate --dry-run
 openclaw simplex invite create --qr
 openclaw pairing list

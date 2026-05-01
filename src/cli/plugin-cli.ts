@@ -8,11 +8,27 @@ import {
   SIMPLEX_CHANNEL_ID,
   SIMPLEX_PLUGIN_ID,
 } from "../constants.js";
+import { connectSimplexLink, planSimplexConnectionLink } from "../simplex/simplex-connect-link.js";
+import {
+  acceptSimplexContactRequest,
+  listSimplexContactRequests,
+  rejectSimplexContactRequest,
+} from "../simplex/simplex-contact-requests.js";
+import {
+  createSimplexGroup,
+  createSimplexGroupLink,
+  listSimplexGroupLink,
+  revokeSimplexGroupLink,
+} from "../simplex/simplex-groups.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
   revokeSimplexInvite,
 } from "../simplex/simplex-invite-service.js";
+import {
+  doctorSimplexRuntime,
+  getSimplexRuntimeStatus,
+} from "../simplex/simplex-runtime-status.js";
 
 const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
 const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
@@ -35,6 +51,30 @@ type SimplexMigrationStateApi = {
 type InviteCliOptions = {
   accountId?: string;
   qr?: boolean;
+};
+
+type AccountCliOptions = {
+  accountId?: string;
+};
+
+type RequestCliOptions = AccountCliOptions & {
+  contactRequestId?: string;
+};
+
+type GroupCreateCliOptions = AccountCliOptions & {
+  displayName?: string;
+  fullName?: string;
+  description?: string;
+};
+
+type GroupLinkCliOptions = AccountCliOptions & {
+  groupId?: string;
+  role?: string;
+  qr?: boolean;
+};
+
+type ConnectCliOptions = AccountCliOptions & {
+  link?: string;
 };
 
 const NODE_CONNECTION_KEYS = new Set([
@@ -77,6 +117,22 @@ async function printTerminalQr(value: string): Promise<void> {
 
 function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
+}
+
+function readPositiveInteger(value: string | undefined, label: string): number {
+  const parsed = Number(value?.trim() ?? "");
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${label} must be a positive integer`);
+  }
+  return parsed;
+}
+
+function readRequiredString(value: string | undefined, label: string): string {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    throw new Error(`${label} is required`);
+  }
+  return trimmed;
 }
 
 async function runInviteCreateCli(
@@ -144,6 +200,138 @@ async function runAddressRevokeCli(api: OpenClawPluginApi, opts: InviteCliOption
     accountId: result.accountId,
     revoked: result.revoked,
   });
+}
+
+async function runRuntimeStatusCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
+  printJson(
+    await getSimplexRuntimeStatus({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+    })
+  );
+}
+
+async function runRuntimeDoctorCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
+  printJson(
+    await doctorSimplexRuntime({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+    })
+  );
+}
+
+async function runRequestsListCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
+  printJson(
+    await listSimplexContactRequests({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+    })
+  );
+}
+
+async function runRequestsAcceptCli(
+  api: OpenClawPluginApi,
+  opts: RequestCliOptions
+): Promise<void> {
+  printJson(
+    await acceptSimplexContactRequest({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      contactRequestId: readPositiveInteger(opts.contactRequestId, "contactRequestId"),
+    })
+  );
+}
+
+async function runRequestsRejectCli(
+  api: OpenClawPluginApi,
+  opts: RequestCliOptions
+): Promise<void> {
+  printJson(
+    await rejectSimplexContactRequest({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      contactRequestId: readPositiveInteger(opts.contactRequestId, "contactRequestId"),
+    })
+  );
+}
+
+async function runGroupCreateCli(
+  api: OpenClawPluginApi,
+  opts: GroupCreateCliOptions
+): Promise<void> {
+  printJson(
+    await createSimplexGroup({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      displayName: readRequiredString(opts.displayName, "displayName"),
+      fullName: opts.fullName,
+      description: opts.description,
+    })
+  );
+}
+
+async function runGroupLinkCreateCli(
+  api: OpenClawPluginApi,
+  opts: GroupLinkCliOptions
+): Promise<void> {
+  const result = await createSimplexGroupLink({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    groupId: readPositiveInteger(opts.groupId, "groupId"),
+    role: opts.role,
+  });
+  printJson(result);
+  if (opts.qr && result.link) {
+    await printTerminalQr(result.link);
+  }
+}
+
+async function runGroupLinkListCli(
+  api: OpenClawPluginApi,
+  opts: GroupLinkCliOptions
+): Promise<void> {
+  const result = await listSimplexGroupLink({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    groupId: readPositiveInteger(opts.groupId, "groupId"),
+  });
+  printJson(result);
+  if (opts.qr && result.link) {
+    await printTerminalQr(result.link);
+  }
+}
+
+async function runGroupLinkRevokeCli(
+  api: OpenClawPluginApi,
+  opts: GroupLinkCliOptions
+): Promise<void> {
+  printJson(
+    await revokeSimplexGroupLink({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      groupId: readPositiveInteger(opts.groupId, "groupId"),
+    })
+  );
+}
+
+async function runConnectPlanCli(api: OpenClawPluginApi, opts: ConnectCliOptions): Promise<void> {
+  printJson(
+    await planSimplexConnectionLink({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      link: readRequiredString(opts.link, "link"),
+    })
+  );
+}
+
+async function runConnectCli(api: OpenClawPluginApi, opts: ConnectCliOptions): Promise<void> {
+  printJson(
+    await connectSimplexLink({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      link: readRequiredString(opts.link, "link"),
+    })
+  );
 }
 
 function dedupeStrings(values: unknown[] | undefined): string[] | undefined {
@@ -507,6 +695,117 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
         .option("--account-id <accountId>", "Use a specific SimpleX account")
         .action(async (opts: InviteCliOptions) => {
           await runAddressRevokeCli(api, opts);
+        });
+
+      const runtime = command.command("runtime").description("SimpleX runtime diagnostics");
+
+      runtime
+        .command("status")
+        .description("Show SimpleX runtime status for an account")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: AccountCliOptions) => {
+          await runRuntimeStatusCli(api, opts);
+        });
+
+      runtime
+        .command("doctor")
+        .description("Run SimpleX runtime diagnostics for an account")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: AccountCliOptions) => {
+          await runRuntimeDoctorCli(api, opts);
+        });
+
+      const requests = command.command("requests").description("SimpleX contact request helpers");
+
+      requests
+        .command("list")
+        .description("List pending SimpleX contact requests seen by the runtime")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: AccountCliOptions) => {
+          await runRequestsListCli(api, opts);
+        });
+
+      requests
+        .command("accept")
+        .description("Accept a pending SimpleX contact request")
+        .requiredOption("--contact-request-id <id>", "SimpleX contact request id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: RequestCliOptions) => {
+          await runRequestsAcceptCli(api, opts);
+        });
+
+      requests
+        .command("reject")
+        .description("Reject a pending SimpleX contact request")
+        .requiredOption("--contact-request-id <id>", "SimpleX contact request id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: RequestCliOptions) => {
+          await runRequestsRejectCli(api, opts);
+        });
+
+      const groups = command.command("groups").description("SimpleX group helpers");
+
+      groups
+        .command("create")
+        .description("Create a SimpleX group")
+        .requiredOption("--display-name <name>", "SimpleX group display name")
+        .option("--full-name <name>", "SimpleX group full name")
+        .option("--description <text>", "SimpleX group description")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: GroupCreateCliOptions) => {
+          await runGroupCreateCli(api, opts);
+        });
+
+      const groupLink = groups.command("link").description("SimpleX group link helpers");
+
+      groupLink
+        .command("create")
+        .description("Create a SimpleX group invite link")
+        .requiredOption("--group-id <id>", "SimpleX group id")
+        .option("--role <role>", "Accepted member role for the group link", "member")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the group link", false)
+        .action(async (opts: GroupLinkCliOptions) => {
+          await runGroupLinkCreateCli(api, opts);
+        });
+
+      groupLink
+        .command("list")
+        .description("Show the current SimpleX group invite link")
+        .requiredOption("--group-id <id>", "SimpleX group id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the group link", false)
+        .action(async (opts: GroupLinkCliOptions) => {
+          await runGroupLinkListCli(api, opts);
+        });
+
+      groupLink
+        .command("revoke")
+        .description("Revoke the current SimpleX group invite link")
+        .requiredOption("--group-id <id>", "SimpleX group id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: GroupLinkCliOptions) => {
+          await runGroupLinkRevokeCli(api, opts);
+        });
+
+      const connect = command.command("connect").description("SimpleX link onboarding helpers");
+
+      connect
+        .command("plan")
+        .description("Inspect what connecting to a SimpleX link would do")
+        .requiredOption("--link <link>", "SimpleX contact, address, or group link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: ConnectCliOptions) => {
+          await runConnectPlanCli(api, opts);
+        });
+
+      connect
+        .command("run")
+        .description("Connect the active SimpleX user to a contact, address, or group link")
+        .requiredOption("--link <link>", "SimpleX contact, address, or group link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: ConnectCliOptions) => {
+          await runConnectCli(api, opts);
         });
     },
     {

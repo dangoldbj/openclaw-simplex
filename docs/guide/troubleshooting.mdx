@@ -53,6 +53,12 @@ What to verify:
 - the <code>simplex-chat</code> package native build was approved by your package manager
 - channel status shows the latest runtime startup error
 
+Run the runtime doctor from the same OpenClaw environment:
+
+```bash
+openclaw simplex runtime doctor
+```
+
 With pnpm, if native build scripts were blocked during install, run:
 
 ```bash
@@ -95,6 +101,7 @@ If that fails:
 - confirm the Node runtime has writable storage
 - check whether the channel account is enabled
 - inspect the latest channel status/runtime error in OpenClaw
+- run <code>openclaw simplex runtime status</code> to verify the active account and last SimpleX error
 - if you are automating through gateway methods, verify the same account works through the plugin CLI first
 
 ## Media issues
@@ -122,6 +129,24 @@ Write Node runtime channel config explicitly:
 
 ```bash
 openclaw channels add --channel openclaw-simplex
+```
+
+Show runtime status:
+
+```bash
+openclaw simplex runtime status
+```
+
+Run runtime diagnostics:
+
+```bash
+openclaw simplex runtime doctor
+```
+
+List pending SimpleX contact requests:
+
+```bash
+openclaw simplex requests list
 ```
 
 ## Where to inspect errors
