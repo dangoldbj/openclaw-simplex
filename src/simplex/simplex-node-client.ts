@@ -29,6 +29,12 @@ export class SimplexNodeClient {
   private eventReceiver: ((event: SimplexChatEvent) => void) | null = null;
   private readonly eventHandlers = new Set<(event: SimplexChatEvent) => void>();
   private readonly connectionHandlers = new Set<(state: SimplexNodeConnectionState) => void>();
+  private lastConnectionState: SimplexNodeConnectionState = {
+    connected: false,
+    at: Date.now(),
+    expected: true,
+    error: null,
+  };
   private closing = false;
 
   constructor(params: SimplexNodeClientParams) {
@@ -48,6 +54,10 @@ export class SimplexNodeClient {
     return () => {
       this.connectionHandlers.delete(handler);
     };
+  }
+
+  getConnectionState(): SimplexNodeConnectionState {
+    return { ...this.lastConnectionState };
   }
 
   async connect(): Promise<void> {
@@ -130,6 +140,7 @@ export class SimplexNodeClient {
     if (!state.connected && this.closing) {
       state.expected = true;
     }
+    this.lastConnectionState = { ...state };
     for (const handler of [...this.connectionHandlers]) {
       handler(state);
     }

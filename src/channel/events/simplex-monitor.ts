@@ -6,9 +6,12 @@ import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import {
   formatSimplexChatRef,
   parseSimplexApiChatRef,
+  parseSimplexNumericId,
   resolveSimplexChatItemId,
   toSimplexApiChatRef,
 } from "../../simplex/simplex-api.js";
+import { recordSimplexContactRequest } from "../../simplex/simplex-contact-requests.js";
+import { markSimplexEventSeen } from "../../simplex/simplex-event-state.js";
 import { SimplexNodeClient } from "../../simplex/simplex-node-client.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexChatItem } from "../../types/events.js";
@@ -67,8 +70,13 @@ async function sendSimplexPayload(params: {
     mediaUrl?: string;
     mediaUrls?: string[];
     audioAsVoice?: boolean;
+    replyToId?: string | number | null;
   };
 }): Promise<{ messageId?: number }> {
+  const quotedItemId =
+    params.payload.replyToId === undefined || params.payload.replyToId === null
+      ? undefined
+      : parseSimplexNumericId(params.payload.replyToId);
   const composedMessages = await buildComposedMessages({
     cfg: params.cfg,
     accountId: params.accountId,
@@ -76,6 +84,7 @@ async function sendSimplexPayload(params: {
     mediaUrl: params.payload.mediaUrl,
     mediaUrls: params.payload.mediaUrls,
     audioAsVoice: params.payload.audioAsVoice,
+    quotedItemId: quotedItemId ?? undefined,
   });
   if (composedMessages.length === 0) {
     return {};
@@ -169,6 +178,14 @@ async function handleSimplexEvent(params: {
 }): Promise<void> {
   const { event, account, cfg, runtime, statusSink, client } = params;
   statusSink?.({ lastEventAt: Date.now() });
+  if (event.type === "receivedContactRequest") {
+    await recordSimplexContactRequest({
+      accountId: account.accountId,
+      contactRequest: (event as { contactRequest?: unknown }).contactRequest,
+    });
+    return;
+  }
+
   if (event.type === "rcvFileDescrReady") {
     const fileId = Number(
       (event as { rcvFileTransfer?: { fileId?: number } })?.rcvFileTransfer?.fileId
@@ -225,12 +242,26 @@ async function handleSimplexEvent(params: {
       continue;
     }
 
+    const currentMessageId =
+      typeof item.chatItem?.meta?.itemId === "number" ? item.chatItem.meta.itemId : undefined;
+
     const normalizedSenderId = normalizeSimplexSenderId(context.senderId);
     const dmPeerId = normalizedSenderId ?? String(context.chatId);
     const chatRef = formatSimplexChatRef({
       type: context.chatType,
       id: context.chatType === "group" ? context.chatId : dmPeerId,
     });
+
+    if (
+      currentMessageId !== undefined &&
+      !(await markSimplexEventSeen({
+        accountId: account.accountId,
+        chatId: context.chatId,
+        messageId: currentMessageId,
+      }))
+    ) {
+      continue;
+    }
 
     const core = getSimplexRuntime();
 
@@ -343,6 +374,7 @@ async function handleSimplexEvent(params: {
                       idLine: `Your SimpleX contact id: ${senderId}`,
                       code,
                     }),
+                    replyToId: currentMessageId,
                   },
                 });
                 statusSink?.({ lastOutboundAt: Date.now() });
@@ -449,10 +481,8 @@ async function handleSimplexEvent(params: {
       SenderId: context.senderId,
       Provider: SIMPLEX_CHANNEL_ID,
       Surface: SIMPLEX_CHANNEL_ID,
-      MessageSid:
-        typeof item.chatItem?.meta?.itemId === "number"
-          ? String(item.chatItem.meta.itemId)
-          : undefined,
+      MessageSid: currentMessageId !== undefined ? String(currentMessageId) : undefined,
+      CurrentMessageId: currentMessageId !== undefined ? String(currentMessageId) : undefined,
       WasMentioned: context.chatType === "group" ? effectiveWasMentioned : undefined,
       CommandAuthorized: commandAuthorized,
       OriginatingChannel: SIMPLEX_CHANNEL_ID,
@@ -484,7 +514,7 @@ async function handleSimplexEvent(params: {
           chatRef,
           cfg,
           accountId: account.accountId,
-          payload,
+          payload: { ...payload, replyToId: currentMessageId },
         });
       },
       statusSink,

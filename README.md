@@ -20,7 +20,7 @@ That changes where reachability comes from. The agent does not depend on a publi
 
 **Self-hosted transport, not only self-hosted inference.** If you're running OpenClaw on your own infrastructure and want the runtime and relay path under your control, SimpleX makes that possible. By default the plugin uses the official SimpleX Node runtime in-process, and SimpleX relays are self-hostable. If you run the runtime and relays inside your environment, the whole path can stay under your infrastructure.
 
-**Agent-to-agent transport without a platform account layer.** Two OpenClaw instances, each with this plugin, can talk over SimpleX without relying on a shared bot API platform, phone-number-based identity, or workspace app registration. If you run your own relays inside an isolated environment, the path can stay off third-party infrastructure.
+**Agent-to-agent chat transport without a platform account layer.** Two OpenClaw instances, each with this plugin, can exchange chat messages over SimpleX without relying on a shared bot API platform, phone-number-based identity, or workspace app registration. This is chat transport, not an implementation of OpenClaw's native federated A2A/session protocol over SimpleX.
 
 **Peer access without platform account onboarding.** You can let someone interact with your agent without asking them to create an account on a platform you control. In the common case, a user installs SimpleX, scans your QR code, and the contact path exists.
 
@@ -106,7 +106,7 @@ There is no separate `simplex-chat` CLI process and no local WebSocket API to ex
 - Pairing approval, exec approval auth, and allowlist enforcement
 - Invite link, address link, and QR generation
 - Shared `message` actions including `upload-file`, reactions, polls, edits, deletes, and group actions
-- Plugin tools and gateway methods for invite and group administration
+- Plugin tools and gateway methods for invites, runtime diagnostics, contact requests, group links, and operator-controlled link onboarding
 - Runtime status reporting, command handling, heartbeat readiness, and Control UI configuration
 - Official SimpleX Node runtime integration
 
@@ -208,11 +208,7 @@ openclaw simplex address show --qr
 openclaw simplex address revoke
 ```
 
-For automation and integrations, OpenClaw exposes gateway methods:
-
-- `simplex.invite.create`
-- `simplex.invite.list`
-- `simplex.invite.revoke`
+For automation and integrations, OpenClaw exposes gateway methods for invite/address management, runtime diagnostics, pending contact requests, group links, and operator-controlled link onboarding. See the [Gateway Methods reference](https://openclaw-simplex.mintlify.app/reference/gateway-methods).
 
 ---
 
@@ -244,7 +240,7 @@ Current note:
 
 - The current plugin id is `openclaw-simplex`
 - The current channel id is `openclaw-simplex`
-- Gateway method names remain `simplex.invite.*`
+- Legacy invite gateway method names remain `simplex.invite.*`
 
 ---
 
@@ -269,11 +265,6 @@ openclaw simplex migrate --dry-run
 openclaw simplex invite create --qr
 openclaw pairing list
 ```
-
-**Gateway methods:**
-- `simplex.invite.create`
-- `simplex.invite.list`
-- `simplex.invite.revoke`
 
 **Plugin tools:**
 - `simplex_invite_create`

@@ -40,7 +40,14 @@ export async function buildAndSendSimplexMessages(params: {
   mediaUrl?: string;
   mediaUrls?: string[];
   audioAsVoice?: boolean;
+  replyToId?: string | number | null;
 }): Promise<{ messageId?: string }> {
+  const quotedItemId =
+    typeof params.replyToId === "number"
+      ? params.replyToId
+      : typeof params.replyToId === "string" && params.replyToId.trim()
+        ? Number(params.replyToId)
+        : undefined;
   const composedMessages = await buildComposedMessages({
     cfg: params.cfg,
     accountId: params.account.accountId,
@@ -48,6 +55,7 @@ export async function buildAndSendSimplexMessages(params: {
     mediaUrl: params.mediaUrl,
     mediaUrls: params.mediaUrls,
     audioAsVoice: params.audioAsVoice,
+    quotedItemId: Number.isFinite(quotedItemId) ? quotedItemId : undefined,
   });
   return await sendComposedMessages({
     account: params.account,

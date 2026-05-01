@@ -11,6 +11,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
     "types": ["node", "vitest/globals"]
   },
   "include": ["index.ts", "setup-entry.ts", "index.test.ts", "src/**/*.ts"]

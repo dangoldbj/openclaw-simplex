@@ -1,12 +1,12 @@
 ---
 title: Gateway Methods
-description: API reference for the OpenClaw SimpleX gateway RPC methods used to create invite links, generate address QR codes, and automate onboarding programmatically.
+description: API reference for OpenClaw SimpleX gateway RPC methods used for runtime status, invite links, contact requests, group links, and operator-controlled SimpleX onboarding.
 ---
 
-The plugin registers these gateway RPC methods for invite/address automation and programmatic onboarding flows.
+The plugin registers these gateway RPC methods for runtime diagnostics, invite/address automation, contact-request review, group-link lifecycle, and operator-controlled SimpleX link onboarding.
 
 <Info>
-  For day-to-day operator workflows, prefer the plugin CLI commands in [Example Commands](/reference/example-commands). Use these gateway methods when another system needs the same invite/address flow programmatically, including QR data URLs.
+  For day-to-day invite/address workflows, prefer the plugin CLI commands in [Example Commands](/reference/example-commands). Use these gateway methods when another system needs programmatic access to runtime status, contact-request review, group-link lifecycle, or link onboarding.
 </Info>
 
 ## Prerequisites and behavior
@@ -100,6 +100,120 @@ Example response shape:
 {
   "accountId": "default",
   "revoked": true
+}
+```
+
+## `simplex.runtime.status`
+
+Return runtime and account state for automation and Control UI surfaces.
+
+Response highlights:
+
+- `activeUser`: active SimpleX user profile, if available
+- `address`: current SimpleX address metadata, if available
+- `counts`: contact, group, and user counts
+- `runtime`: active client, connection state, and latest runtime error
+- `packageVersion`: installed `simplex-chat` package version
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "configured": true,
+  "mode": "node",
+  "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex",
+  "packageVersion": "6.5.0",
+  "runtime": {
+    "activeClient": true,
+    "connected": true,
+    "lastError": null
+  },
+  "counts": {
+    "contacts": 1,
+    "groups": 0,
+    "users": 1
+  }
+}
+```
+
+## `simplex.runtime.doctor`
+
+Return the same runtime status plus `ok` and `issues` fields for operator diagnostics.
+
+## `simplex.requests.*`
+
+Manage pending SimpleX contact requests observed from runtime events.
+
+- `simplex.requests.list`: list stored pending requests for an account
+- `simplex.requests.accept`: accept a request by `contactRequestId`
+- `simplex.requests.reject`: reject a request by `contactRequestId`
+
+Example request:
+
+```json
+{
+  "accountId": "default",
+  "contactRequestId": 123
+}
+```
+
+## `simplex.groups.*`
+
+Create SimpleX groups and manage group invite links through the official Node runtime.
+
+- `simplex.groups.create`: create a group from `displayName`, optional `fullName`, and optional `description`
+- `simplex.groups.link.create`: create a group link for `groupId` and optional `role`
+- `simplex.groups.link.list`: return the current group link plus QR data URL
+- `simplex.groups.link.revoke`: delete the current group link
+
+Example group link request:
+
+```json
+{
+  "accountId": "default",
+  "groupId": 42,
+  "role": "member"
+}
+```
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "groupId": 42,
+  "role": "member",
+  "link": "simplex://...",
+  "qrDataUrl": "data:image/png;base64,..."
+}
+```
+
+## `simplex.connect.*`
+
+Let an operator connect the SimpleX runtime identity to a SimpleX contact/address/group link.
+
+- `simplex.connect.plan`: inspect what connecting to `link` would do
+- `simplex.connect`: connect the active SimpleX user to `link`
+
+Example request:
+
+```json
+{
+  "accountId": "default",
+  "link": "simplex://..."
+}
+```
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "connected": true,
+  "result": {
+    "type": "sentConfirmation"
+  }
 }
 ```
 

@@ -1,6 +1,3 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../types/config.js";
 import type {
   SimplexInviteCreateResult,
   SimplexInviteListResult,
@@ -8,8 +5,7 @@ import type {
   SimplexInviteRevokeResult,
   SimplexInviteServiceOptions,
 } from "../types/invite.js";
-import type { SimplexChatApi, SimplexLogger } from "../types/simplex.js";
-import { withSimplexApi } from "./simplex-transport.js";
+import { resolveRuntimeAccount, withActiveSimplexUser } from "./simplex-runtime-ops.js";
 
 function contactLinkToString(link: unknown): string | null {
   if (!link || typeof link !== "object") {
@@ -26,48 +22,12 @@ function contactLinkToString(link: unknown): string | null {
       : null;
 }
 
-function resolveInviteAccount(
-  cfg: OpenClawConfig,
-  rawAccountId?: string | null
-): ResolvedSimplexAccount {
-  const explicit = rawAccountId?.trim();
-  const accountId = explicit || resolveDefaultSimplexAccountId(cfg);
-  const account = resolveSimplexAccount({ cfg, accountId });
-  if (!account.enabled) {
-    throw new Error(`SimpleX account "${accountId}" is disabled`);
-  }
-  if (!account.configured) {
-    throw new Error(`SimpleX account "${accountId}" is not configured`);
-  }
-  return account;
-}
-
-async function runInviteOperation<T>(
-  account: ResolvedSimplexAccount,
-  params: {
-    logger?: SimplexLogger;
-    run: (userId: number, api: SimplexChatApi) => Promise<T>;
-  }
-): Promise<T> {
-  return await withSimplexApi({
-    account,
-    logger: params.logger,
-    run: async (api) => {
-      const user = await api.apiGetActiveUser();
-      const userId = user?.userId;
-      if (typeof userId !== "number") {
-        throw new Error(`SimpleX account "${account.accountId}" has no active user`);
-      }
-      return await params.run(userId, api);
-    },
-  });
-}
-
 export async function createSimplexInvite(
   params: SimplexInviteServiceOptions & { mode: SimplexInviteMode }
 ): Promise<SimplexInviteCreateResult> {
-  const account = resolveInviteAccount(params.cfg, params.accountId);
-  const result = await runInviteOperation(account, {
+  const account = resolveRuntimeAccount(params.cfg, params.accountId);
+  const result = await withActiveSimplexUser({
+    account,
     logger: params.logger,
     run: async (userId, api) => {
       if (params.mode === "connect") {
@@ -91,8 +51,9 @@ export async function createSimplexInvite(
 export async function listSimplexInvites(
   params: SimplexInviteServiceOptions
 ): Promise<SimplexInviteListResult> {
-  const account = resolveInviteAccount(params.cfg, params.accountId);
-  const { addressResponse, contactsResponse, addressLink } = await runInviteOperation(account, {
+  const account = resolveRuntimeAccount(params.cfg, params.accountId);
+  const { addressResponse, contactsResponse, addressLink } = await withActiveSimplexUser({
+    account,
     logger: params.logger,
     run: async (userId, api) => {
       const [address, contacts] = await Promise.all([
@@ -119,8 +80,9 @@ export async function listSimplexInvites(
 export async function revokeSimplexInvite(
   params: SimplexInviteServiceOptions
 ): Promise<SimplexInviteRevokeResult> {
-  const account = resolveInviteAccount(params.cfg, params.accountId);
-  const revoked = await runInviteOperation(account, {
+  const account = resolveRuntimeAccount(params.cfg, params.accountId);
+  const revoked = await withActiveSimplexUser({
+    account,
     logger: params.logger,
     run: async (userId, api) => {
       await api.apiDeleteUserAddress(userId);

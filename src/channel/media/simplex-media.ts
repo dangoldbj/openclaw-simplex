@@ -99,6 +99,7 @@ export async function buildComposedMessages(params: {
   mediaUrls?: string[];
   mediaUrl?: string;
   audioAsVoice?: boolean;
+  quotedItemId?: number;
 }): Promise<SimplexComposedMessage[]> {
   const text = params.text ?? "";
   const mediaList = params.mediaUrls?.length
@@ -112,6 +113,7 @@ export async function buildComposedMessages(params: {
     if (text) {
       composedMessages.push({
         msgContent: { type: "text", text },
+        quotedItemId: params.quotedItemId,
         mentions: {},
       });
     }
@@ -140,6 +142,7 @@ export async function buildComposedMessages(params: {
     composedMessages.push({
       fileSource: { filePath: resolved.path },
       msgContent,
+      quotedItemId: params.quotedItemId,
       mentions: {},
     });
   }

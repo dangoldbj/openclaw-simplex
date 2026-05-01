@@ -12,7 +12,7 @@ Use this guide only if you previously configured or paired the plugin under the 
 - pairing approval commands now use `openclaw-simplex`
 
 <Info>
-  Gateway method names did not change. Programmatic invite flows still use <code>simplex.invite.create</code>, <code>simplex.invite.list</code>, and <code>simplex.invite.revoke</code>.
+  Legacy invite gateway method names did not change. Programmatic invite flows still use <code>simplex.invite.create</code>, <code>simplex.invite.list</code>, and <code>simplex.invite.revoke</code>.
 </Info>
 
 The migration helper updates config keys and stored pairing/allowlist state so existing approvals can carry forward. It also removes legacy WebSocket/CLI runtime fields such as <code>wsUrl</code>, <code>url</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code> from the SimpleX channel config. Policy fields and multi-account settings remain in place.

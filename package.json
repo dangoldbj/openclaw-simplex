@@ -50,22 +50,20 @@
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.49",
-    "qrcode": "^1.5.4",
     "simplex-chat": "^6.5.0",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.4.27"
+    "openclaw": ">=2026.4.29"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.10",
-    "@mintlify/cli": "^4.0.1090",
-    "@types/node": "^25.5.2",
-    "@types/qrcode": "^1.5.5",
-    "openclaw": "^2026.4.27",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "@biomejs/biome": "^2.4.13",
+    "@mintlify/cli": "^4.0.1146",
+    "@types/node": "^25.6.0",
+    "openclaw": "^2026.4.29",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
   },
   "openclaw": {
     "extensions": [
@@ -99,7 +97,7 @@
     "install": {
       "npmSpec": "@dangoldbj/openclaw-simplex",
       "defaultChoice": "npm",
-      "minHostVersion": ">=2026.4.27"
+      "minHostVersion": ">=2026.4.29"
     }
   }
 }

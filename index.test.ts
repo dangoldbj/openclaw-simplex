@@ -40,16 +40,16 @@ function mockContactLink(link: string | null): MockResponse {
   };
 }
 
-const qrMocks = vi.hoisted(() => ({
-  toDataURL: vi.fn(async () => "data:image/png;base64,mock-base64"),
-}));
-
 vi.mock("./src/simplex/simplex-node-client.js", () => ({
   SimplexNodeClient: class {
     async connect() {}
+    getConnectionState() {
+      return { connected: true, at: 1, error: null };
+    }
     async withApi<T>(fn: (api: Record<string, unknown>) => Promise<T>) {
       const api = {
         apiGetActiveUser: vi.fn(async () => ({ userId: 1 })),
+        apiListUsers: vi.fn(async () => [{ user: { userId: 1 } }]),
         apiCreateLink: vi.fn(
           async () => extractMockLink(nextMockPayload()) ?? "simplex://invite-mock"
         ),
@@ -59,6 +59,16 @@ vi.mock("./src/simplex/simplex-node-client.js", () => ({
         ),
         apiDeleteUserAddress: vi.fn(async () => undefined),
         apiListContacts: vi.fn(async () => [nextMockPayload()]),
+        apiListGroups: vi.fn(async () => [{ groupId: 10 }]),
+        apiNewGroup: vi.fn(async () => ({ groupId: 11, groupProfile: { displayName: "Ops" } })),
+        apiCreateGroupLink: vi.fn(async () => "simplex://group-link"),
+        apiGetGroupLinkStr: vi.fn(async () => "simplex://group-link"),
+        apiGetGroupLink: vi.fn(async () => ({ groupLinkId: "group-link" })),
+        apiDeleteGroupLink: vi.fn(async () => undefined),
+        apiConnectPlan: vi.fn(async () => [{ type: "ok" }, { connShortLink: "simplex://x" }]),
+        apiConnectActiveUser: vi.fn(async () => ({ type: "sentConfirmation" })),
+        apiAcceptContactRequest: vi.fn(async () => ({ contactId: 100 })),
+        apiRejectContactRequest: vi.fn(async () => undefined),
         apiSendMessages: vi.fn(async () => [{ chatItem: { meta: { itemId: 1 } } }]),
         apiReceiveFile: vi.fn(async () => ({ chatItem: { meta: { itemId: 1 } } })),
         apiCancelFile: vi.fn(async () => undefined),
@@ -67,10 +77,6 @@ vi.mock("./src/simplex/simplex-node-client.js", () => ({
     }
     async close() {}
   },
-}));
-
-vi.mock("qrcode", () => ({
-  toDataURL: qrMocks.toDataURL,
 }));
 
 import type { OpenClawConfig, PluginRuntime } from "openclaw/plugin-sdk/channel-core";
@@ -154,6 +160,7 @@ function setupRegistration(
     },
     registerReload: () => {},
     registerNodeHostCommand: () => {},
+    registerNodeInvokePolicy: () => {},
     registerSecurityAuditCollector: () => {},
     registerService: () => {},
     registerGatewayDiscoveryService: () => {},
@@ -243,11 +250,26 @@ describe("plugin entry registration modes", () => {
     expect(full.methods.has("simplex.invite.create")).toBe(true);
     expect(full.methods.has("simplex.invite.list")).toBe(true);
     expect(full.methods.has("simplex.invite.revoke")).toBe(true);
+    expect(full.methods.has("simplex.runtime.status")).toBe(true);
+    expect(full.methods.has("simplex.requests.accept")).toBe(true);
+    expect(full.methods.has("simplex.groups.link.create")).toBe(true);
+    expect(full.methods.has("simplex.connect")).toBe(true);
     expect(full.methodScopes).toEqual(
       new Map([
         ["simplex.invite.create", "operator.write"],
         ["simplex.invite.list", "operator.read"],
         ["simplex.invite.revoke", "operator.admin"],
+        ["simplex.runtime.status", "operator.read"],
+        ["simplex.runtime.doctor", "operator.read"],
+        ["simplex.requests.list", "operator.read"],
+        ["simplex.requests.accept", "operator.admin"],
+        ["simplex.requests.reject", "operator.admin"],
+        ["simplex.groups.create", "operator.admin"],
+        ["simplex.groups.link.create", "operator.admin"],
+        ["simplex.groups.link.list", "operator.read"],
+        ["simplex.groups.link.revoke", "operator.admin"],
+        ["simplex.connect.plan", "operator.read"],
+        ["simplex.connect", "operator.admin"],
       ])
     );
     expect(setupOnly.methods.size).toBe(0);
@@ -571,11 +593,10 @@ describe("simplex invite gateway", () => {
     expect(ok).toBe(true);
     expect(payload).toMatchObject({
       link: "simplex://invite123",
-      qrDataUrl: "data:image/png;base64,mock-base64",
       mode: "connect",
     });
+    expect((payload as { qrDataUrl?: string }).qrDataUrl).toMatch(/^data:image\/png;base64,/);
     expect(getCommands()).toEqual([]);
-    expect(qrMocks.toDataURL).toHaveBeenCalledWith("simplex://invite123", expect.any(Object));
   });
 
   it("uses address mode to create or return an address link", async () => {
@@ -641,11 +662,12 @@ describe("simplex invite gateway", () => {
       accountId: "default",
       addressLink: "simplex://address789",
       links: ["simplex://address789"],
-      addressQrDataUrl: "data:image/png;base64,mock-base64",
     });
+    expect((payload as { addressQrDataUrl?: string }).addressQrDataUrl).toMatch(
+      /^data:image\/png;base64,/
+    );
     expect((payload as { pendingHints?: string[] }).pendingHints).toEqual([]);
     expect(getCommands()).toEqual([]);
-    expect(qrMocks.toDataURL).toHaveBeenCalledWith("simplex://address789", expect.any(Object));
   });
 
   it("revokes address link for selected account", async () => {
@@ -713,6 +735,96 @@ describe("simplex invite gateway", () => {
       accountId: "ops",
       mode: "address",
       link: "simplex://address999",
+    });
+  });
+
+  it("returns runtime status through the gateway", async () => {
+    const handler = setupHandler("simplex.runtime.status", simplexConfiguredChannel);
+    const respond = vi.fn();
+    await handler({ params: {}, respond });
+
+    const firstCall = respond.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    if (!firstCall) {
+      throw new Error("missing response call");
+    }
+    const [ok, payload] = firstCall;
+    expect(ok).toBe(true);
+    expect(payload).toMatchObject({
+      accountId: "default",
+      mode: "node",
+      counts: {
+        contacts: 1,
+        groups: 1,
+        users: 1,
+      },
+    });
+  });
+
+  it("creates group links with QR data", async () => {
+    const handler = setupHandler("simplex.groups.link.create", simplexConfiguredChannel);
+    const respond = vi.fn();
+    await handler({
+      params: { groupId: 10, role: "member" },
+      respond,
+    });
+
+    const firstCall = respond.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    if (!firstCall) {
+      throw new Error("missing response call");
+    }
+    const [ok, payload] = firstCall;
+    expect(ok).toBe(true);
+    expect(payload).toMatchObject({
+      accountId: "default",
+      groupId: 10,
+      role: "member",
+      link: "simplex://group-link",
+    });
+    expect((payload as { qrDataUrl?: string }).qrDataUrl).toMatch(/^data:image\/png;base64,/);
+  });
+
+  it("accepts pending contact requests by id", async () => {
+    const handler = setupHandler("simplex.requests.accept", simplexConfiguredChannel);
+    const respond = vi.fn();
+    await handler({
+      params: { contactRequestId: 7 },
+      respond,
+    });
+
+    const firstCall = respond.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    if (!firstCall) {
+      throw new Error("missing response call");
+    }
+    const [ok, payload] = firstCall;
+    expect(ok).toBe(true);
+    expect(payload).toMatchObject({
+      accountId: "default",
+      contactRequestId: 7,
+      accepted: true,
+    });
+  });
+
+  it("connects to SimpleX links through the operator gateway", async () => {
+    const handler = setupHandler("simplex.connect", simplexConfiguredChannel);
+    const respond = vi.fn();
+    await handler({
+      params: { link: "simplex://contact-link" },
+      respond,
+    });
+
+    const firstCall = respond.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    if (!firstCall) {
+      throw new Error("missing response call");
+    }
+    const [ok, payload] = firstCall;
+    expect(ok).toBe(true);
+    expect(payload).toMatchObject({
+      accountId: "default",
+      connected: true,
     });
   });
 });

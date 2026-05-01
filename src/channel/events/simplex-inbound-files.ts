@@ -12,6 +12,7 @@ type SimplexReplyPayload = {
   mediaUrl?: string;
   mediaUrls?: string[];
   audioAsVoice?: boolean;
+  replyToId?: string | number | null;
 };
 
 export type PendingInboundFile = {

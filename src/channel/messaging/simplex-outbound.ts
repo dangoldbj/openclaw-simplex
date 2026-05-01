@@ -65,7 +65,7 @@ export function buildSimplexOutbound(): NonNullable<
         presentation,
       }),
     }),
-    sendPayload: async ({ cfg, to, payload, accountId }) => {
+    sendPayload: async ({ cfg, to, payload, accountId, replyToId }) => {
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
       const result = await buildAndSendSimplexMessages({
@@ -76,6 +76,7 @@ export function buildSimplexOutbound(): NonNullable<
         mediaUrls: payload.mediaUrls,
         mediaUrl: payload.mediaUrl,
         audioAsVoice: payload.audioAsVoice,
+        replyToId,
       });
       return {
         channel: SIMPLEX_CHANNEL_ID,
@@ -83,7 +84,7 @@ export function buildSimplexOutbound(): NonNullable<
         chatId: to,
       };
     },
-    sendText: async ({ cfg, to, text, accountId }) => {
+    sendText: async ({ cfg, to, text, accountId, replyToId }) => {
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
       const result = await buildAndSendSimplexMessages({
@@ -91,6 +92,7 @@ export function buildSimplexOutbound(): NonNullable<
         account,
         chatRef: to,
         text,
+        replyToId,
       });
       return {
         channel: SIMPLEX_CHANNEL_ID,
@@ -98,7 +100,7 @@ export function buildSimplexOutbound(): NonNullable<
         chatId: to,
       };
     },
-    sendMedia: async ({ cfg, to, text, mediaUrl, accountId }) => {
+    sendMedia: async ({ cfg, to, text, mediaUrl, accountId, replyToId }) => {
       if (!mediaUrl) {
         return { channel: SIMPLEX_CHANNEL_ID, messageId: "empty", chatId: to };
       }
@@ -110,6 +112,7 @@ export function buildSimplexOutbound(): NonNullable<
         chatRef: to,
         text,
         mediaUrl,
+        replyToId,
       });
       return {
         channel: SIMPLEX_CHANNEL_ID,

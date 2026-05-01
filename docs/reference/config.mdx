@@ -107,23 +107,8 @@ If <code>accounts</code> is set, each account entry can override the shared root
   A channel/account is considered configured when <code>connection</code> exists. If it is omitted, OpenClaw will not treat the channel as startup-ready.
 </Note>
 
-## What belongs in plugin config vs runtime startup
+## Runtime config scope
 
 The runtime is the official <code>simplex-chat</code> Node package. There is no separate <code>simplex-chat</code> CLI process and no local WebSocket endpoint.
 
-### Good fit for plugin config
-
-- <code>connection.dbFilePrefix</code>, <code>displayName</code>, <code>fullName</code>, and <code>migrationConfirmation</code>
-- <code>connection.connectTimeoutMs</code>
-- <code>connection.autoAcceptFiles</code>
-- OpenClaw policy and UX settings such as <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, <code>actions</code>, and <code>reactionLevel</code>
-
-### Intentionally not mirrored into plugin config
-
-These <code>simplex-chat</code> CLI startup flags are not part of this plugin's runtime model:
-
-- transport/bootstrap: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--socks-mode</code>, <code>--host-mode</code>, <code>--required-host-mode</code>, <code>--smp-proxy</code>, <code>--smp-proxy-fallback</code>, <code>--smp-web-port</code>
-- local process/file layout: <code>-d/--database</code>, <code>-k/--key</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
-- runtime process behavior: <code>--device-name</code>, <code>--maintenance</code>, <code>--mute</code>, <code>--mark-read</code>, <code>--reactions</code>, <code>--create-bot-display-name</code>
-
-If you need those CLI-only controls, they are outside this Node-runtime-only plugin path.
+The config surface is intentionally small: local database prefix, initial profile labels, migration behavior, file auto-accept, timeout, and OpenClaw policy/UX fields. Legacy CLI/WebSocket fields such as <code>wsUrl</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code> are not supported and are removed by <code>openclaw simplex migrate</code>.
