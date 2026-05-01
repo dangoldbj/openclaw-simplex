@@ -2,16 +2,17 @@ import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contrac
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveInboundMentionDecision } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import {
-  buildCancelFileCommand,
-  buildReceiveFileCommand,
-  buildSendMessagesCommand,
-  formatChatRef,
-} from "../../simplex/simplex-commands.js";
-import { resolveSimplexCommandError } from "../../simplex/simplex-errors.js";
-import { SimplexWsClient, type SimplexWsEvent } from "../../simplex/simplex-ws-client.js";
+  formatSimplexChatRef,
+  parseSimplexApiChatRef,
+  resolveSimplexChatItemId,
+  toSimplexApiChatRef,
+} from "../../simplex/simplex-api.js";
+import { SimplexNodeClient } from "../../simplex/simplex-node-client.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { SimplexChatItem } from "../../types/events.js";
+import type { SimplexApiComposedMessage, SimplexChatEvent } from "../../types/simplex.js";
 import { buildComposedMessages, resolveSimplexMediaMaxBytes } from "../media/simplex-media.js";
 import { getSimplexRuntime } from "../runtime.js";
 import { isSimplexAllowlisted } from "../security/simplex-security.js";
@@ -21,8 +22,15 @@ import {
   normalizeSimplexSenderId,
   resolveSimplexChatContext,
   resolveSimplexMessageText,
-  type SimplexChatItem,
 } from "./simplex-event-parser.js";
+import {
+  dispatchInbound,
+  finalizePendingFile,
+  hasPendingFile,
+  type PendingInboundFile,
+  queuePendingFile,
+  requestFileDownload,
+} from "./simplex-inbound-files.js";
 
 export type SimplexMonitorOpts = {
   account: ResolvedSimplexAccount;
@@ -31,28 +39,6 @@ export type SimplexMonitorOpts = {
   abortSignal: AbortSignal;
   statusSink?: (patch: Partial<ChannelAccountSnapshot>) => void;
 };
-
-const PENDING_FILE_TIMEOUT_MS = 90_000;
-
-type PendingInboundFile = {
-  fileId: number;
-  ctxPayload: Record<string, unknown>;
-  storePath: string;
-  sessionKey: string;
-  chatRef: string;
-  rawBody: string;
-  account: ResolvedSimplexAccount;
-  cfg: OpenClawConfig;
-  runtime: RuntimeEnv;
-  client: SimplexWsClient;
-  statusSink?: (patch: Partial<ChannelAccountSnapshot>) => void;
-};
-
-const pendingFiles = new Map<string, PendingInboundFile>();
-
-function pendingKey(accountId: string, fileId: number): string {
-  return `${accountId}:${fileId}`;
-}
 
 function resolveSimplexGroupRequireMention(params: {
   account: ResolvedSimplexAccount;
@@ -72,7 +58,7 @@ function resolveSimplexGroupRequireMention(params: {
 }
 
 async function sendSimplexPayload(params: {
-  client: SimplexWsClient;
+  client: SimplexNodeClient;
   chatRef: string;
   cfg: OpenClawConfig;
   accountId: string;
@@ -94,34 +80,26 @@ async function sendSimplexPayload(params: {
   if (composedMessages.length === 0) {
     return {};
   }
-  const cmd = buildSendMessagesCommand({
-    chatRef: params.chatRef,
-    composedMessages,
-  });
-  const response = await params.client.sendCommand(cmd);
-  const resp = response.resp as {
-    type?: string;
-    chatError?: { errorType?: { type?: string; message?: string } };
-    chatItems?: Array<{ chatItem?: { meta?: { itemId?: number } } }>;
-  };
-  const commandError = resolveSimplexCommandError(resp);
-  if (commandError) {
-    throw new Error(commandError);
+  const apiChatRef = parseSimplexApiChatRef(params.chatRef);
+  if (!apiChatRef) {
+    throw new Error(`SimpleX chat ref must be numeric for runtime API: ${params.chatRef}`);
   }
-  if (resp?.type === "newChatItems") {
-    const itemId = resp.chatItems?.[0]?.chatItem?.meta?.itemId;
-    return { messageId: typeof itemId === "number" ? itemId : undefined };
-  }
-  return {};
+  const chatItems = await params.client.withApi((api) =>
+    api.apiSendMessages(
+      toSimplexApiChatRef(apiChatRef),
+      composedMessages as SimplexApiComposedMessage[]
+    )
+  );
+  const messageId = resolveSimplexChatItemId(chatItems[0]);
+  return { messageId: messageId ? Number(messageId) : undefined };
 }
 
 export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
-  client: SimplexWsClient;
+  client: SimplexNodeClient;
 }> {
   const { account, cfg, runtime, statusSink } = params;
-  const client = new SimplexWsClient({
-    url: account.wsUrl,
-    connectTimeoutMs: account.config.connection?.connectTimeoutMs,
+  const client = new SimplexNodeClient({
+    account,
     logger: {
       info: (message) => runtime?.log?.(message),
       warn: (message) => runtime?.error?.(message),
@@ -182,12 +160,12 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
 }
 
 async function handleSimplexEvent(params: {
-  event: SimplexWsEvent;
+  event: SimplexChatEvent;
   account: ResolvedSimplexAccount;
   cfg: OpenClawConfig;
   runtime: RuntimeEnv;
   statusSink?: (patch: Partial<ChannelAccountSnapshot>) => void;
-  client: SimplexWsClient;
+  client: SimplexNodeClient;
 }): Promise<void> {
   const { event, account, cfg, runtime, statusSink, client } = params;
   statusSink?.({ lastEventAt: Date.now() });
@@ -205,7 +183,7 @@ async function handleSimplexEvent(params: {
     const chatItem = (event as { chatItem?: SimplexChatItem })?.chatItem;
     const file = chatItem?.chatItem?.file;
     const fileId = typeof file?.fileId === "number" ? file.fileId : null;
-    if (fileId && pendingFiles.has(pendingKey(account.accountId, fileId))) {
+    if (fileId && hasPendingFile(account.accountId, fileId)) {
       const filePath = file?.fileSource?.filePath?.trim();
       await finalizePendingFile({
         accountId: account.accountId,
@@ -249,7 +227,7 @@ async function handleSimplexEvent(params: {
 
     const normalizedSenderId = normalizeSimplexSenderId(context.senderId);
     const dmPeerId = normalizedSenderId ?? String(context.chatId);
-    const chatRef = formatChatRef({
+    const chatRef = formatSimplexChatRef({
       type: context.chatType,
       id: context.chatType === "group" ? context.chatId : dmPeerId,
     });
@@ -496,12 +474,19 @@ async function handleSimplexEvent(params: {
       ctxPayload,
       storePath,
       sessionKey: route.sessionKey,
-      chatRef,
-      rawBody,
       account,
       cfg,
       runtime,
       client,
+      sendPayload: async (payload) => {
+        await sendSimplexPayload({
+          client,
+          chatRef,
+          cfg,
+          accountId: account.accountId,
+          payload,
+        });
+      },
       statusSink,
     };
 
@@ -514,137 +499,11 @@ async function handleSimplexEvent(params: {
       }
       const accepted = await requestFileDownload({ fileId, account, client, runtime });
       if (accepted) {
-        pendingFiles.set(pendingKey(account.accountId, fileId), pending);
-        setTimeout(() => {
-          const key = pendingKey(account.accountId, fileId);
-          const current = pendingFiles.get(key);
-          if (current) {
-            pendingFiles.delete(key);
-            void current.client.sendCommand(buildCancelFileCommand(fileId)).catch((err) => {
-              runtime.error?.(
-                `[${account.accountId}] SimpleX file timeout cancel failed: ${String(err)}`
-              );
-            });
-            void dispatchInbound({
-              pending: current,
-              mediaPath: undefined,
-              mediaType: undefined,
-            }).catch((err) => {
-              runtime.error?.(
-                `[${account.accountId}] SimpleX pending file timeout: ${String(err)}`
-              );
-            });
-          }
-        }, PENDING_FILE_TIMEOUT_MS);
+        queuePendingFile({ pending, accountId: account.accountId, fileId });
         continue;
       }
     }
 
     await dispatchInbound({ pending, mediaPath: undefined, mediaType: undefined });
   }
-}
-
-async function requestFileDownload(params: {
-  fileId: number;
-  account: ResolvedSimplexAccount;
-  client: SimplexWsClient;
-  runtime: RuntimeEnv;
-}): Promise<boolean> {
-  const { fileId, account, client, runtime } = params;
-  const autoAccept = account.config.connection?.autoAcceptFiles !== false;
-  if (!autoAccept) {
-    return false;
-  }
-  const cmd = buildReceiveFileCommand({ fileId });
-  try {
-    await client.sendCommand(cmd);
-  } catch (err) {
-    runtime.error?.(`[${account.accountId}] SimpleX receive file failed: ${String(err)}`);
-    return false;
-  }
-  return true;
-}
-
-async function finalizePendingFile(params: {
-  accountId: string;
-  fileId: number;
-  filePath?: string;
-}): Promise<void> {
-  const pending = pendingFiles.get(pendingKey(params.accountId, params.fileId));
-  if (!pending) {
-    return;
-  }
-  pendingFiles.delete(pendingKey(params.accountId, params.fileId));
-  const mediaPath = params.filePath?.trim() || undefined;
-  let mediaType: string | undefined;
-  if (mediaPath) {
-    mediaType = await getSimplexRuntime().media.detectMime({ filePath: mediaPath });
-  }
-  await dispatchInbound({ pending, mediaPath, mediaType });
-}
-
-async function dispatchInbound(params: {
-  pending: PendingInboundFile;
-  mediaPath?: string;
-  mediaType?: string;
-}): Promise<void> {
-  const { pending, mediaPath, mediaType } = params;
-  const core = getSimplexRuntime();
-  const ctxPayload = {
-    ...pending.ctxPayload,
-    MediaPath: mediaPath,
-    MediaType: mediaType,
-    MediaUrl: mediaPath,
-  };
-
-  await core.channel.session.recordInboundSession({
-    storePath: pending.storePath,
-    sessionKey: (ctxPayload as { SessionKey?: string }).SessionKey ?? pending.sessionKey,
-    ctx: ctxPayload,
-    onRecordError: (err) => {
-      pending.runtime.error?.(`simplex: failed updating session meta: ${String(err)}`);
-    },
-  });
-
-  pending.statusSink?.({ lastInboundAt: Date.now() });
-
-  await core.channel.reply.dispatchReplyWithBufferedBlockDispatcher({
-    ctx: ctxPayload,
-    cfg: pending.cfg,
-    dispatcherOptions: {
-      deliver: async (payload) => {
-        const hasMedia =
-          Boolean(payload.mediaUrl) ||
-          (Array.isArray(payload.mediaUrls) && payload.mediaUrls.length > 0);
-        if (!payload.text && !hasMedia) {
-          return;
-        }
-        if (!pending.account.enabled || !pending.account.configured) {
-          pending.runtime.error?.(
-            `[${pending.account.accountId}] SimpleX reply skipped: account not ready (enabled=${pending.account.enabled}, configured=${pending.account.configured})`
-          );
-          return;
-        }
-        await sendSimplexPayload({
-          client: pending.client,
-          chatRef: pending.chatRef,
-          cfg: pending.cfg,
-          accountId: pending.account.accountId,
-          payload,
-        });
-        pending.statusSink?.({ lastOutboundAt: Date.now() });
-      },
-      onError: (err) => {
-        pending.runtime.error?.(
-          `[${pending.account.accountId}] SimpleX reply failed: ${String(err)}`
-        );
-      },
-    },
-    replyOptions: {
-      disableBlockStreaming:
-        typeof pending.account.config.blockStreaming === "boolean"
-          ? !pending.account.config.blockStreaming
-          : undefined,
-    },
-  });
 }

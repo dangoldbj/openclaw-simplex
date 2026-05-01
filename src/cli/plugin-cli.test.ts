@@ -3,13 +3,17 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  CHANNEL_ID,
-  LEGACY_CHANNEL_ID,
-  LEGACY_PLUGIN_ID,
-  migrateConfigObject,
-  migrateStateFiles,
-  PLUGIN_ID,
-} from "./plugin-cli.js";
+  LEGACY_SIMPLEX_CHANNEL_ID,
+  LEGACY_SIMPLEX_PLUGIN_ID,
+  SIMPLEX_CHANNEL_ID,
+  SIMPLEX_PLUGIN_ID,
+} from "../constants.js";
+import { migrateConfigObject, migrateStateFiles } from "./plugin-cli.js";
+
+const CHANNEL_ID = SIMPLEX_CHANNEL_ID;
+const LEGACY_CHANNEL_ID = LEGACY_SIMPLEX_CHANNEL_ID;
+const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
+const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
 
 describe("simplex migration config", () => {
   it("migrates legacy plugin and channel ids", () => {
@@ -27,7 +31,7 @@ describe("simplex migration config", () => {
       channels: {
         [LEGACY_CHANNEL_ID]: {
           enabled: true,
-          connection: { wsUrl: "ws://127.0.0.1:5225" },
+          connection: {},
           accounts: {
             ops: {
               allowFrom: ["*"],
@@ -51,7 +55,7 @@ describe("simplex migration config", () => {
       channels: {
         [CHANNEL_ID]: {
           enabled: true,
-          connection: { wsUrl: "ws://127.0.0.1:5225" },
+          connection: {},
           accounts: {
             ops: {
               allowFrom: ["*"],
@@ -68,6 +72,118 @@ describe("simplex migration config", () => {
     );
     expect(result.changed).toContain(
       `config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`
+    );
+  });
+
+  it("removes legacy WebSocket and CLI runtime config while preserving policies and accounts", () => {
+    const { nextConfig, result } = migrateConfigObject({
+      channels: {
+        [LEGACY_CHANNEL_ID]: {
+          enabled: true,
+          wsUrl: "ws://127.0.0.1:5225",
+          managed: true,
+          cliPath: "/usr/local/bin/simplex-chat",
+          connection: {
+            wsUrl: "ws://127.0.0.1:5225",
+            authToken: "legacy-token",
+            dbFilePrefix: "~/.openclaw/simplex/kept",
+            connectTimeoutMs: 7000,
+          },
+          dmPolicy: "pairing",
+          allowFrom: ["alice"],
+          accounts: {
+            ops: {
+              name: "Ops",
+              allowFrom: ["bob"],
+              groupAllowFrom: ["group:ops"],
+              connection: {
+                wsUrl: "ws://127.0.0.1:5226",
+                displayName: "Ops Bot",
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(nextConfig.channels).toEqual({
+      [CHANNEL_ID]: {
+        enabled: true,
+        connection: {
+          dbFilePrefix: "~/.openclaw/simplex/kept",
+          connectTimeoutMs: 7000,
+        },
+        dmPolicy: "pairing",
+        allowFrom: ["alice"],
+        accounts: {
+          ops: {
+            name: "Ops",
+            allowFrom: ["bob"],
+            groupAllowFrom: ["group:ops"],
+            connection: {
+              displayName: "Ops Bot",
+            },
+          },
+        },
+      },
+    });
+    expect(result.changed).toContain(
+      `config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}: cliPath, managed, wsUrl`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.connection: authToken, wsUrl`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.accounts.ops.connection: wsUrl`
+    );
+  });
+
+  it("normalizes already-renamed configs when migrate is run after a partial manual upgrade", () => {
+    const { nextConfig, result } = migrateConfigObject({
+      channels: {
+        [CHANNEL_ID]: {
+          connection: {
+            wsUrl: "ws://localhost:5225",
+            fullName: "SimpleX Agent",
+          },
+          accounts: {
+            support: {
+              managed: false,
+              connection: {
+                token: "old",
+                autoAcceptFiles: false,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(nextConfig.channels).toEqual({
+      [CHANNEL_ID]: {
+        connection: {
+          fullName: "SimpleX Agent",
+        },
+        accounts: {
+          support: {
+            connection: {
+              autoAcceptFiles: false,
+            },
+          },
+        },
+      },
+    });
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.connection: wsUrl`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.accounts.support: managed`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.accounts.support.connection: token`
     );
   });
 });

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- Switched the SimpleX runtime path to the official `simplex-chat` Node runtime and removed the CLI/WebSocket sidecar runtime path.
+- Updated the package license to `AGPL-3.0-or-later` because the plugin now depends directly on the official SimpleX runtime package.
+- Expanded channel config schema, manifest metadata, README, and docs for Node runtime storage fields.
+
 ## [1.5.0] - 2026-04-26
 
 ### Changed

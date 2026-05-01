@@ -1,7 +1,6 @@
 import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "../../config/config-schema.js";
 import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../../constants.js";
-import { describeSimplexWsEndpointSecurity } from "../transport/simplex-transport-security.js";
 
 function isEmptyArray(value: unknown): boolean {
   return Array.isArray(value) && value.length === 0;
@@ -14,19 +13,9 @@ function readChannelConfig(cfg: { channels?: Record<string, unknown> }): Simplex
 function collectAccountWarnings(
   channel: SimplexChannelConfig,
   accountId: string,
-  account: SimplexAccountConfig,
-  doctorFixCommand: string
+  account: SimplexAccountConfig
 ): string[] {
   const warnings: string[] = [];
-  const wsUrl = account.connection?.wsUrl ?? "";
-  if (wsUrl) {
-    const security = describeSimplexWsEndpointSecurity(wsUrl, {
-      allowUnsafeRemoteWs: account.connection?.allowUnsafeRemoteWs === true,
-    });
-    for (const warning of security.warnings) {
-      warnings.push(`- SimpleX account "${accountId}" has ${warning} Run ${doctorFixCommand}.`);
-    }
-  }
 
   const inheritedAllowFrom = account.allowFrom ?? channel.allowFrom;
   if (account.dmPolicy === "allowlist" && isEmptyArray(inheritedAllowFrom)) {
@@ -58,16 +47,6 @@ export const simplexDoctor: ChannelDoctorAdapter = {
     }
 
     const channel = readChannelConfig(cfg);
-    const baseWsUrl = typeof channel.connection?.wsUrl === "string" ? channel.connection.wsUrl : "";
-    if (baseWsUrl) {
-      const security = describeSimplexWsEndpointSecurity(baseWsUrl, {
-        allowUnsafeRemoteWs: channel.connection?.allowUnsafeRemoteWs === true,
-      });
-      for (const warning of security.warnings) {
-        warnings.push(`- SimpleX ${warning}`);
-      }
-    }
-
     if (channel.dmPolicy === "allowlist" && isEmptyArray(channel.allowFrom)) {
       warnings.push(
         '- SimpleX dmPolicy="allowlist" is configured with an empty allowFrom list. New contacts will be dropped until allowFrom is populated.'
@@ -84,7 +63,7 @@ export const simplexDoctor: ChannelDoctorAdapter = {
       if (!account) {
         continue;
       }
-      warnings.push(...collectAccountWarnings(channel, accountId, account, doctorFixCommand));
+      warnings.push(...collectAccountWarnings(channel, accountId, account));
     }
 
     return warnings;

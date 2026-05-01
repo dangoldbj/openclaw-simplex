@@ -1,8 +1,7 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { PAIRING_APPROVED_MESSAGE } from "openclaw/plugin-sdk/channel-status";
 import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
-import type { SimplexClientRegistry } from "../gateway/simplex-client-registry.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { buildAndSendSimplexMessages } from "../messaging/simplex-send.js";
 import {
   assertSimplexOutboundAccountReady,
@@ -11,9 +10,9 @@ import {
   stripSimplexPrefix,
 } from "../shared/simplex-common.js";
 
-export function buildSimplexPairing(
-  registry: SimplexClientRegistry
-): NonNullable<ChannelPlugin<ResolvedSimplexAccount>["pairing"]> {
+export function buildSimplexPairing(): NonNullable<
+  ChannelPlugin<ResolvedSimplexAccount>["pairing"]
+> {
   return {
     idLabel: "simplexContactId",
     normalizeAllowEntry: (entry) => stripLeadingAt(stripSimplexPrefix(entry)),
@@ -22,7 +21,6 @@ export function buildSimplexPairing(
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
       await buildAndSendSimplexMessages({
-        registry,
         cfg,
         account,
         chatRef: normalizeSimplexContactRef(id),

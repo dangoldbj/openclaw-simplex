@@ -12,9 +12,7 @@ The plugin reads configuration from <code>channels.openclaw-simplex</code>.
   "channels": {
     "openclaw-simplex": {
       "enabled": true,
-      "connection": {
-        "wsUrl": "ws://127.0.0.1:5225"
-      }
+      "connection": {}
     }
   }
 }
@@ -41,7 +39,6 @@ If <code>accounts</code> is not set, the root <code>channels.openclaw-simplex</c
       "groupAllowFrom": [],
       "mediaMaxMb": 5,
       "connection": {
-        "wsUrl": "ws://127.0.0.1:5225",
         "connectTimeoutMs": 15000
       }
     }
@@ -60,9 +57,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
       "enabled": true,
       "dmPolicy": "pairing",
       "groupPolicy": "allowlist",
-      "connection": {
-        "wsUrl": "ws://127.0.0.1:5225"
-      },
+      "connection": {},
       "accounts": {
         "ops": {
           "name": "Ops",
@@ -70,7 +65,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
           "reactionLevel": "extensive",
           "allowFrom": ["alice", "bob"],
           "connection": {
-            "wsUrl": "ws://127.0.0.1:7777"
+            "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex-ops"
           }
         }
       }
@@ -100,37 +95,35 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `markdown` | Markdown rendering config from OpenClaw's shared channel schema. |
 | `blockStreaming` | If true, buffer the response instead of streaming partial output. |
 | `blockStreamingCoalesce` | Optional response coalescing behavior for blocked streaming. |
-| `connection.mode` | Connection mode. Only `external` is supported. |
-| `connection.wsUrl` | WebSocket URL for the running `simplex-chat` WebSocket API. If set, this wins over `wsHost`/`wsPort`. |
-| `connection.wsHost` | Optional host fallback when `wsUrl` is not set. Default: `127.0.0.1`. |
-| `connection.wsPort` | Optional port fallback when `wsUrl` is not set. Default: `5225`. |
+| `connection.dbFilePrefix` | SQLite database file prefix for the Node runtime. Default: `~/.openclaw/simplex/openclaw-simplex` with account-specific suffixes for named accounts. |
+| `connection.displayName` | Display name used when the Node runtime creates its SimpleX profile. |
+| `connection.fullName` | Full name used when the Node runtime creates its SimpleX profile. |
+| `connection.migrationConfirmation` | Database migration confirmation mode: `yesUp` \| `yesUpDown` \| `console` \| `error`. |
 | `connection.autoAcceptFiles` | Whether incoming file transfers should be auto-accepted by the SimpleX runtime. |
-| `connection.connectTimeoutMs` | WebSocket connection timeout in milliseconds. |
-| `connection.allowUnsafeRemoteWs` | Explicitly allow plaintext `ws://` to a non-loopback host. Use only for private sidecar networks or firewall-protected deployments. |
+| `connection.connectTimeoutMs` | Runtime connection/start timeout in milliseconds. |
 | `accounts.<accountId>` | Per-account overrides for the same schema. |
 
 <Note>
-  A channel/account is considered configured only when <code>connection.wsUrl</code>, <code>connection.wsHost</code>, or <code>connection.wsPort</code> is present. If none of those are set, OpenClaw will not treat the channel as startup-ready.
+  A channel/account is considered configured when <code>connection</code> exists. If it is omitted, OpenClaw will not treat the channel as startup-ready.
 </Note>
 
 ## What belongs in plugin config vs runtime startup
 
-This plugin talks to an already running external <code>simplex-chat</code> process. That means the OpenClaw config only models settings the plugin can truthfully use at runtime.
+The runtime is the official <code>simplex-chat</code> Node package. There is no separate <code>simplex-chat</code> CLI process and no local WebSocket endpoint.
 
 ### Good fit for plugin config
 
-- <code>connection.wsUrl</code>, <code>wsHost</code>, <code>wsPort</code>
+- <code>connection.dbFilePrefix</code>, <code>displayName</code>, <code>fullName</code>, and <code>migrationConfirmation</code>
 - <code>connection.connectTimeoutMs</code>
 - <code>connection.autoAcceptFiles</code>
-- <code>connection.allowUnsafeRemoteWs</code> when a private sidecar network requires a non-loopback host such as <code>simplex-chat</code>
 - OpenClaw policy and UX settings such as <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, <code>actions</code>, and <code>reactionLevel</code>
 
 ### Intentionally not mirrored into plugin config
 
-These are primarily <code>simplex-chat</code> startup or environment flags, so they belong in the host-managed service command line, not in <code>channels.openclaw-simplex</code>:
+These <code>simplex-chat</code> CLI startup flags are not part of this plugin's runtime model:
 
 - transport/bootstrap: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--socks-mode</code>, <code>--host-mode</code>, <code>--required-host-mode</code>, <code>--smp-proxy</code>, <code>--smp-proxy-fallback</code>, <code>--smp-web-port</code>
 - local process/file layout: <code>-d/--database</code>, <code>-k/--key</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
 - runtime process behavior: <code>--device-name</code>, <code>--maintenance</code>, <code>--mute</code>, <code>--mark-read</code>, <code>--reactions</code>, <code>--create-bot-display-name</code>
 
-Those flags can still be valuable, but the right place to set them is the supervised <code>simplex-chat</code> service definition described in [Runtime Setup](/guide/runtime-setup).
+If you need those CLI-only controls, they are outside this Node-runtime-only plugin path.

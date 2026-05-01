@@ -5,17 +5,7 @@ description: Copy-paste CLI commands for common OpenClaw SimpleX tasks like gene
 
 Use this page as a command cookbook after the first setup is working. For the full first-run flow, start with [Getting Started](/guide/getting-started).
 
-<Info>
-  The long-running <code>simplex-chat -p 5225</code> process should run in a separate terminal or as a host-managed service. See [Runtime Setup](/guide/runtime-setup) for persistent startup.
-</Info>
-
 ## Install and verify
-
-Start the SimpleX WebSocket runtime:
-
-```bash
-simplex-chat -p 5225
-```
 
 Install plugin in OpenClaw:
 
@@ -38,22 +28,10 @@ openclaw config set plugins.allow "$(
 )" --strict-json
 ```
 
-Configure the WebSocket endpoint:
+Configure the default Node runtime:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
-```
-
-Preview a supervised local runtime service:
-
-```bash
-openclaw simplex runtime install-service --dry-run
-```
-
-Install and start that service after reviewing the plan:
-
-```bash
-openclaw simplex runtime install-service --start
+openclaw channels add --channel openclaw-simplex
 ```
 
 Verify that OpenClaw sees and trusts the plugin:
@@ -127,17 +105,6 @@ Preview migration only:
 ```bash
 openclaw simplex migrate --dry-run
 ```
-
-## SimpleX console commands
-
-Run these inside the <code>simplex-chat</code> console if you want to manage links directly from the runtime:
-
-| Command | Meaning |
-| --- | --- |
-| `/c` | Create a one-time connect link. |
-| `/ad` | Create or return the account address link. |
-| `/show_address` | Show the current address link. |
-| `/delete_address` | Revoke the current address link. |
 
 ## Gateway method names
 

@@ -10,7 +10,7 @@ import { registerSimplexToolHooks, registerSimplexTools } from "./src/tools/plug
 const pluginEntry: ReturnType<typeof defineChannelPluginEntry> = defineChannelPluginEntry({
   id: SIMPLEX_PLUGIN_ID,
   name: "SimpleX",
-  description: "SimpleX Chat channel plugin via external WebSocket API",
+  description: "SimpleX Chat channel plugin via the official Node runtime",
   plugin: simplexPlugin,
   setRuntime: setSimplexRuntime,
   registerCliMetadata: registerSimplexCliMetadata,

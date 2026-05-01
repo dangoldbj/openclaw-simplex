@@ -9,10 +9,6 @@ function setMockResponse(next: MockResponse | MockResponse[]): void {
   mockSendResponses = Array.isArray(next) ? [...next] : [next];
 }
 
-function getLastCommand(): string | null {
-  return sentCommands[sentCommands.length - 1] ?? null;
-}
-
 function getCommands(): string[] {
   return [...sentCommands];
 }
@@ -22,17 +18,52 @@ function resetMockState(): void {
   mockSendResponses = [{ resp: { type: "ok" } }];
 }
 
+function nextMockPayload(): MockResponse {
+  const next = mockSendResponses.shift();
+  return (next && "resp" in next ? next.resp : (next ?? { type: "ok" })) as MockResponse;
+}
+
+function extractMockLink(value: unknown): string | null {
+  if (typeof value === "string") {
+    return value.match(/simplex:\/\/\S+/)?.[0] ?? null;
+  }
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  return extractMockLink(record.output) ?? extractMockLink(record.message);
+}
+
+function mockContactLink(link: string | null): MockResponse {
+  return {
+    connShortLink: link ?? "simplex://address-mock",
+  };
+}
+
 const qrMocks = vi.hoisted(() => ({
   toDataURL: vi.fn(async () => "data:image/png;base64,mock-base64"),
 }));
 
-vi.mock("./src/simplex/simplex-ws-client.js", () => ({
-  SimplexWsClient: class {
+vi.mock("./src/simplex/simplex-node-client.js", () => ({
+  SimplexNodeClient: class {
     async connect() {}
-    async sendCommand(cmd: string) {
-      sentCommands.push(cmd);
-      const next = mockSendResponses.shift();
-      return next ?? { resp: { type: "ok" } };
+    async withApi<T>(fn: (api: Record<string, unknown>) => Promise<T>) {
+      const api = {
+        apiGetActiveUser: vi.fn(async () => ({ userId: 1 })),
+        apiCreateLink: vi.fn(
+          async () => extractMockLink(nextMockPayload()) ?? "simplex://invite-mock"
+        ),
+        apiGetUserAddress: vi.fn(async () => mockContactLink(extractMockLink(nextMockPayload()))),
+        apiCreateUserAddress: vi.fn(async () =>
+          mockContactLink(extractMockLink(nextMockPayload()))
+        ),
+        apiDeleteUserAddress: vi.fn(async () => undefined),
+        apiListContacts: vi.fn(async () => [nextMockPayload()]),
+        apiSendMessages: vi.fn(async () => [{ chatItem: { meta: { itemId: 1 } } }]),
+        apiReceiveFile: vi.fn(async () => ({ chatItem: { meta: { itemId: 1 } } })),
+        apiCancelFile: vi.fn(async () => undefined),
+      };
+      return await fn(api);
     }
     async close() {}
   },
@@ -51,9 +82,7 @@ import { simplexPlugin } from "./src/channel/plugin.js";
 const simplexConfiguredChannel = {
   channels: {
     "openclaw-simplex": {
-      connection: {
-        wsUrl: "ws://127.0.0.1:5225",
-      },
+      connection: {},
     },
   },
 };
@@ -68,13 +97,6 @@ const noopLogger = {
 type Handler = (ctx: {
   params?: Record<string, unknown>;
   respond: (ok: boolean, payload?: unknown, err?: unknown) => void;
-  context: {
-    startChannel: (channel: string, accountId?: string) => Promise<void>;
-    getRuntimeSnapshot: () => {
-      channels?: Record<string, { running?: boolean }>;
-      channelAccounts?: Record<string, Record<string, { running?: boolean }>>;
-    };
-  };
 }) => Promise<void>;
 
 type BeforeToolCallHook = (event: { toolName: string; params: Record<string, unknown> }) => unknown;
@@ -347,11 +369,11 @@ describe("simplex channel config and allowlist adapters", () => {
     const cfg = {
       channels: {
         "openclaw-simplex": {
-          connection: { wsUrl: "ws://127.0.0.1:5225" },
+          connection: {},
           allowFrom: ["@base"],
           accounts: {
             ops: {
-              connection: { wsUrl: "ws://127.0.0.1:6225" },
+              connection: { dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops" },
               allowFrom: ["@ops"],
             },
           },
@@ -515,10 +537,6 @@ describe("simplex invite gateway", () => {
     await handler({
       params: { mode: "bad" },
       respond,
-      context: {
-        startChannel: async () => {},
-        getRuntimeSnapshot: () => ({ channels: {}, channelAccounts: {} }),
-      },
     });
     const firstCall = respond.mock.calls[0];
     expect(firstCall).toBeDefined();
@@ -542,13 +560,6 @@ describe("simplex invite gateway", () => {
     await handler({
       params: { mode: "connect" },
       respond,
-      context: {
-        startChannel: async () => {},
-        getRuntimeSnapshot: () => ({
-          channels: { "openclaw-simplex": { running: false } },
-          channelAccounts: {},
-        }),
-      },
     });
 
     const firstCall = respond.mock.calls[0];
@@ -563,11 +574,11 @@ describe("simplex invite gateway", () => {
       qrDataUrl: "data:image/png;base64,mock-base64",
       mode: "connect",
     });
-    expect(getLastCommand()).toBe("/c");
+    expect(getCommands()).toEqual([]);
     expect(qrMocks.toDataURL).toHaveBeenCalledWith("simplex://invite123", expect.any(Object));
   });
 
-  it("uses address mode to build invite command", async () => {
+  it("uses address mode to create or return an address link", async () => {
     setMockResponse({
       resp: {
         type: "ok",
@@ -580,13 +591,6 @@ describe("simplex invite gateway", () => {
     await handler({
       params: { mode: "address" },
       respond,
-      context: {
-        startChannel: async () => {},
-        getRuntimeSnapshot: () => ({
-          channels: { "openclaw-simplex": { running: true } },
-          channelAccounts: {},
-        }),
-      },
     });
 
     const firstCall = respond.mock.calls[0];
@@ -600,7 +604,7 @@ describe("simplex invite gateway", () => {
       link: "simplex://address456",
       mode: "address",
     });
-    expect(getLastCommand()).toBe("/ad");
+    expect(getCommands()).toEqual([]);
   });
 
   it("lists address links and pending hints", async () => {
@@ -624,13 +628,6 @@ describe("simplex invite gateway", () => {
     await handler({
       params: {},
       respond,
-      context: {
-        startChannel: async () => {},
-        getRuntimeSnapshot: () => ({
-          channels: { "openclaw-simplex": { running: true } },
-          channelAccounts: {},
-        }),
-      },
     });
 
     const firstCall = respond.mock.calls[0];
@@ -643,11 +640,11 @@ describe("simplex invite gateway", () => {
     expect(payload).toMatchObject({
       accountId: "default",
       addressLink: "simplex://address789",
-      links: ["simplex://address789", "simplex://invite999"],
+      links: ["simplex://address789"],
       addressQrDataUrl: "data:image/png;base64,mock-base64",
     });
-    expect((payload as { pendingHints?: string[] }).pendingHints?.length).toBeGreaterThan(0);
-    expect(getCommands()).toEqual(["/show_address", "/contacts"]);
+    expect((payload as { pendingHints?: string[] }).pendingHints).toEqual([]);
+    expect(getCommands()).toEqual([]);
     expect(qrMocks.toDataURL).toHaveBeenCalledWith("simplex://address789", expect.any(Object));
   });
 
@@ -657,7 +654,7 @@ describe("simplex invite gateway", () => {
         "openclaw-simplex": {
           accounts: {
             ops: {
-              connection: { wsUrl: "ws://127.0.0.1:7777", mode: "external" },
+              connection: { dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops" },
             },
           },
         },
@@ -667,13 +664,6 @@ describe("simplex invite gateway", () => {
     await handler({
       params: { accountId: "ops" },
       respond,
-      context: {
-        startChannel: async () => {},
-        getRuntimeSnapshot: () => ({
-          channels: { "openclaw-simplex": { running: true } },
-          channelAccounts: { "openclaw-simplex": { ops: { running: true } } },
-        }),
-      },
     });
 
     const firstCall = respond.mock.calls[0];
@@ -684,10 +674,10 @@ describe("simplex invite gateway", () => {
     const [ok, payload] = firstCall;
     expect(ok).toBe(true);
     expect(payload).toMatchObject({ accountId: "ops" });
-    expect(getLastCommand()).toBe("/delete_address");
+    expect(getCommands()).toEqual([]);
   });
 
-  it("uses the configured default account runtime when accountId is omitted", async () => {
+  it("uses the configured default account when accountId is omitted", async () => {
     setMockResponse({
       resp: {
         type: "ok",
@@ -700,24 +690,16 @@ describe("simplex invite gateway", () => {
         "openclaw-simplex": {
           accounts: {
             ops: {
-              connection: { wsUrl: "ws://127.0.0.1:7777", mode: "external" },
+              connection: { dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops" },
             },
           },
         },
       },
     });
     const respond = vi.fn();
-    const startChannel = vi.fn(async () => {});
     await handler({
       params: { mode: "address" },
       respond,
-      context: {
-        startChannel,
-        getRuntimeSnapshot: () => ({
-          channels: { "openclaw-simplex": { running: false } },
-          channelAccounts: { "openclaw-simplex": { ops: { running: true } } },
-        }),
-      },
     });
 
     const firstCall = respond.mock.calls[0];
@@ -732,6 +714,5 @@ describe("simplex invite gateway", () => {
       mode: "address",
       link: "simplex://address999",
     });
-    expect(startChannel).not.toHaveBeenCalled();
   });
 });

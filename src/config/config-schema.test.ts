@@ -77,7 +77,7 @@ describe("simplex config schema manifest", () => {
       detailLabel: "SimpleX Chat",
       aliases: ["simplex"],
       systemImage: "link.badge.plus",
-      selectionExtras: ["Invite-based reachability", "External WebSocket runtime"],
+      selectionExtras: ["Invite-based reachability", "Official Node runtime"],
       markdownCapable: true,
       exposure: {
         configured: true,

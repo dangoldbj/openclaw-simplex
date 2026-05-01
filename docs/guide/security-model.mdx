@@ -1,6 +1,6 @@
 ---
 title: Security Model
-description: Learn how invite-link access control, OpenClaw pairing and allowlist policies, and simplex-chat runtime trust boundaries work together to secure the channel.
+description: Learn how invite-link access control, OpenClaw pairing and allowlist policies, and SimpleX runtime trust boundaries work together to secure the channel.
 ---
 
 The core security property of this channel is that reachability starts from an invitation, not from a public bot identity. OpenClaw then adds policy checks before a sender can trigger agent work.
@@ -9,7 +9,7 @@ There are three boundaries to keep straight:
 
 - the SimpleX invite or address link controls who can reach the agent at all
 - OpenClaw policy controls who is allowed to trigger agent work after a message arrives
-- the external <code>simplex-chat</code> runtime boundary controls where process and relay trust live
+- the SimpleX runtime boundary controls where process, storage, and relay trust live
 
 <Tip>
   Start conservative: use <code>dmPolicy: "pairing"</code> and <code>groupPolicy: "allowlist"</code> until you have a reason to widen access.
@@ -37,28 +37,23 @@ There are three boundaries to keep straight:
 
 ## Operational boundaries
 
-- OpenClaw only talks to an already-running <code>simplex-chat</code> endpoint over WebSocket.
-- Keep that endpoint loopback-only whenever possible: <code>ws://127.0.0.1:5225</code> or <code>ws://localhost:5225</code>.
-- Do not publish the <code>simplex-chat</code> WebSocket port from Docker, Kubernetes, or a VM unless it is protected by a private network boundary and host firewall rules.
+- The plugin uses the official <code>simplex-chat</code> Node package in the OpenClaw process, avoiding a separate unauthenticated local WebSocket control surface.
+- A fatal SimpleX native/runtime failure can affect the OpenClaw process because they share process fate.
 - You decide where the runtime runs, which relay path it uses, and whether relays are public or self-hosted.
-- If you need a fully internal deployment, keep <code>simplex-chat</code> and your relays inside that network boundary.
-- External runtime mode is the supported deployment model for this plugin. OpenClaw does not spawn or supervise <code>simplex-chat</code> here.
-- The plugin warns through OpenClaw doctor/runtime logs when the WebSocket URL uses plaintext <code>ws://</code> against a non-loopback host or targets wildcard bind addresses such as <code>0.0.0.0</code>.
-- By default, plaintext <code>ws://</code> to a non-loopback host is blocked. Set <code>connection.allowUnsafeRemoteWs: true</code> only for private sidecar networks or equivalent firewall-protected deployments.
+- If you need a fully internal deployment, keep the runtime database and your relays inside that network boundary.
 
 ## What this does not protect against
 
 - Anyone with a currently valid invite or address link can attempt to contact the agent. Use pairing and allowlists if that link may be shared beyond your intended audience.
 - If you set <code>dmPolicy: "open"</code> and <code>allowFrom: ["*"]</code>, a shared link becomes broad access to the agent.
 - If <code>simplex-chat</code> uses public relays, traffic still traverses third-party relay infrastructure even though message contents are end-to-end encrypted.
-- SimpleX E2EE protects transport to the local runtime. Messages are plaintext inside <code>simplex-chat</code>, this plugin, OpenClaw, logs, and any agent tools that receive them.
-- A reachable <code>simplex-chat</code> WebSocket endpoint is a local control surface. Treat it like a privileged local service, not a public API.
+- SimpleX E2EE protects transport to the local runtime. Messages are plaintext inside the SimpleX runtime, this plugin, OpenClaw, logs, and any agent tools that receive them.
 
 ## Recommended production posture
 
 - Start with `dmPolicy: "pairing"` and `groupPolicy: "allowlist"`.
 - Keep `allowFrom`/`groupAllowFrom` narrow.
 - Prefer one-time invite links for onboarding and revoke address links when they are no longer needed.
-- Bind the SimpleX WebSocket runtime to loopback, and prefer sidecar/private-network deployment if OpenClaw and <code>simplex-chat</code> run in separate containers.
+- Protect the SimpleX database and file-transfer directories as sensitive local state.
 - Keep incoming media capped with `mediaMaxMb`; disable `connection.autoAcceptFiles` if your agent should not receive files.
 - Monitor status snapshots and logs for repeated authorization failures.

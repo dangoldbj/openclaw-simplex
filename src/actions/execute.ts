@@ -2,20 +2,25 @@ import type { ChannelMessageActionName } from "openclaw/plugin-sdk/channel-contr
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { buildComposedMessages } from "../channel/media/simplex-media.js";
 import { resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
 import {
-  buildAddGroupMemberCommand,
-  buildDeleteChatItemCommand,
-  buildLeaveGroupCommand,
-  buildReactionCommand,
-  buildRemoveGroupMemberCommand,
-  buildSendMessagesCommand,
-  buildUpdateChatItemCommand,
-  buildUpdateGroupProfileCommand,
-  type SimplexComposedMessage,
-} from "../simplex/simplex-commands.js";
-import { resolveSimplexCommandError } from "../simplex/simplex-errors.js";
-import { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+  parseSimplexApiChatRef,
+  parseSimplexNumericId,
+  resolveSimplexChatItemId,
+  toSimplexApiChatRef,
+  toSimplexApiChatType,
+} from "../simplex/simplex-api.js";
+import { withSimplexApi } from "../simplex/simplex-transport.js";
+import type { SimplexActionParams, ToolResult } from "../types/actions.js";
+import type { ResolvedSimplexAccount } from "../types/config.js";
+import type {
+  SimplexApiComposedMessage,
+  SimplexApiDeleteMode,
+  SimplexApiGroupMemberRole,
+  SimplexApiGroupProfile,
+  SimplexApiMsgContent,
+  SimplexApiReaction,
+  SimplexComposedMessage,
+} from "../types/simplex.js";
 import { assertSimplexReactActionAllowed } from "./discovery.js";
 import {
   normalizeSimplexGroupRef,
@@ -29,23 +34,6 @@ import {
 } from "./params.js";
 import { jsonResult } from "./result.js";
 import { SIMPLEX_SUPPORTED_ACTIONS } from "./schema.js";
-import type { SimplexActionParams, ToolResult } from "./types.js";
-
-async function withSimplexClient<T>(
-  account: ResolvedSimplexAccount,
-  fn: (client: SimplexWsClient) => Promise<T>
-): Promise<T> {
-  const client = new SimplexWsClient({
-    url: account.wsUrl,
-    connectTimeoutMs: account.config.connection?.connectTimeoutMs,
-  });
-  await client.connect();
-  try {
-    return await fn(client);
-  } finally {
-    await client.close();
-  }
-}
 
 async function resolveEditMessage(params: {
   cfg: OpenClawConfig;
@@ -75,30 +63,19 @@ async function sendActionComposedMessages(params: {
   if (params.composedMessages.length === 0) {
     return {};
   }
-  const cmd = buildSendMessagesCommand({
-    chatRef: params.chatRef,
-    composedMessages: params.composedMessages,
+  const apiChatRef = parseSimplexApiChatRef(params.chatRef);
+  if (!apiChatRef) {
+    throw new Error(`SimpleX chat ref must be numeric for runtime API: ${params.chatRef}`);
+  }
+  const chatItems = await withSimplexApi({
+    account: params.account,
+    run: (api) =>
+      api.apiSendMessages(
+        toSimplexApiChatRef(apiChatRef),
+        params.composedMessages as SimplexApiComposedMessage[]
+      ),
   });
-  const response = await withSimplexClient(params.account, (client) => client.sendCommand(cmd));
-  const resp = response.resp as {
-    type?: string;
-    chatError?: { errorType?: { type?: string; message?: string } };
-    chatItems?: Array<{ chatItem?: { meta?: { itemId?: unknown } } }>;
-    itemId?: unknown;
-    messageId?: unknown;
-  };
-  const commandError = resolveSimplexCommandError(resp);
-  if (commandError) {
-    throw new Error(commandError);
-  }
-  const rawMessageId = resp.chatItems?.[0]?.chatItem?.meta?.itemId ?? resp.messageId ?? resp.itemId;
-  if (typeof rawMessageId === "number" && Number.isFinite(rawMessageId)) {
-    return { messageId: String(rawMessageId) };
-  }
-  if (typeof rawMessageId === "string" && rawMessageId.trim()) {
-    return { messageId: rawMessageId.trim() };
-  }
-  return {};
+  return { messageId: resolveSimplexChatItemId(chatItems[0]) };
 }
 
 export async function executeSimplexAction(params: {
@@ -180,13 +157,25 @@ export async function executeSimplexAction(params: {
     if (!reaction) {
       throw new Error("reaction or emoji required");
     }
-    const cmd = buildReactionCommand({
-      chatRef,
-      chatItemId: messageId,
-      add: !remove,
-      reaction,
+    const apiChatRef = parseSimplexApiChatRef(chatRef);
+    if (!apiChatRef) {
+      throw new Error(`SimpleX chat ref must be numeric for runtime API: ${chatRef}`);
+    }
+    const apiReaction =
+      emoji && !("type" in reaction)
+        ? ({ type: "emoji", emoji } as unknown as SimplexApiReaction)
+        : (reaction as unknown as SimplexApiReaction);
+    await withSimplexApi({
+      account,
+      run: (api) =>
+        api.apiChatItemReaction(
+          toSimplexApiChatType(apiChatRef),
+          apiChatRef[1],
+          messageId,
+          !remove,
+          apiReaction
+        ),
     });
-    await withSimplexClient(account, (client) => client.sendCommand(cmd));
     return jsonResult({ ok: true, action: remove ? "removed" : "added", emoji });
   }
 
@@ -204,23 +193,41 @@ export async function executeSimplexAction(params: {
       throw new Error("text required");
     }
     const updatedMessage = await resolveEditMessage({ cfg, account, text });
-    const cmd = buildUpdateChatItemCommand({
-      chatRef,
-      chatItemId: messageId,
-      updatedMessage,
+    const apiChatRef = parseSimplexApiChatRef(chatRef);
+    if (!apiChatRef) {
+      throw new Error(`SimpleX chat ref must be numeric for runtime API: ${chatRef}`);
+    }
+    await withSimplexApi({
+      account,
+      run: (api) =>
+        api.apiUpdateChatItem(
+          toSimplexApiChatType(apiChatRef),
+          apiChatRef[1],
+          messageId,
+          updatedMessage.msgContent as SimplexApiMsgContent,
+          false
+        ),
     });
-    await withSimplexClient(account, (client) => client.sendCommand(cmd));
     return jsonResult({ ok: true, updated: messageId });
   }
 
   if (action === "delete" || action === "unsend") {
     const messageIds = readMessageIds(toolParams);
-    const cmd = buildDeleteChatItemCommand({
-      chatRef,
-      chatItemIds: messageIds,
-      deleteMode: readDeleteMode(toolParams),
+    const deleteMode = readDeleteMode(toolParams);
+    const apiChatRef = parseSimplexApiChatRef(chatRef);
+    if (!apiChatRef) {
+      throw new Error(`SimpleX chat ref must be numeric for runtime API: ${chatRef}`);
+    }
+    await withSimplexApi({
+      account,
+      run: (api) =>
+        api.apiDeleteChatItems(
+          toSimplexApiChatType(apiChatRef),
+          apiChatRef[1],
+          messageIds.map((id) => Math.trunc(Number(id))),
+          (deleteMode ?? "broadcast") as SimplexApiDeleteMode
+        ),
     });
-    await withSimplexClient(account, (client) => client.sendCommand(cmd));
     return jsonResult({ ok: true, deleted: messageIds });
   }
 
@@ -235,11 +242,15 @@ export async function executeSimplexAction(params: {
       } catch (err) {
         throw new Error(`Invalid profile JSON: ${String(err)}`, { cause: err });
       }
-      const cmd = buildUpdateGroupProfileCommand({
-        groupId: normalizeSimplexGroupRef(target),
-        profile,
+      const groupId = parseSimplexNumericId(normalizeSimplexGroupRef(target));
+      if (groupId === null) {
+        throw new Error(`SimpleX group id must be numeric for runtime API: ${target}`);
+      }
+      await withSimplexApi({
+        account,
+        run: (api) =>
+          api.apiUpdateGroupProfile(groupId, profile as unknown as SimplexApiGroupProfile),
       });
-      await withSimplexClient(account, (client) => client.sendCommand(cmd));
       return jsonResult({ ok: true, group: target, profile });
     }
     const displayName =
@@ -249,11 +260,14 @@ export async function executeSimplexAction(params: {
     if (!displayName) {
       throw new Error("displayName or name required");
     }
-    const cmd = buildUpdateGroupProfileCommand({
-      groupId: normalizeSimplexGroupRef(target),
-      profile: { displayName },
+    const groupId = parseSimplexNumericId(normalizeSimplexGroupRef(target));
+    if (groupId === null) {
+      throw new Error(`SimpleX group id must be numeric for runtime API: ${target}`);
+    }
+    await withSimplexApi({
+      account,
+      run: (api) => api.apiUpdateGroupProfile(groupId, { displayName } as SimplexApiGroupProfile),
     });
-    await withSimplexClient(account, (client) => client.sendCommand(cmd));
     return jsonResult({ ok: true, group: target, displayName });
   }
 
@@ -266,11 +280,15 @@ export async function executeSimplexAction(params: {
     if (!participant) {
       throw new Error("participant or contactId required");
     }
-    const cmd = buildAddGroupMemberCommand({
-      groupId: normalizeSimplexGroupRef(target),
-      contactId: participant,
+    const groupId = parseSimplexNumericId(normalizeSimplexGroupRef(target));
+    const contactId = parseSimplexNumericId(participant);
+    if (groupId === null || contactId === null) {
+      throw new Error("SimpleX group and contact ids must be numeric for runtime API");
+    }
+    await withSimplexApi({
+      account,
+      run: (api) => api.apiAddMember(groupId, contactId, "member" as SimplexApiGroupMemberRole),
     });
-    await withSimplexClient(account, (client) => client.sendCommand(cmd));
     return jsonResult({ ok: true, group: target, added: participant });
   }
 
@@ -283,18 +301,28 @@ export async function executeSimplexAction(params: {
     if (!participant) {
       throw new Error("participant or memberId required");
     }
-    const cmd = buildRemoveGroupMemberCommand({
-      groupId: normalizeSimplexGroupRef(target),
-      memberId: participant,
+    const groupId = parseSimplexNumericId(normalizeSimplexGroupRef(target));
+    const memberId = parseSimplexNumericId(participant);
+    if (groupId === null || memberId === null) {
+      throw new Error("SimpleX group and member ids must be numeric for runtime API");
+    }
+    await withSimplexApi({
+      account,
+      run: (api) => api.apiRemoveMembers(groupId, [memberId]),
     });
-    await withSimplexClient(account, (client) => client.sendCommand(cmd));
     return jsonResult({ ok: true, group: target, removed: participant });
   }
 
   if (action === "leaveGroup") {
     const target = readGroupTarget(toolParams);
-    const cmd = buildLeaveGroupCommand(normalizeSimplexGroupRef(target));
-    await withSimplexClient(account, (client) => client.sendCommand(cmd));
+    const groupId = parseSimplexNumericId(normalizeSimplexGroupRef(target));
+    if (groupId === null) {
+      throw new Error(`SimpleX group id must be numeric for runtime API: ${target}`);
+    }
+    await withSimplexApi({
+      account,
+      run: (api) => api.apiLeaveGroup(groupId),
+    });
     return jsonResult({ ok: true, group: target, left: true });
   }
 

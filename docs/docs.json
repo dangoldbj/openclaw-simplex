@@ -22,7 +22,6 @@
           "guide/how-it-works",
           "guide/architecture",
           "guide/runtime-setup",
-          "guide/production-sidecar",
           "guide/security-model",
           "guide/migration",
           "guide/troubleshooting"

@@ -116,32 +116,29 @@ const accountScopedUiHints = withAccountScope({
   },
   connection: {
     label: "Connection",
-    help: "Transport settings for the external simplex-chat WebSocket runtime.",
+    help: "Runtime settings for the official SimpleX Node runtime.",
   },
-  "connection.mode": {
-    label: "Connection Mode",
-    help: "SimpleX currently supports only the external runtime mode in this plugin.",
+  "connection.dbFilePrefix": {
+    label: "Node DB File Prefix",
+    help: "SQLite database file prefix for the SimpleX Node runtime. Defaults to ~/.openclaw/simplex/openclaw-simplex.",
+    placeholder: "~/.openclaw/simplex/openclaw-simplex",
+    tags: ["runtime", "storage"],
+  },
+  "connection.displayName": {
+    label: "SimpleX Profile Name",
+    help: "Display name used when the Node runtime creates its SimpleX profile.",
     advanced: true,
   },
-  "connection.wsUrl": {
-    label: "WebSocket URL",
-    help: "WebSocket URL for the running simplex-chat API, for example ws://127.0.0.1:5225.",
-    placeholder: "ws://127.0.0.1:5225",
-    tags: ["transport"],
-  },
-  "connection.wsHost": {
-    label: "WebSocket Host",
-    help: "Host override used when wsUrl is not set explicitly.",
-    placeholder: "127.0.0.1",
+  "connection.fullName": {
+    label: "SimpleX Full Name",
+    help: "Full name used when the Node runtime creates its SimpleX profile.",
     advanced: true,
-    tags: ["transport"],
   },
-  "connection.wsPort": {
-    label: "WebSocket Port",
-    help: "Port override used when wsUrl is not set explicitly.",
-    placeholder: "5225",
+  "connection.migrationConfirmation": {
+    label: "DB Migration Mode",
+    help: "SimpleX database migration confirmation mode for the Node runtime.",
     advanced: true,
-    tags: ["transport"],
+    tags: ["runtime", "storage"],
   },
   "connection.autoAcceptFiles": {
     label: "Auto Accept Files",
@@ -151,22 +148,16 @@ const accountScopedUiHints = withAccountScope({
   },
   "connection.connectTimeoutMs": {
     label: "Connect Timeout (ms)",
-    help: "WebSocket connection timeout in milliseconds.",
+    help: "Runtime connection/start timeout in milliseconds.",
     advanced: true,
     tags: ["transport"],
-  },
-  "connection.allowUnsafeRemoteWs": {
-    label: "Allow Unsafe Remote WS",
-    help: "Permit plaintext ws:// connections to non-loopback hosts. Leave off unless the endpoint is protected by a private network, firewall, or authenticated TLS proxy.",
-    advanced: true,
-    tags: ["transport", "security"],
   },
 });
 
 export const simplexChannelConfigUiHints = {
   "": {
     label: "SimpleX",
-    help: "Connect OpenClaw to a separately running simplex-chat WebSocket runtime. Reachability starts from SimpleX invite or address links, while OpenClaw still applies pairing, allowlists, and group policy.",
+    help: "Connect OpenClaw to SimpleX through the official Node runtime. Reachability starts from SimpleX invite or address links, while OpenClaw still applies pairing, allowlists, and group policy.",
   },
   defaultAccount: {
     label: "Default Account",

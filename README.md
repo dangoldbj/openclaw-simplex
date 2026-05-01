@@ -18,7 +18,7 @@ That changes where reachability comes from. The agent does not depend on a publi
 
 **Private, bounded agent access.** A lawyer spinning up an AI assistant for a single client engagement. An HR department running anonymous employee feedback. A therapist giving a patient after-hours access to a support agent. These all benefit from a channel where reachability starts with a link you intentionally shared, not with a public bot endpoint.
 
-**Self-hosted transport, not only self-hosted inference.** If you're running OpenClaw on your own infrastructure and want the runtime and relay path under your control, SimpleX makes that possible. The CLI runs locally, the plugin connects to it over a local WebSocket, and SimpleX relays are self-hostable. If you run the runtime and relays inside your environment, the whole path can stay under your infrastructure.
+**Self-hosted transport, not only self-hosted inference.** If you're running OpenClaw on your own infrastructure and want the runtime and relay path under your control, SimpleX makes that possible. By default the plugin uses the official SimpleX Node runtime in-process, and SimpleX relays are self-hostable. If you run the runtime and relays inside your environment, the whole path can stay under your infrastructure.
 
 **Agent-to-agent transport without a platform account layer.** Two OpenClaw instances, each with this plugin, can talk over SimpleX without relying on a shared bot API platform, phone-number-based identity, or workspace app registration. If you run your own relays inside an isolated environment, the path can stay off third-party infrastructure.
 
@@ -30,32 +30,20 @@ That changes where reachability comes from. The agent does not depend on a publi
 
 **Fresh install:**
 
-1. Install `simplex-chat`:
-
-```bash
-curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
-```
-
-2. Start the WebSocket runtime:
-
-```bash
-simplex-chat -p 5225
-```
-
-3. Install and enable the plugin:
+1. Install and enable the plugin:
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
 openclaw plugins enable openclaw-simplex
 ```
 
-4. Configure the channel:
+2. Configure the channel with the official Node runtime:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex
 ```
 
-5. Generate an invite link:
+3. Generate an invite link:
 
 ```bash
 openclaw simplex invite create --qr
@@ -91,10 +79,10 @@ Full docs: https://openclaw-simplex.mintlify.app/
             | - account/runtime state |
             +------------+------------+
                          |
-                         | WebSocket API
+                         | Node runtime API
                          v
             +-------------------------+
-            |   SimpleX CLI Runtime   |
+            |  SimpleX Node Runtime   |
             |      (simplex-chat)     |
             +------------+------------+
                          |
@@ -105,16 +93,9 @@ Full docs: https://openclaw-simplex.mintlify.app/
             +-------------------------+
 ```
 
-The plugin connects OpenClaw to a locally running `simplex-chat` process via its WebSocket API. Incoming messages are normalized into the standard OpenClaw message context. OpenClaw applies your policies (`dmPolicy`, `allowFrom`, group policy), runs the agent, and sends the response back through SimpleX.
+The plugin connects OpenClaw to SimpleX through the official `simplex-chat` Node runtime by default. Incoming messages are normalized into the standard OpenClaw message context. OpenClaw applies your policies (`dmPolicy`, `allowFrom`, group policy), runs the agent, and sends the response back through SimpleX.
 
-The key runtime boundary is explicit: OpenClaw does not own or supervise the `simplex-chat` process. You run it separately, point OpenClaw at its WebSocket endpoint, and the channel becomes operational. This gives you full control over the runtime lifecycle.
-
-For persistent startup, the plugin CLI can install a user-level `systemd` or `launchd` service after showing a confirmation plan:
-
-```bash
-openclaw simplex runtime install-service --dry-run
-openclaw simplex runtime install-service --start
-```
+There is no separate `simplex-chat` CLI process and no local WebSocket API to expose or supervise. The SimpleX runtime lives inside the OpenClaw plugin process through the official Node/FFI package.
 
 ---
 
@@ -127,47 +108,17 @@ openclaw simplex runtime install-service --start
 - Shared `message` actions including `upload-file`, reactions, polls, edits, deletes, and group actions
 - Plugin tools and gateway methods for invite and group administration
 - Runtime status reporting, command handling, heartbeat readiness, and Control UI configuration
-- External WebSocket runtime integration with explicit operator-managed lifecycle
+- Official SimpleX Node runtime integration
 
 ---
 
 ## Install
 
-### 1. Install SimpleX CLI (`simplex-chat`)
-
-Official installer:
-
-```bash
-curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
-```
-
-If the official installer resolves the wrong Darwin/Linux target:
-
-```bash
-curl -o- https://raw.githubusercontent.com/dangoldbj/simplex-chat/install-arch-matrix/install.sh | bash
-```
-
-Verify:
-
-```bash
-simplex-chat -h
-```
-
-Start the long-running WebSocket process:
-
-```bash
-simplex-chat -p 5225
-```
-
----
-
-### 2. Install in OpenClaw
+### 1. Install in OpenClaw
 
 ```bash
 openclaw plugins install @dangoldbj/openclaw-simplex
 ```
-
-This release no longer requires the unsafe-install override because the plugin does not spawn `simplex-chat`.
 
 Enable:
 
@@ -186,12 +137,27 @@ openclaw config set plugins.allow "$(
 
 This appends `openclaw-simplex` to the existing allowlist instead of replacing it.
 
+---
+
+### 2. Configure the default Node runtime
+
+```bash
+openclaw channels add --channel openclaw-simplex
+```
+
+This writes channel config that uses the official Node runtime. The default SimpleX database file prefix is `~/.openclaw/simplex/openclaw-simplex`.
+
+If your package manager blocks native dependency build scripts, approve the `simplex-chat` package build before starting OpenClaw. With pnpm, run:
+
+```bash
+pnpm approve-builds
+```
+
 **Important:**
 
 - `openclaw plugins enable openclaw-simplex` only enables the plugin
 - OpenClaw will not start the SimpleX channel until `channels.openclaw-simplex.connection` is configured
-- Configure `channels.openclaw-simplex.connection.wsUrl` to point to the running SimpleX WebSocket endpoint
-- If `simplex-chat` is not running at that endpoint, OpenClaw marks the channel disconnected and stores the error in channel status
+- The official Node runtime is the only supported runtime
 - The interactive `openclaw channels add` picker may not list this external plugin yet
 - The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
 
@@ -204,28 +170,23 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
   "channels": {
     "openclaw-simplex": {
       "enabled": true,
-      "connection": {
-        "wsUrl": "ws://127.0.0.1:5225"
-      },
+      "connection": {},
       "allowFrom": ["*"]
     }
   }
 }
 ```
 
-OpenClaw does not own the `simplex-chat` process for this plugin. If you want it to start automatically, use the plugin CLI service installer or run it as a host-managed service.
-
-For production, treat `simplex-chat` as a private sidecar: keep the WebSocket on loopback or a private container network, do not publish port `5225`, and use `connection.allowUnsafeRemoteWs: true` only when a non-loopback host is protected by that private boundary.
+The SimpleX runtime runs inside the OpenClaw plugin process through the official Node library.
 
 Keep the split clear:
 
-- `channels.openclaw-simplex` is for OpenClaw-side channel behavior and the WebSocket endpoint
-- `simplex-chat` CLI flags such as `--device-name`, `--files-folder`, `--temp-folder`, proxy settings, relay selection, and `--maintenance` belong in the external runtime service definition
+- `channels.openclaw-simplex` is for OpenClaw-side channel behavior and Node runtime storage
+- OpenClaw still owns policy and agent execution; the plugin translates events and runtime API calls
 
 Docs:
 
 - Runtime setup: https://openclaw-simplex.mintlify.app/guide/runtime-setup
-- Production sidecar: https://openclaw-simplex.mintlify.app/guide/production-sidecar
 
 ---
 
@@ -240,25 +201,12 @@ openclaw simplex invite create --qr
 # List current invite and address state
 openclaw simplex invite list
 
-# Install a supervised simplex-chat service after reviewing the plan
-openclaw simplex runtime install-service --dry-run
-openclaw simplex runtime install-service --start
-
 # Show the current address link
 openclaw simplex address show --qr
 
 # Revoke the current address link
 openclaw simplex address revoke
 ```
-
-You can also use the `simplex-chat` console directly:
-
-| Command | Effect |
-|---|---|
-| `/c` | Create a one-time connect link |
-| `/ad` | Create or return the account address link |
-| `/show_address` | Show the current address link |
-| `/delete_address` | Revoke the current address link |
 
 For automation and integrations, OpenClaw exposes gateway methods:
 
@@ -306,8 +254,7 @@ Current note:
 - OpenClaw applies sender gating via `dmPolicy`, `allowFrom`, and group policy
 - Pairing-based approval can require explicit acceptance before a new contact can trigger the agent
 - Same-chat exec approvals are supported for authorized SimpleX senders
-- OpenClaw does not embed the SimpleX runtime; runtime control stays explicit and can be delegated to `systemd`, `launchd`, Docker, or another supervisor
-- Plaintext non-loopback `ws://` endpoints are blocked unless `connection.allowUnsafeRemoteWs` is explicitly set for a private sidecar/proxy deployment
+- The SimpleX runtime is embedded through the official Node library; there is no separate local WebSocket control surface
 - The plugin does not depend on a platform bot registry or hosted messaging API
 
 ---
@@ -317,8 +264,7 @@ Current note:
 ```bash
 openclaw plugins list
 openclaw plugins info openclaw-simplex
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
-openclaw simplex runtime install-service --dry-run
+openclaw channels add --channel openclaw-simplex
 openclaw simplex migrate --dry-run
 openclaw simplex invite create --qr
 openclaw pairing list
@@ -344,7 +290,7 @@ openclaw pairing list
 | Symptom | Fix |
 |---|---|
 | Plugin not visible | Check `plugins.allow` and run `openclaw plugins list` |
-| Channel not starting | Verify `channels.openclaw-simplex.connection` exists and points to a running SimpleX runtime |
+| Channel not starting | Verify `channels.openclaw-simplex.connection` exists and the Node runtime can write its database path |
 | `Configured No` | Add explicit `channels.openclaw-simplex.connection` config; plugin defaults alone are not enough for startup |
 | Inbound issues | Review `allowFrom`, `dmPolicy`, and group policy settings |
 | Media issues | Validate URLs and check size limits |
@@ -354,7 +300,7 @@ openclaw pairing list
 ## Happy path
 
 1. Open `Control → Channels → SimpleX`
-2. Start `simplex-chat` separately and configure OpenClaw with its `wsUrl`
+2. Configure OpenClaw with the Node runtime
 3. Run `openclaw simplex invite create --qr` to generate an invite
 4. Scan the QR code with the SimpleX app
 5. Approve pairing in OpenClaw

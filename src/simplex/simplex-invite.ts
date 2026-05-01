@@ -1,9 +1,4 @@
-export type SimplexInviteMode = "connect" | "address";
-
-export const INVITE_COMMANDS: Record<SimplexInviteMode, string> = {
-  connect: "/c",
-  address: "/ad",
-};
+import type { SimplexInviteMode } from "../types/invite.js";
 
 export function resolveInviteMode(value: unknown): SimplexInviteMode | null {
   if (value === "connect" || value === "address") {

@@ -2,9 +2,8 @@ import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { renderMessagePresentationFallbackText } from "openclaw/plugin-sdk/interactive-runtime";
 import { normalizePollInput } from "openclaw/plugin-sdk/poll-runtime";
 import { resolveSimplexAccount } from "../../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
-import type { SimplexClientRegistry } from "../gateway/simplex-client-registry.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { assertSimplexOutboundAccountReady } from "../shared/simplex-common.js";
 import { buildAndSendSimplexMessages } from "./simplex-send.js";
 
@@ -43,9 +42,9 @@ function renderSimplexPollText(params: {
   return lines.join("\n").trim();
 }
 
-export function buildSimplexOutbound(
-  registry: SimplexClientRegistry
-): NonNullable<ChannelPlugin<ResolvedSimplexAccount>["outbound"]> {
+export function buildSimplexOutbound(): NonNullable<
+  ChannelPlugin<ResolvedSimplexAccount>["outbound"]
+> {
   return {
     deliveryMode: "direct" as const,
     textChunkLimit: 4000,
@@ -70,7 +69,6 @@ export function buildSimplexOutbound(
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
       const result = await buildAndSendSimplexMessages({
-        registry,
         cfg,
         account,
         chatRef: to,
@@ -89,7 +87,6 @@ export function buildSimplexOutbound(
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
       const result = await buildAndSendSimplexMessages({
-        registry,
         cfg,
         account,
         chatRef: to,
@@ -108,7 +105,6 @@ export function buildSimplexOutbound(
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexOutboundAccountReady(account);
       const result = await buildAndSendSimplexMessages({
-        registry,
         cfg,
         account,
         chatRef: to,
@@ -128,7 +124,6 @@ export function buildSimplexOutbound(
       const normalized = normalizePollInput(poll);
       const text = renderSimplexPollText(normalized);
       const result = await buildAndSendSimplexMessages({
-        registry,
         cfg,
         account,
         chatRef: to,

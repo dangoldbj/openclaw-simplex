@@ -15,8 +15,3 @@ export function stripSimplexProviderPrefix(value: string): string {
   }
   return trimmed;
 }
-
-export function hasSimplexProviderPrefix(value: string): boolean {
-  const lower = value.trim().toLowerCase();
-  return SIMPLEX_PROVIDER_PREFIXES.some((prefix) => lower.startsWith(`${prefix}:`));
-}

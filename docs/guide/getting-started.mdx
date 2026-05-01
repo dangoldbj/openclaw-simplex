@@ -1,47 +1,11 @@
 ---
 title: Getting Started
-description: Install simplex-chat, configure the OpenClaw SimpleX plugin, generate your first invite link, and pair your first contact with the agent step by step.
+description: Install the OpenClaw SimpleX plugin, start the official Node runtime, generate your first invite link, and pair your first contact with the agent step by step.
 ---
 
 This path gets you from zero to the first invited contact talking to your OpenClaw agent over SimpleX.
 
 <Steps>
-  <Step title="Install SimpleX CLI">
-    Install the official <code>simplex-chat</code> CLI:
-
-    ```bash
-    curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
-    ```
-
-    Verify the CLI:
-
-    ```bash
-    simplex-chat -h
-    ```
-
-    <Note>
-      If the official installer picks the wrong Darwin/Linux build for your host, use the temporary arch-matrix installer:
-
-      ```bash
-      curl -o- https://raw.githubusercontent.com/dangoldbj/simplex-chat/install-arch-matrix/install.sh | bash
-      ```
-    </Note>
-  </Step>
-
-  <Step title="Start the SimpleX runtime">
-    Start the WebSocket runtime in a separate terminal:
-
-    ```bash
-    simplex-chat -p 5225
-    ```
-
-    Expected result: <code>simplex-chat</code> stays in the foreground and serves the WebSocket API on port <code>5225</code>.
-
-    <Info>
-      This is a long-running foreground process. If you want it to start automatically, use <code>openclaw simplex runtime install-service</code> from <a href="/guide/runtime-setup">Runtime Setup</a>.
-    </Info>
-  </Step>
-
   <Step title="Install and enable the plugin">
     Install the plugin in OpenClaw:
 
@@ -67,10 +31,10 @@ This path gets you from zero to the first invited contact talking to your OpenCl
   </Step>
 
   <Step title="Configure the channel">
-    Point OpenClaw at the local SimpleX WebSocket endpoint:
+    Configure the default official Node runtime:
 
     ```bash
-    openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+    openclaw channels add --channel openclaw-simplex
     ```
 
     That command writes channel config equivalent to:
@@ -80,9 +44,7 @@ This path gets you from zero to the first invited contact talking to your OpenCl
       "channels": {
         "openclaw-simplex": {
           "enabled": true,
-          "connection": {
-            "wsUrl": "ws://127.0.0.1:5225"
-          },
+          "connection": {},
           "dmPolicy": "pairing",
           "allowFrom": ["*"]
         }
@@ -91,7 +53,7 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     ```
 
     <Info>
-      OpenClaw will not start the channel until <code>channels.openclaw-simplex.connection</code> exists. If <code>simplex-chat</code> is not running at that endpoint, OpenClaw will mark the channel disconnected and record the connection error in channel status.
+      The plugin uses the official <code>simplex-chat</code> Node package in the OpenClaw process. There is no separate SimpleX CLI process to start.
     </Info>
   </Step>
 

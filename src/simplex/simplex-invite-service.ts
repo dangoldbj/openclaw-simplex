@@ -1,51 +1,30 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
-import { INVITE_COMMANDS, type SimplexInviteMode } from "./simplex-invite.js";
-import {
-  extractSimplexLink,
-  extractSimplexLinks,
-  extractSimplexPendingHints,
-} from "./simplex-links.js";
-import {
-  type SimplexLogger,
-  sendSimplexCommand,
-  sendSimplexCommandWithRetry,
-} from "./simplex-transport.js";
-import type { SimplexWsResponse } from "./simplex-ws-client.js";
+import type { ResolvedSimplexAccount } from "../types/config.js";
+import type {
+  SimplexInviteCreateResult,
+  SimplexInviteListResult,
+  SimplexInviteMode,
+  SimplexInviteRevokeResult,
+  SimplexInviteServiceOptions,
+} from "../types/invite.js";
+import type { SimplexChatApi, SimplexLogger } from "../types/simplex.js";
+import { withSimplexApi } from "./simplex-transport.js";
 
-type RunningStateResolver = () => boolean;
-type ChannelStarter = () => Promise<void>;
-
-export type SimplexInviteServiceOptions = {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  logger?: SimplexLogger;
-  startChannel?: ChannelStarter;
-  isRunning?: RunningStateResolver;
-};
-
-export type SimplexInviteCreateResult = {
-  accountId: string;
-  command: string;
-  mode: SimplexInviteMode;
-  link: string | null;
-  response: SimplexWsResponse;
-};
-
-export type SimplexInviteListResult = {
-  accountId: string;
-  addressLink: string | null;
-  links: string[];
-  pendingHints: string[];
-  addressResponse: SimplexWsResponse;
-  contactsResponse: SimplexWsResponse;
-};
-
-export type SimplexInviteRevokeResult = {
-  accountId: string;
-  response: SimplexWsResponse;
-};
+function contactLinkToString(link: unknown): string | null {
+  if (!link || typeof link !== "object") {
+    return null;
+  }
+  const record = link as Record<string, unknown>;
+  const nested = (record.connLinkContact as Record<string, unknown> | undefined) ?? record;
+  const short = nested.connShortLink;
+  const full = nested.connFullLink;
+  return typeof short === "string" && short
+    ? short
+    : typeof full === "string" && full
+      ? full
+      : null;
+}
 
 function resolveInviteAccount(
   cfg: OpenClawConfig,
@@ -63,28 +42,24 @@ function resolveInviteAccount(
   return account;
 }
 
-async function runInviteCommand(
+async function runInviteOperation<T>(
   account: ResolvedSimplexAccount,
   params: {
-    command: string;
     logger?: SimplexLogger;
-    startChannel?: ChannelStarter;
-    isRunning?: RunningStateResolver;
+    run: (userId: number, api: SimplexChatApi) => Promise<T>;
   }
-): Promise<SimplexWsResponse> {
-  if (params.startChannel || params.isRunning) {
-    return await sendSimplexCommandWithRetry({
-      account,
-      command: params.command,
-      logger: params.logger,
-      startChannel: params.startChannel,
-      isRunning: params.isRunning,
-    });
-  }
-  return await sendSimplexCommand({
+): Promise<T> {
+  return await withSimplexApi({
     account,
-    command: params.command,
     logger: params.logger,
+    run: async (api) => {
+      const user = await api.apiGetActiveUser();
+      const userId = user?.userId;
+      if (typeof userId !== "number") {
+        throw new Error(`SimpleX account "${account.accountId}" has no active user`);
+      }
+      return await params.run(userId, api);
+    },
   });
 }
 
@@ -92,19 +67,24 @@ export async function createSimplexInvite(
   params: SimplexInviteServiceOptions & { mode: SimplexInviteMode }
 ): Promise<SimplexInviteCreateResult> {
   const account = resolveInviteAccount(params.cfg, params.accountId);
-  const command = INVITE_COMMANDS[params.mode];
-  const response = await runInviteCommand(account, {
-    command,
+  const result = await runInviteOperation(account, {
     logger: params.logger,
-    startChannel: params.startChannel,
-    isRunning: params.isRunning,
+    run: async (userId, api) => {
+      if (params.mode === "connect") {
+        const link = await api.apiCreateLink(userId);
+        return { link };
+      }
+      const existing = await api.apiGetUserAddress(userId);
+      const address = existing ?? (await api.apiCreateUserAddress(userId));
+      const link = contactLinkToString(address);
+      return { link };
+    },
   });
   return {
     accountId: account.accountId,
-    command,
+    operation: params.mode === "connect" ? "create-link" : "create-address",
     mode: params.mode,
-    link: extractSimplexLink(response),
-    response,
+    link: result.link,
   };
 }
 
@@ -112,30 +92,25 @@ export async function listSimplexInvites(
   params: SimplexInviteServiceOptions
 ): Promise<SimplexInviteListResult> {
   const account = resolveInviteAccount(params.cfg, params.accountId);
-  const [addressResponse, contactsResponse] = await Promise.all([
-    runInviteCommand(account, {
-      command: "/show_address",
-      logger: params.logger,
-      startChannel: params.startChannel,
-      isRunning: params.isRunning,
-    }),
-    runInviteCommand(account, {
-      command: "/contacts",
-      logger: params.logger,
-      startChannel: params.startChannel,
-      isRunning: params.isRunning,
-    }),
-  ]);
+  const { addressResponse, contactsResponse, addressLink } = await runInviteOperation(account, {
+    logger: params.logger,
+    run: async (userId, api) => {
+      const [address, contacts] = await Promise.all([
+        api.apiGetUserAddress(userId),
+        api.apiListContacts(userId),
+      ]);
+      return {
+        addressResponse: address,
+        contactsResponse: contacts,
+        addressLink: contactLinkToString(address),
+      };
+    },
+  });
   return {
     accountId: account.accountId,
-    addressLink: extractSimplexLink(addressResponse),
-    links: [
-      ...new Set([
-        ...extractSimplexLinks(addressResponse),
-        ...extractSimplexLinks(contactsResponse),
-      ]),
-    ],
-    pendingHints: extractSimplexPendingHints(contactsResponse),
+    addressLink,
+    links: addressLink ? [addressLink] : [],
+    pendingHints: [],
     addressResponse,
     contactsResponse,
   };
@@ -145,14 +120,15 @@ export async function revokeSimplexInvite(
   params: SimplexInviteServiceOptions
 ): Promise<SimplexInviteRevokeResult> {
   const account = resolveInviteAccount(params.cfg, params.accountId);
-  const response = await runInviteCommand(account, {
-    command: "/delete_address",
+  const revoked = await runInviteOperation(account, {
     logger: params.logger,
-    startChannel: params.startChannel,
-    isRunning: params.isRunning,
+    run: async (userId, api) => {
+      await api.apiDeleteUserAddress(userId);
+      return true;
+    },
   });
   return {
     accountId: account.accountId,
-    response,
+    revoked,
   };
 }

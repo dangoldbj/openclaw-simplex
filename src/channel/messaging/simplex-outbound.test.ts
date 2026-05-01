@@ -15,7 +15,7 @@ describe("simplex outbound presentation support", () => {
   });
 
   it("advertises presentation support with text fallback only", () => {
-    const outbound = buildSimplexOutbound(new Map());
+    const outbound = buildSimplexOutbound();
 
     expect(
       outbound.shouldTreatDeliveredTextAsVisible?.({
@@ -40,7 +40,7 @@ describe("simplex outbound presentation support", () => {
   });
 
   it("renders presentation payloads into fallback text", async () => {
-    const outbound = buildSimplexOutbound(new Map());
+    const outbound = buildSimplexOutbound();
     const rendered = await outbound.renderPresentation?.({
       payload: {
         text: "Choose an option",
@@ -70,15 +70,13 @@ describe("simplex outbound presentation support", () => {
   });
 
   it("renders polls into numbered text prompts", async () => {
-    const outbound = buildSimplexOutbound(new Map());
+    const outbound = buildSimplexOutbound();
 
     const result = await outbound.sendPoll?.({
       cfg: {
         channels: {
           "openclaw-simplex": {
-            connection: {
-              wsUrl: "ws://127.0.0.1:5225",
-            },
+            connection: {},
           },
         },
       },

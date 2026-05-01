@@ -2,7 +2,7 @@ import path from "node:path";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveChannelMediaMaxBytes } from "openclaw/plugin-sdk/media-runtime";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
-import type { SimplexComposedMessage, SimplexMsgContent } from "../../simplex/simplex-commands.js";
+import type { SimplexComposedMessage, SimplexMsgContent } from "../../types/simplex.js";
 import { getSimplexRuntime } from "../runtime.js";
 
 const DEFAULT_MAX_BYTES = 5 * 1024 * 1024;
@@ -22,7 +22,7 @@ export function resolveSimplexMediaMaxBytes(params: {
   );
 }
 
-export async function resolveMediaPath(params: {
+async function resolveMediaPath(params: {
   mediaUrl: string;
   maxBytes: number;
 }): Promise<{ path: string; contentType?: string; fileName?: string }> {
@@ -48,7 +48,7 @@ export async function resolveMediaPath(params: {
   return { path: params.mediaUrl, contentType, fileName };
 }
 
-export function buildMediaMsgContent(params: {
+function buildMediaMsgContent(params: {
   text: string;
   mediaPath: string;
   contentType?: string;
@@ -112,6 +112,7 @@ export async function buildComposedMessages(params: {
     if (text) {
       composedMessages.push({
         msgContent: { type: "text", text },
+        mentions: {},
       });
     }
     return composedMessages;
@@ -139,6 +140,7 @@ export async function buildComposedMessages(params: {
     composedMessages.push({
       fileSource: { filePath: resolved.path },
       msgContent,
+      mentions: {},
     });
   }
 

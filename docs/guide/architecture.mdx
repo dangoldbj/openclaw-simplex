@@ -1,11 +1,11 @@
 ---
 title: Architecture
-description: Understand the runtime boundaries between OpenClaw, the SimpleX channel plugin, and the external simplex-chat process including their responsibilities.
+description: Understand the runtime boundaries between OpenClaw, the SimpleX channel plugin, and the official Node runtime.
 ---
 
-The architecture is built around one rule: OpenClaw should enforce policy and route messages, but it should not own the <code>simplex-chat</code> process lifecycle for this plugin.
+The architecture is built around one rule: OpenClaw enforces policy and routes messages; this plugin only translates between OpenClaw channel events/actions and SimpleX runtime API events.
 
-That separation keeps the channel implementation explicit, makes host-level supervision a deployment choice, and avoids hiding the network/runtime boundary inside plugin startup code.
+The runtime path uses the official <code>simplex-chat</code> Node package in-process. There is no separate CLI process or local WebSocket API.
 
 ## High-level diagram
 
@@ -26,10 +26,10 @@ That separation keeps the channel implementation explicit, makes host-level supe
             | - account/runtime state |
             +------------+------------+
                          |
-                         | WebSocket API
+                         | Node runtime API
                          v
             +-------------------------+
-            |   SimpleX CLI Runtime   |
+            |  SimpleX Node Runtime   |
             |      (simplex-chat)     |
             +------------+------------+
                          |
@@ -47,7 +47,7 @@ That separation keeps the channel implementation explicit, makes host-level supe
     Access checks stay in OpenClaw through <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, pairing state, and command authorization.
   </Card>
   <Card title="Runtime boundary" icon="server">
-    The plugin connects to a separately running <code>simplex-chat</code> instance over WebSocket instead of spawning or supervising that process.
+    The official SimpleX Node runtime runs in the OpenClaw process.
   </Card>
 </Columns>
 
@@ -56,20 +56,22 @@ That separation keeps the channel implementation explicit, makes host-level supe
     Account-specific overrides live under <code>channels.openclaw-simplex.accounts</code>, while shared channel config remains at the channel root.
   </Card>
   <Card title="Failure isolation" icon="triangle-alert">
-    If the SimpleX WebSocket endpoint is unavailable, this channel reports a runtime error and disconnect state without taking down unrelated OpenClaw channels.
+    The Node runtime removes the unauthenticated local WebSocket surface, but it shares process fate with OpenClaw.
   </Card>
 </Columns>
 
 ## Data flow
 
-1. <code>simplex-chat</code> emits events through its WebSocket API.
+1. The SimpleX runtime emits events through the Node API.
 2. The plugin monitor parses those events into OpenClaw channel context.
 3. OpenClaw applies policy checks and runs the agent.
-4. The plugin translates replies, edits, reactions, media sends, and group actions back into SimpleX commands.
+4. The plugin translates replies, edits, reactions, media sends, and group actions into typed SimpleX runtime API calls.
 
 ## Implementation surfaces
 
-- <code>src/channel/simplex-monitor.ts</code>: inbound SimpleX event parsing and message normalization.
-- <code>src/channel/simplex-send.ts</code> and <code>src/channel/simplex-outbound.ts</code>: outbound message/action translation.
-- <code>src/simplex/simplex-ws-client.ts</code> and <code>src/simplex/simplex-transport.ts</code>: WebSocket transport and command execution.
+- <code>src/channel/events/simplex-monitor.ts</code>: inbound SimpleX event parsing and message normalization.
+- <code>src/channel/events/simplex-inbound-files.ts</code>: incoming file lifecycle, delayed dispatch, and reply delivery after file resolution.
+- <code>src/channel/messaging/simplex-send.ts</code> and <code>src/channel/messaging/simplex-outbound.ts</code>: outbound message/action translation.
+- <code>src/simplex/simplex-node-client.ts</code>: official Node runtime adapter.
+- <code>src/simplex/simplex-transport.ts</code>: active-client registry and runtime API execution.
 - <code>channels.openclaw-simplex</code> and <code>channels.openclaw-simplex.accounts</code>: shared and per-account runtime config.

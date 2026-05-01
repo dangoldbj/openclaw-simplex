@@ -30,33 +30,25 @@ export const simplexSetupAdapter: ChannelSetupAdapter = {
       name,
     });
   },
-  applyAccountConfig: ({ cfg, accountId, input }) => {
-    const wsUrl = input.url?.trim() || input.httpUrl?.trim();
+  applyAccountConfig: ({ cfg, accountId }) => {
     return applySetupAccountConfigPatch({
       cfg,
       channelKey: SIMPLEX_CHANNEL_ID,
       accountId,
       patch: {
         enabled: true,
-        ...(wsUrl
-          ? {
-              connection: {
-                mode: "external",
-                wsUrl,
-              },
-            }
-          : {}),
+        connection: {},
       },
     });
   },
   validateInput: ({ input }) => {
     const cliPath = input.cliPath?.trim();
     if (cliPath) {
-      return "SimpleX managed mode is no longer supported; run simplex-chat separately and provide a ws:// or wss:// URL instead.";
+      return "SimpleX CLI path is no longer needed. This plugin uses the official Node runtime.";
     }
-    const wsUrl = input.url?.trim() || input.httpUrl?.trim();
-    if (wsUrl && !/^wss?:\/\//i.test(wsUrl)) {
-      return "SimpleX external URL must start with ws:// or wss://";
+    const runtimeUrl = input.url?.trim() || input.httpUrl?.trim();
+    if (runtimeUrl) {
+      return "SimpleX runtime URLs are no longer supported. This plugin uses the official Node runtime.";
     }
     return null;
   },

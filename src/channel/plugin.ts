@@ -15,9 +15,8 @@ import {
   SIMPLEX_ACCOUNT_CONFIG_CLEAR_FIELDS,
   SimplexChannelConfigSchema,
 } from "../config/config-schema.js";
-import type { ResolvedSimplexAccount } from "../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
-import type { SimplexWsClient } from "../simplex/simplex-ws-client.js";
+import type { ResolvedSimplexAccount } from "../types/config.js";
 import {
   listSimplexDirectoryGroups,
   listSimplexDirectoryPeers,
@@ -46,8 +45,6 @@ import {
   stripSimplexPrefix,
 } from "./shared/simplex-common.js";
 
-const activeClients = new Map<string, SimplexWsClient>();
-
 const resolveSimplexDmSecurityPolicy = createScopedDmSecurityResolver<ResolvedSimplexAccount>({
   channelKey: SIMPLEX_CHANNEL_ID,
   resolvePolicy: (account) => account.config.dmPolicy,
@@ -66,15 +63,15 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
   meta: {
     id: SIMPLEX_CHANNEL_ID,
     label: "SimpleX",
-    selectionLabel: "SimpleX (WebSocket)",
+    selectionLabel: "SimpleX",
     detailLabel: "SimpleX Chat",
     docsPath: "/channels/openclaw-simplex",
     docsLabel: SIMPLEX_CHANNEL_ID,
-    blurb: "SimpleX Chat via external WebSocket API",
+    blurb: "SimpleX Chat via the official Node runtime",
     aliases: ["simplex"],
     order: 95,
     systemImage: "link.badge.plus",
-    selectionExtras: ["Invite-based reachability", "External WebSocket runtime"],
+    selectionExtras: ["Invite-based reachability", "Official Node runtime"],
     markdownCapable: true,
     exposure: {
       configured: true,
@@ -83,7 +80,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     },
     quickstartAllowFrom: true,
   },
-  pairing: buildSimplexPairing(activeClients),
+  pairing: buildSimplexPairing(),
   capabilities: {
     chatTypes: ["direct", "group"],
     polls: true,
@@ -117,7 +114,7 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
       configured: account.configured,
       mode: account.mode,
       application: {
-        wsUrl: account.wsUrl,
+        dbFilePrefix: account.dbFilePrefix,
       },
     }),
   },
@@ -193,9 +190,9 @@ export const simplexPlugin: ChannelPlugin<ResolvedSimplexAccount> = {
     resolveToolPolicy: resolveSimplexGroupToolPolicy,
   },
   gatewayMethods: ["simplex.invite.create", "simplex.invite.list", "simplex.invite.revoke"],
-  outbound: buildSimplexOutbound(activeClients),
-  heartbeat: buildSimplexHeartbeat(activeClients),
-  status: buildSimplexStatus(activeClients),
+  outbound: buildSimplexOutbound(),
+  heartbeat: buildSimplexHeartbeat(),
+  status: buildSimplexStatus(),
   doctor: simplexDoctor,
-  gateway: buildSimplexGatewayRuntime(activeClients),
+  gateway: buildSimplexGatewayRuntime(),
 };

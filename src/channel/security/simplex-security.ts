@@ -1,13 +1,9 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveDefaultSimplexAccountId } from "../../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { SimplexAllowlistEntry } from "../../types/security.js";
 import { stripSimplexPrefix } from "../shared/simplex-common.js";
-
-export type SimplexAllowlistEntry = {
-  kind: "any" | "sender" | "group";
-  value: string;
-};
 
 function normalizeSimplexId(value: string): string {
   return value.trim().toLowerCase();

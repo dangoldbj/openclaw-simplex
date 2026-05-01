@@ -30,13 +30,12 @@ const SimplexReactionLevelSchema = z.enum(["off", "ack", "minimal", "extensive"]
 
 const SimplexConnectionSchema = z
   .object({
-    mode: z.literal("external").optional(),
-    wsUrl: z.string().url().optional(),
-    wsHost: z.string().optional(),
-    wsPort: z.number().int().positive().optional(),
+    dbFilePrefix: z.string().optional(),
+    displayName: z.string().optional(),
+    fullName: z.string().optional(),
+    migrationConfirmation: z.enum(["yesUp", "yesUpDown", "console", "error"]).optional(),
     autoAcceptFiles: z.boolean().optional(),
     connectTimeoutMs: z.number().int().positive().optional(),
-    allowUnsafeRemoteWs: z.boolean().optional(),
   })
   .strict();
 

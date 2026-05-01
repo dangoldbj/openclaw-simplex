@@ -1,42 +1,10 @@
-import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 import type { ChannelGroupContext } from "openclaw/plugin-sdk/channel-contract";
 import type { GroupToolPolicyConfig } from "openclaw/plugin-sdk/channel-policy";
 import { resolveChannelRouteTargetWithParser } from "openclaw/plugin-sdk/channel-route";
 import { resolveSimplexAccount } from "../../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
 import { stripSimplexProviderPrefix } from "../../constants.js";
-
-export { DEFAULT_ACCOUNT_ID };
-
-export type SimplexExplicitTarget = {
-  to: string;
-  chatType: "direct" | "group";
-};
-
-type SimplexTargetKind = SimplexExplicitTarget["chatType"] | null;
-
-export function extractSimplexWsUrlFromApplication(application: unknown): string | undefined {
-  if (!application || typeof application !== "object") {
-    return undefined;
-  }
-  const value = (application as { wsUrl?: unknown }).wsUrl;
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
-}
-
-export function extractSimplexTransportWarningsFromApplication(application: unknown): string[] {
-  if (!application || typeof application !== "object") {
-    return [];
-  }
-  const value = (application as { transportWarnings?: unknown }).transportWarnings;
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.map((entry) => (typeof entry === "string" ? entry.trim() : "")).filter(Boolean);
-}
+import type { SimplexExplicitTarget, SimplexTargetKind } from "../../types/channel.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
 
 export function resolveSimplexHealthState(params: {
   configured: boolean;
@@ -58,17 +26,6 @@ export function resolveSimplexHealthState(params: {
     return "ready";
   }
   return "idle";
-}
-
-export function normalizeSimplexMessageId(value: unknown): string | undefined {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return String(value);
-  }
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    return trimmed ? trimmed : undefined;
-  }
-  return undefined;
 }
 
 export function stripSimplexPrefix(value: string): string {

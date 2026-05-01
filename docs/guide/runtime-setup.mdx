@@ -1,110 +1,68 @@
 ---
 title: Runtime Setup
-description: Configure simplex-chat as a persistent systemd or launchd service, set the WebSocket endpoint, and connect multiple SimpleX accounts to OpenClaw.
+description: Configure SimpleX Node runtime storage and multi-account SimpleX identities for OpenClaw.
 ---
 
-Use this page after the first setup is already working and you want to make the SimpleX runtime persistent or split multiple accounts across separate runtimes. For the first install and pairing flow, start with [Getting Started](/guide/getting-started).
+Use this page after the first setup is already working and you want to tune SimpleX runtime storage or split multiple SimpleX identities across accounts. For the first install and pairing flow, start with [Getting Started](/guide/getting-started).
 
-For containerized or production deployments, also read [Production Sidecar](/guide/production-sidecar).
+## Node runtime storage
 
-## Keep `simplex-chat` running
+This plugin uses the official <code>simplex-chat</code> Node package in the OpenClaw process. There is no separate <code>simplex-chat</code> CLI process and no local WebSocket endpoint.
 
-If you want the SimpleX runtime to start automatically on login or machine boot, let the host OS supervise it and keep OpenClaw focused on the channel connection itself.
-
-The plugin CLI can generate the local service for you:
-
-```bash
-openclaw simplex runtime install-service --dry-run
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "enabled": true,
+      "connection": {
+        "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex"
+      }
+    }
+  }
+}
 ```
 
-After reviewing the plan, apply it interactively:
+The default database file prefix is <code>~/.openclaw/simplex/openclaw-simplex</code>. For named accounts, the default suffix is the account id, for example <code>~/.openclaw/simplex/openclaw-simplex-ops</code>.
 
-```bash
-openclaw simplex runtime install-service --start
+## Multiple accounts
+
+Give each account its own database file prefix so each SimpleX identity has isolated local state.
+
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "enabled": true,
+      "accounts": {
+        "ops": {
+          "enabled": true,
+          "connection": {
+            "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex-ops",
+            "displayName": "OpenClaw Ops"
+          }
+        },
+        "support": {
+          "enabled": true,
+          "connection": {
+            "dbFilePrefix": "~/.openclaw/simplex/openclaw-simplex-support",
+            "displayName": "OpenClaw Support"
+          }
+        }
+      }
+    }
+  }
+}
 ```
 
-For non-interactive setup, use <code>--yes</code>. The command refuses to overwrite an existing service file unless <code>--force</code> is set.
+## Runtime fields
 
-## Decide which settings go where
+- <code>connection.dbFilePrefix</code>: SQLite database file prefix used by the SimpleX Node runtime.
+- <code>connection.displayName</code>: display name used when the runtime creates a SimpleX profile.
+- <code>connection.fullName</code>: full name used when the runtime creates a SimpleX profile.
+- <code>connection.migrationConfirmation</code>: database migration behavior, one of <code>yesUp</code>, <code>yesUpDown</code>, <code>console</code>, or <code>error</code>.
+- <code>connection.connectTimeoutMs</code>: runtime connection/start timeout.
+- <code>connection.autoAcceptFiles</code>: whether incoming file transfers should be auto-accepted.
 
-Use this rule:
+## Operational notes
 
-- put OpenClaw channel behavior in <code>channels.openclaw-simplex</code>
-- put <code>simplex-chat</code> process startup flags in the supervised service command line
-
-Plugin-side settings:
-
-- <code>connection.wsUrl</code>
-- <code>connection.connectTimeoutMs</code>
-- <code>connection.autoAcceptFiles</code>
-- <code>connection.allowUnsafeRemoteWs</code> only for private sidecar networks or authenticated proxy deployments
-- <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>
-
-Runtime-side startup flags:
-
-- relay and proxy selection: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--host-mode</code>, <code>--smp-proxy</code>
-- local storage/layout: <code>--database</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
-- runtime process behavior: <code>--device-name</code>, <code>--maintenance</code>, <code>--mute</code>, <code>--mark-read</code>
-
-## Service installation options
-
-Prefer the plugin CLI for normal installs. It detects Linux <code>systemd --user</code> or macOS <code>launchd</code>, prints the planned service file and commands, and asks for confirmation before writing.
-
-Useful options:
-
-- <code>--manager systemd-user|launchd</code> to override detection
-- <code>--binary /path/to/simplex-chat</code> when the CLI is not in the default location
-- <code>--port 5225</code> to change the WebSocket port
-- <code>--state-dir ~/path</code> to choose where files, temp files, and logs live
-- <code>--yes</code> for non-interactive setup
-- <code>--force</code> to overwrite an existing service file
-
-If you want to manage the service manually, use the checked-in templates as a starting point:
-
-- Linux: <a href="https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/systemd/simplex-chat.service">examples/systemd/simplex-chat.service</a>
-- Docker sidecar: <a href="https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/docker-compose.sidecar.yml">examples/docker-compose.sidecar.yml</a>
-- Remote proxy exception: <a href="https://github.com/dangoldbj/openclaw-simplex/blob/main/examples/caddy/Caddyfile">examples/caddy/Caddyfile</a>
-
-### Check status
-
-<Tabs>
-  <Tab title="Linux">
-    ```bash
-    systemctl --user status simplex-chat.service
-    ```
-
-    Expected result: the service status should be <code>active (running)</code>.
-  </Tab>
-  <Tab title="macOS">
-    ```bash
-    launchctl print gui/$(id -u)/ai.openclaw.simplex-chat
-    ```
-
-    Expected result: the launch agent should appear under that label and report a running PID.
-  </Tab>
-</Tabs>
-
-## Common startup flag patterns
-
-These are reasonable patterns to consider when you run <code>simplex-chat</code> as an external service:
-
-- fixed local identity label:
-  <code>--device-name "OpenClaw SimpleX"</code>
-- explicit file locations:
-  <code>--files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp</code>
-- custom relay policy:
-  <code>--server "smp1.example.com smp2.example.com" --xftp-server "xftp1.example.com"</code>
-- SOCKS/Tor routing:
-  <code>--socks-proxy :9050 --host-mode onion --required-host-mode</code>
-- stricter message routing:
-  <code>--smp-proxy always --smp-proxy-fallback no</code>
-
-<Warning>
-  Do not copy every CLI flag into the service blindly. Flags such as proxy mode, relay selection, maintenance mode, and custom database paths materially change runtime behavior and should be chosen deliberately for your deployment.
-</Warning>
-
-## Maintenance mode
-
-If you need to bring up the runtime without immediately serving chat traffic, run it with <code>--maintenance</code> and start chat manually inside the runtime later.
-
-This is a <code>simplex-chat</code> operational mode, not an OpenClaw channel config field, so it belongs in the service command only when you intentionally want that behavior.
+The SimpleX runtime shares process fate with OpenClaw. That is the intended official integration path and avoids a separate unauthenticated WebSocket control surface. Treat the database files and file-transfer directories as sensitive local state.

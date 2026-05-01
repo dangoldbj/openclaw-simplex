@@ -1,40 +1,25 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
-import { startSimplexMonitor } from "../events/simplex-monitor.js";
 import {
-  assertSimplexWsEndpointAllowed,
-  describeSimplexWsEndpointSecurity,
-  redactSimplexWsUrl,
-} from "../transport/simplex-transport-security.js";
-import type { SimplexClientRegistry } from "./simplex-client-registry.js";
+  activeSimplexNodeClients,
+  registerActiveSimplexNodeClient,
+  unregisterActiveSimplexNodeClient,
+} from "../../simplex/simplex-transport.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
+import { startSimplexMonitor } from "../events/simplex-monitor.js";
 
-export function buildSimplexGatewayRuntime(
-  activeClients: SimplexClientRegistry
-): NonNullable<ChannelPlugin<ResolvedSimplexAccount>["gateway"]> {
+export function buildSimplexGatewayRuntime(): NonNullable<
+  ChannelPlugin<ResolvedSimplexAccount>["gateway"]
+> {
   return {
     startAccount: async (ctx) => {
       const account = ctx.account;
-      const redactedWsUrl = redactSimplexWsUrl(account.wsUrl);
-      ctx.log?.info?.(`[${account.accountId}] SimpleX start requested (wsUrl=${redactedWsUrl})`);
-      const allowUnsafeRemoteWs = account.config.connection?.allowUnsafeRemoteWs === true;
-      const endpointSecurity = describeSimplexWsEndpointSecurity(account.wsUrl, {
-        allowUnsafeRemoteWs,
-      });
-      for (const warning of endpointSecurity.warnings) {
-        ctx.log?.warn?.(`[${account.accountId}] SimpleX transport warning: ${warning}`);
-      }
+      ctx.log?.info?.(`[${account.accountId}] SimpleX start requested (mode=${account.mode})`);
       ctx.setStatus({
         accountId: account.accountId,
         mode: account.mode,
         application: {
-          wsUrl: redactedWsUrl,
-          transportWarnings: endpointSecurity.warnings,
-          transportBlocked: endpointSecurity.blockingWarnings.length > 0,
+          dbFilePrefix: account.dbFilePrefix,
         },
-      });
-      assertSimplexWsEndpointAllowed({
-        wsUrl: account.wsUrl,
-        allowUnsafeRemoteWs,
       });
 
       ctx.log?.info?.(`[${account.accountId}] Starting SimpleX monitor`);
@@ -47,7 +32,7 @@ export function buildSimplexGatewayRuntime(
       });
       ctx.log?.info?.(`[${account.accountId}] SimpleX monitor started`);
 
-      activeClients.set(account.accountId, monitor.client);
+      await registerActiveSimplexNodeClient(account, monitor.client);
 
       await new Promise<void>((resolve) => {
         ctx.abortSignal.addEventListener(
@@ -59,14 +44,14 @@ export function buildSimplexGatewayRuntime(
         );
       });
 
-      activeClients.delete(account.accountId);
+      unregisterActiveSimplexNodeClient(account, monitor.client);
       await monitor.client.close().catch(() => undefined);
     },
     stopAccount: async (ctx) => {
-      const client = activeClients.get(ctx.account.accountId);
+      const client = activeSimplexNodeClients.get(ctx.account.accountId);
       if (client) {
         await client.close();
-        activeClients.delete(ctx.account.accountId);
+        unregisterActiveSimplexNodeClient(ctx.account, client);
       }
     },
   };

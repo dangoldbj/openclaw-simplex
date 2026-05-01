@@ -1,22 +1,23 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
+import type { ResolvedSimplexAccount, SimplexConnectionConfig } from "../types/config.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
-import type {
-  ResolvedSimplexAccount,
-  SimplexConnectionConfig,
-  SimplexConnectionMode,
-} from "./types.js";
 
-const DEFAULT_WS_HOST = "127.0.0.1";
-const DEFAULT_WS_PORT = 5225;
+const DEFAULT_NODE_DB_PREFIX = "~/.openclaw/simplex/openclaw-simplex";
 
 function hasMeaningfulConnectionConfig(connection: SimplexConnectionConfig | undefined): boolean {
   if (!connection) {
     return false;
   }
   return Boolean(
-    connection.wsUrl?.trim() || connection.wsHost?.trim() || connection.wsPort !== undefined
+    Object.keys(connection).length === 0 ||
+      connection.dbFilePrefix?.trim() ||
+      connection.displayName?.trim() ||
+      connection.fullName?.trim() ||
+      connection.migrationConfirmation ||
+      connection.autoAcceptFiles !== undefined ||
+      connection.connectTimeoutMs !== undefined
   );
 }
 
@@ -87,21 +88,14 @@ function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): Simp
   };
 }
 
-function resolveWsHost(connection: SimplexConnectionConfig): string {
-  return connection.wsHost?.trim() || DEFAULT_WS_HOST;
-}
-
-function resolveWsPort(connection: SimplexConnectionConfig): number {
-  return connection.wsPort ?? DEFAULT_WS_PORT;
-}
-
-function resolveWsUrl(connection: SimplexConnectionConfig): string {
-  if (connection.wsUrl?.trim()) {
-    return connection.wsUrl.trim();
+function resolveNodeDbFilePrefix(connection: SimplexConnectionConfig, accountId: string): string {
+  const configured = connection.dbFilePrefix?.trim();
+  if (configured) {
+    return configured;
   }
-  const host = resolveWsHost(connection);
-  const port = resolveWsPort(connection);
-  return `ws://${host}:${port}`;
+  return accountId === DEFAULT_ACCOUNT_ID
+    ? DEFAULT_NODE_DB_PREFIX
+    : `${DEFAULT_NODE_DB_PREFIX}-${accountId}`;
 }
 
 export function resolveSimplexAccount(params: {
@@ -114,20 +108,14 @@ export function resolveSimplexAccount(params: {
   const baseEnabled = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.enabled !== false;
   const enabled = baseEnabled && merged.enabled !== false;
   const connection = merged.connection ?? {};
-  const mode: SimplexConnectionMode = "external";
-  const wsUrl = resolveWsUrl(connection);
-  const wsHost = resolveWsHost(connection);
-  const wsPort = resolveWsPort(connection);
   const configured = hasMeaningfulConfig;
   return {
     accountId,
     enabled,
     name: merged.name?.trim() || undefined,
     configured,
-    mode,
-    wsUrl,
-    wsHost,
-    wsPort,
+    mode: "node",
+    dbFilePrefix: resolveNodeDbFilePrefix(connection, accountId),
     config: merged,
   };
 }

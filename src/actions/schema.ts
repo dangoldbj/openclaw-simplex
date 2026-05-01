@@ -16,19 +16,6 @@ export const SIMPLEX_SUPPORTED_ACTIONS = new Set<ChannelMessageActionName>([
   "leaveGroup",
 ]);
 
-export const SIMPLEX_MESSAGE_TOOL_ACTIONS = [
-  "send",
-  "upload-file",
-  "react",
-  "edit",
-  "delete",
-  "unsend",
-  "renameGroup",
-  "addParticipant",
-  "removeParticipant",
-  "leaveGroup",
-] as const satisfies readonly ChannelMessageActionName[];
-
 export function buildSimplexMessageToolSchema(): ChannelMessageToolSchemaContribution {
   return {
     properties: {

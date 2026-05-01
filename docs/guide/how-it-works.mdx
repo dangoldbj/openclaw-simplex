@@ -1,9 +1,9 @@
 ---
 title: How It Works
-description: Trace the full message lifecycle from an incoming SimpleX contact through the plugin WebSocket bridge, OpenClaw policy checks, and agent response delivery.
+description: Trace the full message lifecycle from an incoming SimpleX contact through the plugin runtime bridge, OpenClaw policy checks, and agent response delivery.
 ---
 
-The runtime model is intentionally split: OpenClaw owns routing and policy, this plugin translates channel behavior, and <code>simplex-chat</code> remains a separately managed process with a WebSocket API.
+The runtime model is intentionally narrow: OpenClaw owns routing and policy, this plugin translates channel behavior, and SimpleX handles encrypted transport through the official Node runtime.
 
 The invite or address link is the access boundary. Once a sender reaches the agent through SimpleX, OpenClaw still applies pairing approval, allowlists, and group policy before that sender can trigger agent work.
 
@@ -13,7 +13,7 @@ The invite or address link is the access boundary. Once a sender reaches the age
   </Step>
 
   <Step title="The plugin attaches to your SimpleX runtime">
-    OpenClaw only starts the channel after explicit <code>channels.openclaw-simplex.connection</code> config exists. The plugin then connects to the separately running <code>simplex-chat</code> WebSocket API.
+    OpenClaw only starts the channel after explicit <code>channels.openclaw-simplex.connection</code> config exists. The plugin then starts the official SimpleX Node runtime.
   </Step>
 
   <Step title="Inbound events are normalized">
@@ -25,12 +25,12 @@ The invite or address link is the access boundary. Once a sender reaches the age
   </Step>
 
   <Step title="Replies go back through SimpleX">
-    Message actions, media sends, polls, edits, deletes, reactions, and group operations are translated back into SimpleX commands and sent through the same WebSocket connection.
+    Message actions, media sends, polls, edits, deletes, reactions, and group operations are executed through the official SimpleX runtime APIs.
   </Step>
 </Steps>
 
 <Note>
-  OpenClaw does not spawn <code>simplex-chat</code>, does not create a hosted bot identity for this channel, and does not currently expose plugin-defined invite buttons on the external plugin channel card.
+  OpenClaw does not create a hosted bot identity for this channel and does not currently expose plugin-defined invite buttons on the external plugin channel card.
 </Note>
 
 ## What the plugin surfaces

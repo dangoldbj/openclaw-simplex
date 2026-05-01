@@ -15,17 +15,11 @@ Use this guide only if you previously configured or paired the plugin under the 
   Gateway method names did not change. Programmatic invite flows still use <code>simplex.invite.create</code>, <code>simplex.invite.list</code>, and <code>simplex.invite.revoke</code>.
 </Info>
 
-The migration helper updates config keys and stored pairing/allowlist state so existing approvals can carry forward.
+The migration helper updates config keys and stored pairing/allowlist state so existing approvals can carry forward. It also removes legacy WebSocket/CLI runtime fields such as <code>wsUrl</code>, <code>url</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code> from the SimpleX channel config. Policy fields and multi-account settings remain in place.
 
 <Steps>
-  <Step title="Start the external SimpleX runtime">
-    Run <code>simplex-chat</code> yourself and expose the WebSocket endpoint the channel should use:
-
-    ```bash
-    simplex-chat -p 5225
-    ```
-
-    Make sure your config points to that endpoint under <code>channels.openclaw-simplex.connection.wsUrl</code>.
+  <Step title="Use the Node runtime">
+    New installs use the official SimpleX Node runtime. Legacy WebSocket runtime config is no longer part of the supported runtime model, and <code>openclaw simplex migrate</code> strips those old runtime fields from both root and per-account SimpleX config.
   </Step>
 
   <Step title="Preview the migration">
@@ -41,7 +35,7 @@ The migration helper updates config keys and stored pairing/allowlist state so e
     openclaw simplex migrate
     ```
 
-    This rewrites the old <code>simplex</code> config keys and renames the related pairing/allowlist state files in the OpenClaw state directory.
+    This rewrites the old <code>simplex</code> config keys, normalizes the runtime config for the Node runtime, and renames the related pairing/allowlist state files in the OpenClaw state directory.
   </Step>
 
   <Step title="Verify the new ids and pairing flow">
@@ -54,7 +48,7 @@ The migration helper updates config keys and stored pairing/allowlist state so e
     If you need to re-add the channel explicitly, use the new channel id:
 
     ```bash
-    openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+    openclaw channels add --channel openclaw-simplex
     ```
 
     Pairing approval also uses the new channel id:
@@ -76,7 +70,6 @@ After migration, the channel should be configured under <code>openclaw-simplex</
   "channels": {
     "openclaw-simplex": {
       "connection": {
-        "wsUrl": "ws://127.0.0.1:5225"
       }
     }
   }
@@ -89,4 +82,5 @@ After migration, the channel should be configured under <code>openclaw-simplex</
 - `plugins.installs.simplex` -> `plugins.installs.openclaw-simplex`
 - `plugins.allow` / `plugins.deny`
 - `channels.simplex` -> `channels.openclaw-simplex`
+- legacy SimpleX WebSocket/CLI runtime fields are removed from `channels.openclaw-simplex.connection` and from each `accounts.<id>.connection`
 - OpenClaw pairing and allowlist state files under the OpenClaw state directory

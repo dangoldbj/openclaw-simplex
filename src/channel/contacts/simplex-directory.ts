@@ -2,14 +2,9 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { ChannelDirectoryEntry } from "openclaw/plugin-sdk/directory-runtime";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveSimplexAccount } from "../../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
-import {
-  buildListContactsCommand,
-  buildListGroupMembersCommand,
-  buildListGroupsCommand,
-  buildShowActiveUserCommand,
-} from "../../simplex/simplex-commands.js";
-import { SimplexWsClient } from "../../simplex/simplex-ws-client.js";
+import { parseSimplexNumericId } from "../../simplex/simplex-api.js";
+import { withSimplexApi } from "../../simplex/simplex-transport.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { stripSimplexPrefix } from "../shared/simplex-common.js";
 
 type SimplexDirectoryParams = {
@@ -159,44 +154,24 @@ function normalizeSimplexInputId(input: string): { id: string; explicit: boolean
   return { id: withoutPrefix, explicit: false };
 }
 
-async function withSimplexClient<T>(
-  account: ResolvedSimplexAccount,
-  fn: (client: SimplexWsClient) => Promise<T>
-): Promise<T> {
-  const client = new SimplexWsClient({
-    url: account.wsUrl,
-    connectTimeoutMs: account.config.connection?.connectTimeoutMs,
-  });
-  await client.connect();
-  try {
-    return await fn(client);
-  } finally {
-    await client.close();
-  }
-}
-
 async function fetchActiveUserInfo(
   account: ResolvedSimplexAccount,
   runtime: RuntimeEnv
 ): Promise<ActiveUserInfo | null> {
   try {
-    return await withSimplexClient(account, async (client) => {
-      const response = await client.sendCommand(buildShowActiveUserCommand());
-      const resp = response.resp as Record<string, unknown> | undefined;
-      const user =
-        (resp?.user as Record<string, unknown> | undefined) ??
-        (resp?.activeUser as Record<string, unknown> | undefined) ??
-        (resp?.profile as Record<string, unknown> | undefined) ??
-        (resp?.userProfile as Record<string, unknown> | undefined) ??
-        resp;
-      if (!user || typeof user !== "object") {
-        return null;
-      }
-      const profile = (user.profile as Record<string, unknown> | undefined) ?? {};
-      const userId = toId(user.userId ?? user.id ?? profile.userId);
-      const displayName =
-        toId(profile.displayName) ?? toId(profile.fullName) ?? toId(user.displayName);
-      return { userId, displayName, raw: user };
+    return await withSimplexApi({
+      account,
+      run: async (api) => {
+        const user = (await api.apiGetActiveUser()) as Record<string, unknown> | undefined;
+        if (!user || typeof user !== "object") {
+          return null;
+        }
+        const profile = (user.profile as Record<string, unknown> | undefined) ?? {};
+        const userId = toId(user.userId ?? user.id ?? profile.userId);
+        const displayName =
+          toId(profile.displayName) ?? toId(profile.fullName) ?? toId(user.displayName);
+        return { userId, displayName, raw: user };
+      },
     });
   } catch (err) {
     runtime.error?.(`simplex: failed to read active user: ${String(err)}`);
@@ -215,25 +190,25 @@ async function listContactsLive(params: {
   if (!activeUserId) {
     return [];
   }
-  return await withSimplexClient(params.account, async (client) => {
-    const response = await client.sendCommand(buildListContactsCommand(activeUserId));
-    const resp = response.resp as Record<string, unknown> | undefined;
-    const contacts =
-      (resp?.contacts as unknown[]) ??
-      (resp?.contactList as unknown[]) ??
-      (resp?.contactsList as unknown[]) ??
-      (resp?.items as unknown[]) ??
-      [];
-    const mapped = contacts.map(mapContactEntry).filter(Boolean) as ChannelDirectoryEntry[];
-    const q = normalizeQuery(params.query);
-    const filtered = q
-      ? mapped.filter(
-          (entry) =>
-            entry.id.toLowerCase().includes(q) || (entry.name?.toLowerCase().includes(q) ?? false)
-        )
-      : mapped;
-    const limit = params.limit && params.limit > 0 ? params.limit : undefined;
-    return limit ? filtered.slice(0, limit) : filtered;
+  const userId = parseSimplexNumericId(activeUserId);
+  if (userId === null) {
+    return [];
+  }
+  return await withSimplexApi({
+    account: params.account,
+    run: async (api) => {
+      const contacts = await api.apiListContacts(userId);
+      const mapped = contacts.map(mapContactEntry).filter(Boolean) as ChannelDirectoryEntry[];
+      const q = normalizeQuery(params.query);
+      const filtered = q
+        ? mapped.filter(
+            (entry) =>
+              entry.id.toLowerCase().includes(q) || (entry.name?.toLowerCase().includes(q) ?? false)
+          )
+        : mapped;
+      const limit = params.limit && params.limit > 0 ? params.limit : undefined;
+      return limit ? filtered.slice(0, limit) : filtered;
+    },
   });
 }
 
@@ -248,30 +223,25 @@ async function listGroupsLive(params: {
   if (!activeUserId) {
     return [];
   }
-  return await withSimplexClient(params.account, async (client) => {
-    const response = await client.sendCommand(
-      buildListGroupsCommand({
-        userId: activeUserId,
-        search: params.query ?? undefined,
-      })
-    );
-    const resp = response.resp as Record<string, unknown> | undefined;
-    const groups =
-      (resp?.groups as unknown[]) ??
-      (resp?.groupList as unknown[]) ??
-      (resp?.groupsList as unknown[]) ??
-      (resp?.items as unknown[]) ??
-      [];
-    const mapped = groups.map(mapGroupEntry).filter(Boolean) as ChannelDirectoryEntry[];
-    const q = normalizeQuery(params.query);
-    const filtered = q
-      ? mapped.filter(
-          (entry) =>
-            entry.id.toLowerCase().includes(q) || (entry.name?.toLowerCase().includes(q) ?? false)
-        )
-      : mapped;
-    const limit = params.limit && params.limit > 0 ? params.limit : undefined;
-    return limit ? filtered.slice(0, limit) : filtered;
+  const userId = parseSimplexNumericId(activeUserId);
+  if (userId === null) {
+    return [];
+  }
+  return await withSimplexApi({
+    account: params.account,
+    run: async (api) => {
+      const groups = await api.apiListGroups(userId, undefined, params.query ?? undefined);
+      const mapped = groups.map(mapGroupEntry).filter(Boolean) as ChannelDirectoryEntry[];
+      const q = normalizeQuery(params.query);
+      const filtered = q
+        ? mapped.filter(
+            (entry) =>
+              entry.id.toLowerCase().includes(q) || (entry.name?.toLowerCase().includes(q) ?? false)
+          )
+        : mapped;
+      const limit = params.limit && params.limit > 0 ? params.limit : undefined;
+      return limit ? filtered.slice(0, limit) : filtered;
+    },
   });
 }
 
@@ -281,24 +251,18 @@ async function listGroupMembersLive(params: {
   groupId: string;
   limit?: number | null;
 }): Promise<ChannelDirectoryEntry[]> {
-  return await withSimplexClient(params.account, async (client) => {
-    const response = await client.sendCommand(
-      buildListGroupMembersCommand({
-        groupId: params.groupId,
-      })
-    );
-    const resp = response.resp as Record<string, unknown> | undefined;
-    const members =
-      (resp?.members as unknown[]) ??
-      (resp?.groupMembers as unknown[]) ??
-      (resp?.items as unknown[]) ??
-      (resp?.group as Record<string, unknown> | undefined)?.members ??
-      [];
-    const mapped = (Array.isArray(members) ? members : [])
-      .map(mapMemberEntry)
-      .filter(Boolean) as ChannelDirectoryEntry[];
-    const limit = params.limit && params.limit > 0 ? params.limit : undefined;
-    return limit ? mapped.slice(0, limit) : mapped;
+  const groupId = parseSimplexNumericId(params.groupId);
+  if (groupId === null) {
+    return [];
+  }
+  return await withSimplexApi({
+    account: params.account,
+    run: async (api) => {
+      const members = await api.apiListMembers(groupId);
+      const mapped = members.map(mapMemberEntry).filter(Boolean) as ChannelDirectoryEntry[];
+      const limit = params.limit && params.limit > 0 ? params.limit : undefined;
+      return limit ? mapped.slice(0, limit) : mapped;
+    },
   });
 }
 

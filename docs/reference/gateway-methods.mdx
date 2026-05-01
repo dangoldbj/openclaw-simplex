@@ -12,9 +12,9 @@ The plugin registers these gateway RPC methods for invite/address automation and
 ## Prerequisites and behavior
 
 - The target SimpleX account must be enabled and configured under <code>channels.openclaw-simplex</code>.
-- The <code>simplex-chat</code> WebSocket runtime must be reachable for that account.
+- The SimpleX Node runtime must start successfully for that account.
 - If <code>accountId</code> is omitted or blank, the plugin uses the channel's default account.
-- If the channel is not running, these methods ask OpenClaw to start <code>openclaw-simplex</code> for the target account and retry the SimpleX command.
+- These methods call the embedded SimpleX runtime API for the target account directly; they do not start a separate SimpleX CLI or WebSocket sidecar.
 
 ## `simplex.invite.create`
 
@@ -31,8 +31,8 @@ Request params:
 
 `mode` supports:
 
-- `connect` -> runs <code>/c</code>
-- `address` -> runs <code>/ad</code>
+- `connect` -> creates a one-time invitation link
+- `address` -> returns or creates the account address link
 
 Response highlights:
 
@@ -44,7 +44,7 @@ Example response shape:
 ```json
 {
   "accountId": "default",
-  "command": "/c",
+  "operation": "create-link",
   "mode": "connect",
   "link": "simplex://...",
   "qrDataUrl": "data:image/png;base64,..."
@@ -53,7 +53,7 @@ Example response shape:
 
 ## `simplex.invite.list`
 
-List current invite/address links and pending contact hints. Internally this combines <code>/show_address</code> and <code>/contacts</code>.
+List the current address link and related contact state through the SimpleX runtime APIs.
 
 Request params:
 
@@ -67,7 +67,7 @@ Response highlights:
 
 - `addressLink`: current address link if available
 - `links`: extracted invite/address links seen in the responses
-- `pendingHints`: pending contact hints from `/contacts`
+- `pendingHints`: pending contact hints, if exposed by the runtime
 - `addressQrDataUrl`: PNG QR image as a `data:` URL for `addressLink`
 
 Example response shape:
@@ -84,7 +84,7 @@ Example response shape:
 
 ## `simplex.invite.revoke`
 
-Revoke the active address link by running <code>/delete_address</code>.
+Revoke the active address link through the SimpleX runtime API.
 
 Request params:
 
@@ -99,9 +99,7 @@ Example response shape:
 ```json
 {
   "accountId": "default",
-  "response": {
-    "corrId": "..."
-  }
+  "revoked": true
 }
 ```
 
@@ -110,7 +108,7 @@ Example response shape:
 | Code | Meaning |
 | --- | --- |
 | `INVALID_REQUEST` | The request params are invalid. For example, <code>simplex.invite.create</code> received an unsupported <code>mode</code>. |
-| `UNAVAILABLE` | The account is disabled/unconfigured, the channel runtime is unavailable, or the underlying SimpleX command failed. The response message includes the failure reason. |
+| `UNAVAILABLE` | The account is disabled/unconfigured, the channel runtime is unavailable, or the underlying SimpleX runtime API call failed. The response message includes the failure reason. |
 
 ## Related agent tools
 

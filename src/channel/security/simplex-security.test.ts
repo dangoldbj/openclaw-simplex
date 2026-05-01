@@ -1,6 +1,6 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { describe, expect, it } from "vitest";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
 import {
   formatSimplexAllowFrom,
   isSimplexAllowlisted,
@@ -72,9 +72,7 @@ describe("simplex allowlist", () => {
           accounts: {
             beta: {
               allowFrom: ["beta-only"],
-              connection: {
-                wsUrl: "ws://127.0.0.1:7777",
-              },
+              connection: {},
             },
           },
         },
@@ -106,10 +104,8 @@ describe("simplex allowlist", () => {
       accountId: "alpha",
       enabled: true,
       configured: true,
-      mode: "external",
-      wsUrl: "ws://127.0.0.1:5225",
-      wsHost: "127.0.0.1",
-      wsPort: 5225,
+      mode: "node",
+      dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-alpha",
       config: { markdown: {}, dmPolicy: "open" },
     };
     const result = resolveSimplexDmPolicy({

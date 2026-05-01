@@ -1,12 +1,12 @@
 ---
 title: Troubleshooting
-description: Diagnose and fix common OpenClaw SimpleX problems including WebSocket connection failures, plugin trust errors, policy rejections, and pairing issues.
+description: Diagnose and fix common OpenClaw SimpleX problems including runtime startup failures, plugin trust errors, policy rejections, and pairing issues.
 ---
 
-Most failures fall into one of three buckets: the plugin is not trusted/enabled, OpenClaw cannot reach the external <code>simplex-chat</code> WebSocket endpoint, or policy settings are correctly rejecting a sender you expected to allow.
+Most failures fall into one of three buckets: the plugin is not trusted/enabled, the SimpleX Node runtime cannot start, or policy settings are correctly rejecting a sender you expected to allow.
 
 <Tip>
-  Two common mistakes: <code>simplex-chat</code> is listening on one port but <code>wsUrl</code> points to another, or <code>dmPolicy: "pairing"</code> is enabled but the sender has not been approved yet.
+  Two common mistakes: <code>channels.openclaw-simplex.connection</code> is missing, or <code>dmPolicy: "pairing"</code> is enabled but the sender has not been approved yet.
 </Tip>
 
 ## Plugin not listed
@@ -34,28 +34,30 @@ If the package is installed but not allowlisted, OpenClaw may still refuse to lo
 
 ## Channel fails to start
 
-What to check first: <code>simplex-chat</code> must be running on the same WebSocket endpoint that <code>channels.openclaw-simplex.connection.wsUrl</code> points to.
+What to check first: <code>channels.openclaw-simplex.connection</code> must exist. The simplest valid config is:
 
-Start the runtime manually if needed:
-
-```bash
-simplex-chat -p 5225
-```
-
-Then verify the configured channel endpoint:
-
-```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+```json
+{
+  "channels": {
+    "openclaw-simplex": {
+      "enabled": true,
+      "connection": {}
+    }
+  }
+}
 ```
 
 What to verify:
 
-- <code>channels.openclaw-simplex.connection</code> exists
-- <code>wsUrl</code> matches the port where <code>simplex-chat</code> is actually listening
-- if you use <code>wsHost</code>/<code>wsPort</code> instead, those values match the runtime endpoint
-- channel status shows the latest connection error if the WebSocket handshake fails
+- the Node runtime has a writable <code>dbFilePrefix</code>
+- the <code>simplex-chat</code> package native build was approved by your package manager
+- channel status shows the latest runtime startup error
 
-For persistent startup, run <code>simplex-chat</code> under a host-managed service. See [Runtime Setup](/guide/runtime-setup).
+With pnpm, if native build scripts were blocked during install, run:
+
+```bash
+pnpm approve-builds
+```
 
 ## Inbound messages dropped
 
@@ -80,7 +82,7 @@ openclaw pairing approve openclaw-simplex <pairingCode>
 
 ## Invite methods failing
 
-Invite commands and gateway methods require more than plugin installation: the channel account must be configured, enabled, and connected to a live <code>simplex-chat</code> runtime.
+Invite commands and gateway methods require more than plugin installation: the channel account must be configured, enabled, and connected to a live SimpleX runtime.
 
 Use the plugin CLI first:
 
@@ -90,7 +92,7 @@ openclaw simplex invite create --qr
 
 If that fails:
 
-- confirm the account's <code>connection.wsUrl</code> points at a running runtime
+- confirm the Node runtime has writable storage
 - check whether the channel account is enabled
 - inspect the latest channel status/runtime error in OpenClaw
 - if you are automating through gateway methods, verify the same account works through the plugin CLI first
@@ -104,12 +106,6 @@ If that fails:
 
 ## Useful diagnostic commands
 
-Start the runtime in the foreground and watch connection behavior directly:
-
-```bash
-simplex-chat -p 5225
-```
-
 List installed plugins:
 
 ```bash
@@ -122,16 +118,16 @@ Inspect this plugin's enable/allow state:
 openclaw plugins info openclaw-simplex
 ```
 
-Write the channel endpoint config explicitly:
+Write Node runtime channel config explicitly:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex
 ```
 
 ## Where to inspect errors
 
 - In Control UI, open <code>Control -&gt; Channels -&gt; SimpleX</code> and inspect the channel status and connection state.
 - Use <code>openclaw plugins info openclaw-simplex</code> to verify plugin enable/allow state.
-- Check the terminal or service logs for the <code>simplex-chat</code> process itself, especially if the WebSocket runtime exits or cannot bind the expected port.
+- Check OpenClaw logs for SimpleX native/runtime startup errors.
 
-For persistent runtime startup and service examples, see [Runtime Setup](/guide/runtime-setup).
+For runtime storage setup, see [Runtime Setup](/guide/runtime-setup).

@@ -13,20 +13,11 @@ import {
   listSimplexInvites,
   revokeSimplexInvite,
 } from "../simplex/simplex-invite-service.js";
-import {
-  buildRuntimeServicePlan,
-  detectRuntimeServiceManager,
-  type RuntimeServiceOptions,
-  type RuntimeServicePlan,
-  runRuntimeServiceInstallCli,
-} from "./runtime/service.js";
 
-export { buildRuntimeServicePlan, detectRuntimeServiceManager, type RuntimeServicePlan };
-
-export const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
-export const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
-export const LEGACY_CHANNEL_ID = LEGACY_SIMPLEX_CHANNEL_ID;
-export const CHANNEL_ID = SIMPLEX_CHANNEL_ID;
+const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
+const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
+const LEGACY_CHANNEL_ID = LEGACY_SIMPLEX_CHANNEL_ID;
+const CHANNEL_ID = SIMPLEX_CHANNEL_ID;
 
 type MigrationResult = {
   changed: string[];
@@ -45,6 +36,34 @@ type InviteCliOptions = {
   accountId?: string;
   qr?: boolean;
 };
+
+const NODE_CONNECTION_KEYS = new Set([
+  "dbFilePrefix",
+  "displayName",
+  "fullName",
+  "migrationConfirmation",
+  "autoAcceptFiles",
+  "connectTimeoutMs",
+]);
+
+const LEGACY_RUNTIME_KEYS = new Set([
+  "authToken",
+  "cliPath",
+  "command",
+  "headers",
+  "host",
+  "httpUrl",
+  "managed",
+  "mode",
+  "path",
+  "port",
+  "process",
+  "reconnect",
+  "retry",
+  "token",
+  "url",
+  "wsUrl",
+]);
 
 function readOptionalAccountId(value?: string): string | null {
   const trimmed = value?.trim();
@@ -74,7 +93,7 @@ async function runInviteCreateCli(
   printJson({
     accountId: result.accountId,
     mode: result.mode,
-    command: result.command,
+    operation: result.operation,
     link: result.link,
   });
   if (opts.qr && result.link) {
@@ -123,7 +142,7 @@ async function runAddressRevokeCli(api: OpenClawPluginApi, opts: InviteCliOption
   });
   printJson({
     accountId: result.accountId,
-    revoked: true,
+    revoked: result.revoked,
   });
 }
 
@@ -167,6 +186,103 @@ function mergeObjects<T extends Record<string, unknown>>(
     };
   }
   return merged as T;
+}
+
+function sanitizeConnectionConfig(
+  value: unknown,
+  pathLabel: string,
+  result: MigrationResult
+): Record<string, unknown> | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    result.changed.push(`config: reset invalid ${pathLabel} to Node runtime connection config`);
+    return {};
+  }
+
+  const connection = value as Record<string, unknown>;
+  const next: Record<string, unknown> = {};
+  const removed: string[] = [];
+
+  for (const [key, fieldValue] of Object.entries(connection)) {
+    if (NODE_CONNECTION_KEYS.has(key)) {
+      next[key] = fieldValue;
+    } else {
+      removed.push(key);
+    }
+  }
+
+  if (removed.length > 0) {
+    result.changed.push(
+      `config: removed legacy runtime field(s) from ${pathLabel}: ${removed.toSorted().join(", ")}`
+    );
+  }
+
+  return next;
+}
+
+function sanitizeSimplexAccountConfig(
+  value: unknown,
+  pathLabel: string,
+  result: MigrationResult
+): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value as Record<string, unknown> | undefined;
+  }
+  const account = { ...(value as Record<string, unknown>) };
+  const removed: string[] = [];
+
+  for (const key of Object.keys(account)) {
+    if (LEGACY_RUNTIME_KEYS.has(key)) {
+      delete account[key];
+      removed.push(key);
+    }
+  }
+  if (removed.length > 0) {
+    result.changed.push(
+      `config: removed legacy runtime field(s) from ${pathLabel}: ${removed.toSorted().join(", ")}`
+    );
+  }
+
+  if ("connection" in account) {
+    account.connection = sanitizeConnectionConfig(
+      account.connection,
+      `${pathLabel}.connection`,
+      result
+    );
+  }
+
+  return account;
+}
+
+function sanitizeSimplexChannelConfig(channel: unknown, result: MigrationResult): unknown {
+  if (!channel || typeof channel !== "object" || Array.isArray(channel)) {
+    return channel;
+  }
+
+  const next = sanitizeSimplexAccountConfig(channel, `channels.${CHANNEL_ID}`, result) as Record<
+    string,
+    unknown
+  >;
+  const accounts =
+    next.accounts && typeof next.accounts === "object" && !Array.isArray(next.accounts)
+      ? (next.accounts as Record<string, unknown>)
+      : null;
+
+  if (accounts) {
+    const sanitizedAccounts: Record<string, unknown> = {};
+    for (const [accountId, account] of Object.entries(accounts)) {
+      sanitizedAccounts[accountId] = sanitizeSimplexAccountConfig(
+        account,
+        `channels.${CHANNEL_ID}.accounts.${accountId}`,
+        result
+      );
+    }
+    next.accounts = sanitizedAccounts;
+  }
+
+  return next;
 }
 
 export function migrateConfigObject(rawConfig: Record<string, unknown>): {
@@ -230,6 +346,10 @@ export function migrateConfigObject(rawConfig: Record<string, unknown>): {
     );
     delete channels[LEGACY_CHANNEL_ID];
     result.changed.push(`config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`);
+  }
+
+  if (CHANNEL_ID in channels) {
+    channels[CHANNEL_ID] = sanitizeSimplexChannelConfig(channels[CHANNEL_ID], result);
   }
 
   return { nextConfig, result };
@@ -339,24 +459,6 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
         .option("--dry-run", "Show planned changes without writing files", false)
         .action(async (opts: { dryRun?: boolean }) => {
           await runMigration(api, opts.dryRun === true);
-        });
-
-      const runtime = command.command("runtime").description("SimpleX runtime service helpers");
-
-      runtime
-        .command("install-service")
-        .description("Install a supervised simplex-chat runtime service for this user")
-        .option("--manager <manager>", "Service manager: systemd-user or launchd")
-        .option("--binary <path>", "Path to simplex-chat binary")
-        .option("--port <port>", "WebSocket port for simplex-chat", "5225")
-        .option("--device-name <name>", "SimpleX device name", "OpenClaw SimpleX")
-        .option("--state-dir <path>", "Runtime state directory")
-        .option("--start", "Start/enable the service after writing it", false)
-        .option("--dry-run", "Print the plan without writing files or running commands", false)
-        .option("--yes", "Apply without interactive confirmation", false)
-        .option("--force", "Overwrite an existing service file", false)
-        .action(async (opts: RuntimeServiceOptions) => {
-          await runRuntimeServiceInstallCli(opts);
         });
 
       const invite = command.command("invite").description("SimpleX invite helpers");

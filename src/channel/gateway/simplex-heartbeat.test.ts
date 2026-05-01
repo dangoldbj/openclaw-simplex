@@ -4,7 +4,7 @@ import { buildSimplexHeartbeat } from "./simplex-heartbeat.js";
 
 describe("simplex heartbeat adapter", () => {
   it("reports not configured accounts as not ready", async () => {
-    const heartbeat = buildSimplexHeartbeat(new Map());
+    const heartbeat = buildSimplexHeartbeat();
 
     await expect(
       heartbeat.checkReady?.({
@@ -17,14 +17,14 @@ describe("simplex heartbeat adapter", () => {
   });
 
   it("reports configured but stopped accounts as not running", async () => {
-    const heartbeat = buildSimplexHeartbeat(new Map());
+    const heartbeat = buildSimplexHeartbeat();
 
     await expect(
       heartbeat.checkReady?.({
         cfg: {
           channels: {
             "openclaw-simplex": {
-              connection: { wsUrl: "ws://127.0.0.1:5225" },
+              connection: {},
             },
           },
         } as OpenClawConfig,
@@ -36,14 +36,14 @@ describe("simplex heartbeat adapter", () => {
   });
 
   it("resolves direct and group recipients from config", () => {
-    const heartbeat = buildSimplexHeartbeat(new Map());
+    const heartbeat = buildSimplexHeartbeat();
 
     expect(
       heartbeat.resolveRecipients?.({
         cfg: {
           channels: {
             "openclaw-simplex": {
-              connection: { wsUrl: "ws://127.0.0.1:5225" },
+              connection: {},
               allowFrom: ["alice", "@bob"],
               groupAllowFrom: ["group:ops"],
             },
@@ -60,7 +60,7 @@ describe("simplex heartbeat adapter", () => {
         cfg: {
           channels: {
             "openclaw-simplex": {
-              connection: { wsUrl: "ws://127.0.0.1:5225" },
+              connection: {},
               allowFrom: ["alice"],
               groupAllowFrom: ["group:ops"],
             },
@@ -75,7 +75,7 @@ describe("simplex heartbeat adapter", () => {
   });
 
   it("prefers an explicit recipient override", () => {
-    const heartbeat = buildSimplexHeartbeat(new Map());
+    const heartbeat = buildSimplexHeartbeat();
 
     expect(
       heartbeat.resolveRecipients?.({

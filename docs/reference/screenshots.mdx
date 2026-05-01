@@ -6,7 +6,7 @@ description: Step-by-step screenshots showing the full SimpleX pairing flow from
 This page shows the supported SimpleX pairing and approval flow.
 
 <Info>
-  This walkthrough assumes <code>channels.openclaw-simplex.connection.wsUrl</code> already points to a running SimpleX runtime. If not, start with [Getting Started](/guide/getting-started).
+  This walkthrough assumes <code>channels.openclaw-simplex.connection</code> is configured for the Node runtime. If not, start with [Getting Started](/guide/getting-started).
 </Info>
 
 Generate a one-time invite link with the plugin CLI:
@@ -15,7 +15,7 @@ Generate a one-time invite link with the plugin CLI:
 openclaw simplex invite create --qr
 ```
 
-You can also generate or inspect links directly in the <code>simplex-chat</code> console with <code>/c</code>, <code>/ad</code>, or <code>/show_address</code>. For automation, OpenClaw also exposes <code>simplex.invite.create</code> and <code>simplex.invite.list</code>.
+For automation, OpenClaw exposes <code>simplex.invite.create</code> and <code>simplex.invite.list</code>.
 
 <Steps>
   <Step title="Send the first message">

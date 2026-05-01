@@ -1,17 +1,15 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import type { ResolvedSimplexAccount } from "../../config/types.js";
 import {
-  buildSendMessagesCommand,
-  type SimplexComposedMessage,
-} from "../../simplex/simplex-commands.js";
-import { resolveSimplexCommandError } from "../../simplex/simplex-errors.js";
-import type { SimplexClientRegistry } from "../gateway/simplex-client-registry.js";
-import { withSimplexRegistryClient } from "../gateway/simplex-client-registry.js";
+  parseSimplexApiChatRef,
+  resolveSimplexChatItemId,
+  toSimplexApiChatRef,
+} from "../../simplex/simplex-api.js";
+import { withSimplexApi } from "../../simplex/simplex-transport.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { SimplexApiComposedMessage, SimplexComposedMessage } from "../../types/simplex.js";
 import { buildComposedMessages } from "../media/simplex-media.js";
-import { normalizeSimplexMessageId } from "../shared/simplex-common.js";
 
-export async function sendComposedMessages(params: {
-  registry: SimplexClientRegistry;
+async function sendComposedMessages(params: {
   account: ResolvedSimplexAccount;
   chatRef: string;
   composedMessages: SimplexComposedMessage[];
@@ -19,33 +17,22 @@ export async function sendComposedMessages(params: {
   if (params.composedMessages.length === 0) {
     return {};
   }
-  const cmd = buildSendMessagesCommand({
-    chatRef: params.chatRef,
-    composedMessages: params.composedMessages,
-  });
-  const response = await withSimplexRegistryClient(params.registry, params.account, (client) =>
-    client.sendCommand(cmd)
-  );
-  const resp = response.resp as {
-    type?: string;
-    chatError?: { errorType?: { type?: string; message?: string } };
-    chatItems?: Array<{ chatItem?: { meta?: { itemId?: unknown } } }>;
-    itemId?: unknown;
-    messageId?: unknown;
-  };
-  const commandError = resolveSimplexCommandError(resp);
-  if (commandError) {
-    throw new Error(commandError);
+  const apiChatRef = parseSimplexApiChatRef(params.chatRef);
+  if (!apiChatRef) {
+    throw new Error(`SimpleX chat ref must be numeric for runtime API: ${params.chatRef}`);
   }
-  const messageId =
-    normalizeSimplexMessageId(resp.chatItems?.[0]?.chatItem?.meta?.itemId) ??
-    normalizeSimplexMessageId(resp.messageId) ??
-    normalizeSimplexMessageId(resp.itemId);
-  return { messageId };
+  const chatItems = await withSimplexApi({
+    account: params.account,
+    run: (api) =>
+      api.apiSendMessages(
+        toSimplexApiChatRef(apiChatRef),
+        params.composedMessages as SimplexApiComposedMessage[]
+      ),
+  });
+  return { messageId: resolveSimplexChatItemId(chatItems[0]) };
 }
 
 export async function buildAndSendSimplexMessages(params: {
-  registry: SimplexClientRegistry;
   cfg: OpenClawConfig;
   account: ResolvedSimplexAccount;
   chatRef: string;
@@ -63,7 +50,6 @@ export async function buildAndSendSimplexMessages(params: {
     audioAsVoice: params.audioAsVoice,
   });
   return await sendComposedMessages({
-    registry: params.registry,
     account: params.account,
     chatRef: params.chatRef,
     composedMessages,

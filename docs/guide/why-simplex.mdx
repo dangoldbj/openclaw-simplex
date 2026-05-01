@@ -22,7 +22,7 @@ The point is not that this channel replaces every platform-backed integration. I
 
 <Columns cols={2}>
   <Card title="Operator-controlled runtime" icon="server">
-    Run <code>simplex-chat</code> yourself, choose where the runtime and relay path live, and keep OpenClaw policy enforcement local.
+    Use the official SimpleX Node runtime and choose where the local database and relay path live.
   </Card>
   <Card title="OpenClaw-native operations" icon="message-circle">
     Pairing approval, exec approvals, allowlists, invite helpers, media support, reactions, polls, and channel status all exist in the plugin, not in ad hoc glue code.
@@ -31,7 +31,7 @@ The point is not that this channel replaces every platform-backed integration. I
 
 ## What the plugin provides
 
-A SimpleX channel backed by a local <code>simplex-chat</code> WebSocket runtime:
+A SimpleX channel backed by the official Node runtime:
 
 - send/receive (text and media)
 - pairing with allowlist enforcement and same-chat exec approvals
@@ -50,7 +50,7 @@ A SimpleX channel backed by a local <code>simplex-chat</code> WebSocket runtime:
 
 ## Why this plugin matters
 
-Without this plugin, using SimpleX with OpenClaw usually means custom integration work around event parsing, outbound command translation, pairing state, and invite management. This package turns that into a standard channel implementation.
+Without this plugin, using SimpleX with OpenClaw usually means custom integration work around event parsing, outbound runtime API calls, pairing state, and invite management. This package turns that into a standard channel implementation.
 
 The contribution is not just “another channel”. It adds a channel model that is structurally different from bot-account integrations:
 

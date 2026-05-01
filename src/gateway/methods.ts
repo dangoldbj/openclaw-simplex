@@ -1,7 +1,5 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { toDataURL as toQrDataUrl } from "qrcode";
-import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
-import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 import { resolveInviteMode } from "../simplex/simplex-invite.js";
 import {
   createSimplexInvite,
@@ -11,15 +9,6 @@ import {
 
 const INVALID_REQUEST = "INVALID_REQUEST";
 const UNAVAILABLE = "UNAVAILABLE";
-
-type RuntimeChannelState = {
-  running?: boolean;
-};
-
-type RuntimeSnapshot = {
-  channelAccounts?: Record<string, Record<string, RuntimeChannelState | undefined> | undefined>;
-  channels?: Record<string, RuntimeChannelState | undefined>;
-};
 
 type GatewayError = {
   code: string;
@@ -39,21 +28,10 @@ function readAccountId(params: Record<string, unknown> | undefined): string | nu
   return rawAccountId || null;
 }
 
-function createRuntimeChecker(
-  context: { getRuntimeSnapshot: () => RuntimeSnapshot },
-  accountId: string
-): () => boolean {
-  return () => {
-    const runtime = context.getRuntimeSnapshot();
-    const accountRuntime = runtime.channelAccounts?.[SIMPLEX_CHANNEL_ID]?.[accountId];
-    return Boolean(accountRuntime?.running ?? runtime.channels?.[SIMPLEX_CHANNEL_ID]?.running);
-  };
-}
-
 export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
   api.registerGatewayMethod(
     "simplex.invite.create",
-    async ({ params, respond, context }) => {
+    async ({ params, respond }) => {
       const mode = resolveInviteMode(params?.mode);
       if (!mode) {
         respond(
@@ -71,11 +49,6 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
           accountId,
           mode,
           logger: api.logger,
-          startChannel: () => context.startChannel(SIMPLEX_CHANNEL_ID, accountId ?? undefined),
-          isRunning: createRuntimeChecker(
-            context,
-            accountId ?? resolveDefaultSimplexAccountId(api.config)
-          ),
         });
         const qrDataUrl = result.link ? await renderQrDataUrl(result.link) : null;
         respond(true, { ...result, qrDataUrl });
@@ -95,18 +68,13 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
 
   api.registerGatewayMethod(
     "simplex.invite.list",
-    async ({ params, respond, context }) => {
+    async ({ params, respond }) => {
       const accountId = readAccountId(params);
       try {
         const result = await listSimplexInvites({
           cfg: api.config,
           accountId,
           logger: api.logger,
-          startChannel: () => context.startChannel(SIMPLEX_CHANNEL_ID, accountId ?? undefined),
-          isRunning: createRuntimeChecker(
-            context,
-            accountId ?? resolveDefaultSimplexAccountId(api.config)
-          ),
         });
         const addressQrDataUrl = result.addressLink
           ? await renderQrDataUrl(result.addressLink)
@@ -131,18 +99,13 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
 
   api.registerGatewayMethod(
     "simplex.invite.revoke",
-    async ({ params, respond, context }) => {
+    async ({ params, respond }) => {
       const accountId = readAccountId(params);
       try {
         const result = await revokeSimplexInvite({
           cfg: api.config,
           accountId,
           logger: api.logger,
-          startChannel: () => context.startChannel(SIMPLEX_CHANNEL_ID, accountId ?? undefined),
-          isRunning: createRuntimeChecker(
-            context,
-            accountId ?? resolveDefaultSimplexAccountId(api.config)
-          ),
         });
         respond(true, result);
       } catch (err) {
