@@ -1,10 +1,10 @@
-import { stripSimplexProviderPrefix } from "../constants.js";
+import { stripSimplexProviderPrefix } from "../../constants.js";
 import type {
   SimplexApiChatRef,
   SimplexApiChatType,
   SimplexApiNumericChatRef,
   SimplexChatRef,
-} from "../types/simplex.js";
+} from "../../types/simplex.js";
 
 export function formatSimplexChatRef(ref: SimplexChatRef): string {
   if (ref.type === "local") {

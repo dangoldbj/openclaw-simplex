@@ -1,34 +1,34 @@
-import type { ResolvedSimplexAccount } from "../types/config.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type {
   SimplexChatApi,
   SimplexChatEvent,
   SimplexLogger,
   SimplexMigrationConfirmation,
   SimplexMigrationConfirmationSetting,
-} from "../types/simplex.js";
-import { resolveSimplexDbFilePrefix } from "./simplex-db-path.js";
+} from "../../types/simplex.js";
+import { resolveSimplexDbFilePrefix } from "./db-path.js";
 
-type SimplexNodeConnectionState = {
+type SimplexConnectionState = {
   connected: boolean;
   at: number;
   expected?: boolean;
   error?: string | null;
 };
 
-type SimplexNodeClientParams = {
+type SimplexClientParams = {
   account: ResolvedSimplexAccount;
   logger?: SimplexLogger;
 };
 
-export class SimplexNodeClient {
+export class SimplexClient {
   private readonly account: ResolvedSimplexAccount;
-  private readonly logger: SimplexNodeClientParams["logger"];
+  private readonly logger: SimplexClientParams["logger"];
   private chat: SimplexChatApi | null = null;
   private connectPromise: Promise<void> | null = null;
   private eventReceiver: ((event: SimplexChatEvent) => void) | null = null;
   private readonly eventHandlers = new Set<(event: SimplexChatEvent) => void>();
-  private readonly connectionHandlers = new Set<(state: SimplexNodeConnectionState) => void>();
-  private lastConnectionState: SimplexNodeConnectionState = {
+  private readonly connectionHandlers = new Set<(state: SimplexConnectionState) => void>();
+  private lastConnectionState: SimplexConnectionState = {
     connected: false,
     at: Date.now(),
     expected: true,
@@ -36,7 +36,7 @@ export class SimplexNodeClient {
   };
   private closing = false;
 
-  constructor(params: SimplexNodeClientParams) {
+  constructor(params: SimplexClientParams) {
     this.account = params.account;
     this.logger = params.logger;
   }
@@ -48,14 +48,14 @@ export class SimplexNodeClient {
     };
   }
 
-  onConnectionState(handler: (state: SimplexNodeConnectionState) => void): () => void {
+  onConnectionState(handler: (state: SimplexConnectionState) => void): () => void {
     this.connectionHandlers.add(handler);
     return () => {
       this.connectionHandlers.delete(handler);
     };
   }
 
-  getConnectionState(): SimplexNodeConnectionState {
+  getConnectionState(): SimplexConnectionState {
     return { ...this.lastConnectionState };
   }
 
@@ -139,7 +139,7 @@ export class SimplexNodeClient {
     }
   }
 
-  private emitConnectionState(state: SimplexNodeConnectionState): void {
+  private emitConnectionState(state: SimplexConnectionState): void {
     if (!state.connected && this.closing) {
       state.expected = true;
     }

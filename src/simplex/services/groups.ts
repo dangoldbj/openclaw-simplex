@@ -1,6 +1,6 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import type { SimplexApiGroupMemberRole, SimplexApiGroupProfile } from "../types/simplex.js";
-import { resolveRuntimeAccount, withActiveSimplexUser } from "./simplex-runtime-ops.js";
+import type { SimplexApiGroupMemberRole, SimplexApiGroupProfile } from "../../types/simplex.js";
+import { resolveRuntimeAccount, withActiveSimplexUser } from "../runtime/account.js";
 
 const GROUP_MEMBER_ROLES = new Set(["observer", "author", "member", "moderator", "admin", "owner"]);
 

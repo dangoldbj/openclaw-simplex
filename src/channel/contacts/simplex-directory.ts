@@ -2,8 +2,8 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { ChannelDirectoryEntry } from "openclaw/plugin-sdk/directory-runtime";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveSimplexAccount } from "../../config/accounts.js";
-import { parseSimplexNumericId } from "../../simplex/simplex-api.js";
-import { withSimplexApi } from "../../simplex/simplex-transport.js";
+import { parseSimplexNumericId } from "../../simplex/runtime/api.js";
+import { withSimplexApi } from "../../simplex/runtime/transport.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { stripSimplexPrefix } from "../shared/simplex-common.js";
 

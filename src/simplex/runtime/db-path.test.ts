@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveSimplexCliDefaultDbPrefix, resolveSimplexDbFilePrefix } from "./simplex-db-path.js";
+import { resolveSimplexCliDefaultDbPrefix, resolveSimplexDbFilePrefix } from "./db-path.js";
 
 describe("simplex database path helpers", () => {
   it("uses the SimpleX CLI default on unix platforms", () => {

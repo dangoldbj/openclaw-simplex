@@ -1,27 +1,30 @@
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { connectSimplexLink, planSimplexConnectionLink } from "../simplex/simplex-connect-link.js";
+import {
+  connectSimplexLink,
+  planSimplexConnectionLink,
+} from "../simplex/services/connect-links.js";
 import {
   acceptSimplexContactRequest,
   listSimplexContactRequests,
   rejectSimplexContactRequest,
-} from "../simplex/simplex-contact-requests.js";
+} from "../simplex/services/contact-requests.js";
 import {
   createSimplexGroup,
   createSimplexGroupLink,
   listSimplexGroupLink,
   revokeSimplexGroupLink,
-} from "../simplex/simplex-groups.js";
-import { resolveInviteMode } from "../simplex/simplex-invite.js";
+} from "../simplex/services/groups.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
+  resolveInviteMode,
   revokeSimplexInvite,
-} from "../simplex/simplex-invite-service.js";
+} from "../simplex/services/invites.js";
 import {
   doctorSimplexRuntime,
   getSimplexRuntimeStatus,
-} from "../simplex/simplex-runtime-status.js";
+} from "../simplex/services/runtime-status.js";
 
 const INVALID_REQUEST = "INVALID_REQUEST";
 const UNAVAILABLE = "UNAVAILABLE";

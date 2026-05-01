@@ -1,5 +1,5 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { resolveRuntimeAccount, withActiveSimplexUser } from "./simplex-runtime-ops.js";
+import { resolveRuntimeAccount, withActiveSimplexUser } from "../runtime/account.js";
 
 export async function planSimplexConnectionLink(params: {
   cfg: OpenClawConfig;

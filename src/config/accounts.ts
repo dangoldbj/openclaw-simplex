@@ -1,7 +1,7 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
-import { resolveSimplexCliDefaultDbPrefix } from "../simplex/simplex-db-path.js";
+import { resolveSimplexCliDefaultDbPrefix } from "../simplex/runtime/db-path.js";
 import type { ResolvedSimplexAccount, SimplexConnectionConfig } from "../types/config.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
 

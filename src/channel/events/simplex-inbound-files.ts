@@ -1,7 +1,7 @@
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
-import type { SimplexNodeClient } from "../../simplex/simplex-node-client.js";
+import type { SimplexClient } from "../../simplex/runtime/client.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { getSimplexRuntime } from "../runtime.js";
 
@@ -23,7 +23,7 @@ export type PendingInboundFile = {
   account: ResolvedSimplexAccount;
   cfg: OpenClawConfig;
   runtime: RuntimeEnv;
-  client: SimplexNodeClient;
+  client: SimplexClient;
   sendPayload: (payload: SimplexReplyPayload) => Promise<void>;
   statusSink?: (patch: Partial<ChannelAccountSnapshot>) => void;
 };
@@ -37,7 +37,7 @@ function pendingKey(accountId: string, fileId: number): string {
 export async function requestFileDownload(params: {
   fileId: number;
   account: ResolvedSimplexAccount;
-  client: SimplexNodeClient;
+  client: SimplexClient;
   runtime: RuntimeEnv;
 }): Promise<boolean> {
   const { fileId, account, client, runtime } = params;

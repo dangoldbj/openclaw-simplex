@@ -2,12 +2,12 @@ import { type Static, Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { executeSimplexAction } from "../actions/execute.js";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
-import { resolveInviteMode } from "../simplex/simplex-invite.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
+  resolveInviteMode,
   revokeSimplexInvite,
-} from "../simplex/simplex-invite-service.js";
+} from "../simplex/services/invites.js";
 import type { ToolResult } from "../types/actions.js";
 
 const destructiveToolNames = new Set([

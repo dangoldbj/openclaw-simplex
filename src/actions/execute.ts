@@ -8,8 +8,8 @@ import {
   resolveSimplexChatItemId,
   toSimplexApiChatRef,
   toSimplexApiChatType,
-} from "../simplex/simplex-api.js";
-import { withSimplexApi } from "../simplex/simplex-transport.js";
+} from "../simplex/runtime/api.js";
+import { withSimplexApi } from "../simplex/runtime/transport.js";
 import type { SimplexActionParams, ToolResult } from "../types/actions.js";
 import type { ResolvedSimplexAccount } from "../types/config.js";
 import type {

@@ -1,18 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ResolvedSimplexAccount } from "../types/config.js";
-import type { SimplexChatApi } from "../types/simplex.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { SimplexChatApi } from "../../types/simplex.js";
 
-const nodeClientMock = vi.hoisted(() => ({
+const clientMock = vi.hoisted(() => ({
   constructed: 0,
   reset() {
     this.constructed = 0;
   },
 }));
 
-vi.mock("./simplex-node-client.js", () => ({
-  SimplexNodeClient: class {
+vi.mock("./client.js", () => ({
+  SimplexClient: class {
     constructor() {
-      nodeClientMock.constructed += 1;
+      clientMock.constructed += 1;
     }
     async connect() {}
     async close() {}
@@ -22,16 +22,15 @@ vi.mock("./simplex-node-client.js", () => ({
   },
 }));
 
-import type { SimplexNodeClient } from "./simplex-node-client.js";
+import type { SimplexClient } from "./client.js";
 import {
-  activeSimplexNodeClients,
-  registerActiveSimplexNodeClient,
-  unregisterActiveSimplexNodeClient,
+  activeSimplexClients,
+  registerActiveSimplexClient,
+  unregisterActiveSimplexClient,
   withSimplexApi,
-} from "./simplex-transport.js";
+} from "./transport.js";
 
-const registeredAccounts: Array<{ account: ResolvedSimplexAccount; client: SimplexNodeClient }> =
-  [];
+const registeredAccounts: Array<{ account: ResolvedSimplexAccount; client: SimplexClient }> = [];
 
 function account(accountId = "default"): ResolvedSimplexAccount {
   const dbFilePrefix = `/tmp/openclaw-simplex-${accountId}`;
@@ -52,31 +51,31 @@ function accountWithDb(accountId: string, dbFilePrefix: string): ResolvedSimplex
   };
 }
 
-function activeClient(source: string): SimplexNodeClient {
+function activeClient(source: string): SimplexClient {
   return {
     async connect() {},
     async close() {},
     async withApi<T>(fn: (api: SimplexChatApi) => Promise<T>) {
       return await fn({ source } as unknown as SimplexChatApi);
     },
-  } as SimplexNodeClient;
+  } as SimplexClient;
 }
 
 describe("simplex runtime transport", () => {
   afterEach(() => {
     for (const registered of registeredAccounts) {
-      unregisterActiveSimplexNodeClient(registered.account, registered.client);
+      unregisterActiveSimplexClient(registered.account, registered.client);
     }
     registeredAccounts.length = 0;
-    activeSimplexNodeClients.clear();
-    nodeClientMock.reset();
+    activeSimplexClients.clear();
+    clientMock.reset();
   });
 
   it("prefers the active monitor client for shared API calls", async () => {
     const cfg = account("alpha");
     const client = activeClient("active");
     registeredAccounts.push({ account: cfg, client });
-    await registerActiveSimplexNodeClient(cfg, client);
+    await registerActiveSimplexClient(cfg, client);
 
     const result = await withSimplexApi({
       account: cfg,
@@ -84,7 +83,7 @@ describe("simplex runtime transport", () => {
     });
 
     expect(result).toBe("active");
-    expect(nodeClientMock.constructed).toBe(0);
+    expect(clientMock.constructed).toBe(0);
   });
 
   it("reuses an active monitor client for another account with the same runtime database", async () => {
@@ -93,7 +92,7 @@ describe("simplex runtime transport", () => {
     const alias = accountWithDb("alias", dbFilePrefix);
     const client = activeClient("active");
     registeredAccounts.push({ account: monitored, client });
-    await registerActiveSimplexNodeClient(monitored, client);
+    await registerActiveSimplexClient(monitored, client);
 
     const result = await withSimplexApi({
       account: alias,
@@ -101,7 +100,7 @@ describe("simplex runtime transport", () => {
     });
 
     expect(result).toBe("active");
-    expect(nodeClientMock.constructed).toBe(0);
+    expect(clientMock.constructed).toBe(0);
   });
 
   it("does not unregister a newer active client with an older handle", async () => {
@@ -112,11 +111,11 @@ describe("simplex runtime transport", () => {
       { account: cfg, client: oldClient },
       { account: cfg, client: newClient }
     );
-    await registerActiveSimplexNodeClient(cfg, oldClient);
-    await registerActiveSimplexNodeClient(cfg, newClient);
+    await registerActiveSimplexClient(cfg, oldClient);
+    await registerActiveSimplexClient(cfg, newClient);
 
-    unregisterActiveSimplexNodeClient(cfg, oldClient);
+    unregisterActiveSimplexClient(cfg, oldClient);
 
-    expect(activeSimplexNodeClients.get("gamma")).toBe(newClient);
+    expect(activeSimplexClients.get("gamma")).toBe(newClient);
   });
 });

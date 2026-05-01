@@ -4,8 +4,8 @@ import type {
   SimplexInviteMode,
   SimplexInviteRevokeResult,
   SimplexInviteServiceOptions,
-} from "../types/invite.js";
-import { resolveRuntimeAccount, withActiveSimplexUser } from "./simplex-runtime-ops.js";
+} from "../../types/invite.js";
+import { resolveRuntimeAccount, withActiveSimplexUser } from "../runtime/account.js";
 
 function contactLinkToString(link: unknown): string | null {
   if (!link || typeof link !== "object") {
@@ -20,6 +20,13 @@ function contactLinkToString(link: unknown): string | null {
     : typeof full === "string" && full
       ? full
       : null;
+}
+
+export function resolveInviteMode(value: unknown): SimplexInviteMode | null {
+  if (value === "connect" || value === "address") {
+    return value;
+  }
+  return null;
 }
 
 export async function createSimplexInvite(

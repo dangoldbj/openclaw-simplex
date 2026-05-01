@@ -14,7 +14,7 @@ const simplexApiMock = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("../../simplex/simplex-transport.js", () => ({
+vi.mock("../../simplex/runtime/transport.js", () => ({
   withSimplexApi: async <T>(params: { run: (api: SimplexChatApi) => Promise<T> }): Promise<T> => {
     const api = {
       apiGetActiveUser: vi.fn(async () => ({

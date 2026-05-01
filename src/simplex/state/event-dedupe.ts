@@ -1,5 +1,5 @@
-import { getSimplexRuntime } from "../channel/runtime.js";
-import { openSimplexKeyedStore } from "./simplex-state-store.js";
+import { getSimplexRuntime } from "../../channel/runtime.js";
+import { openSimplexKeyedStore } from "./keyed-store.js";
 
 const SEEN_EVENT_NAMESPACE = "simplex-seen-events";
 const SEEN_EVENT_MAX_ENTRIES = 10_000;

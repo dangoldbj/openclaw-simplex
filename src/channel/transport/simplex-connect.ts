@@ -1,8 +1,8 @@
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
-import type { SimplexNodeClient } from "../../simplex/simplex-node-client.js";
+import type { SimplexClient } from "../../simplex/runtime/client.js";
 
 export async function connectSimplexWithRetry(params: {
-  client: SimplexNodeClient;
+  client: SimplexClient;
   runtime: RuntimeEnv;
   accountId: string;
   abortSignal: AbortSignal;

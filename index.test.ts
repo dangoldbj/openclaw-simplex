@@ -40,8 +40,8 @@ function mockContactLink(link: string | null): MockResponse {
   };
 }
 
-vi.mock("./src/simplex/simplex-node-client.js", () => ({
-  SimplexNodeClient: class {
+vi.mock("./src/simplex/runtime/client.js", () => ({
+  SimplexClient: class {
     async connect() {}
     getConnectionState() {
       return { connected: true, at: 1, error: null };

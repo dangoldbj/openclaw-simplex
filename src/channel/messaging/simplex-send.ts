@@ -3,8 +3,8 @@ import {
   parseSimplexApiChatRef,
   resolveSimplexChatItemId,
   toSimplexApiChatRef,
-} from "../../simplex/simplex-api.js";
-import { withSimplexApi } from "../../simplex/simplex-transport.js";
+} from "../../simplex/runtime/api.js";
+import { withSimplexApi } from "../../simplex/runtime/transport.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexApiComposedMessage, SimplexComposedMessage } from "../../types/simplex.js";
 import { buildComposedMessages } from "../media/simplex-media.js";

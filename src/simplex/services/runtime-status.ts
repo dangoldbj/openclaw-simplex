@@ -3,8 +3,8 @@ import {
   readSimplexPackageVersion,
   resolveRuntimeAccount,
   withActiveSimplexUser,
-} from "./simplex-runtime-ops.js";
-import { activeSimplexNodeClients } from "./simplex-transport.js";
+} from "../runtime/account.js";
+import { activeSimplexClients } from "../runtime/transport.js";
 
 export type SimplexRuntimeStatusResult = {
   accountId: string;
@@ -34,7 +34,7 @@ export async function getSimplexRuntimeStatus(params: {
   accountId?: string | null;
 }): Promise<SimplexRuntimeStatusResult> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
-  const activeClient = activeSimplexNodeClients.get(account.accountId);
+  const activeClient = activeSimplexClients.get(account.accountId);
   const connection = activeClient?.getConnectionState();
   const details = await withActiveSimplexUser({
     account,

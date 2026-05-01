@@ -9,10 +9,10 @@ import {
   parseSimplexNumericId,
   resolveSimplexChatItemId,
   toSimplexApiChatRef,
-} from "../../simplex/simplex-api.js";
-import { recordSimplexContactRequest } from "../../simplex/simplex-contact-requests.js";
-import { markSimplexEventSeen } from "../../simplex/simplex-event-state.js";
-import { SimplexNodeClient } from "../../simplex/simplex-node-client.js";
+} from "../../simplex/runtime/api.js";
+import { SimplexClient } from "../../simplex/runtime/client.js";
+import { recordSimplexContactRequest } from "../../simplex/state/contact-requests.js";
+import { markSimplexEventSeen } from "../../simplex/state/event-dedupe.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexChatItem } from "../../types/events.js";
 import type { SimplexApiComposedMessage, SimplexChatEvent } from "../../types/simplex.js";
@@ -61,7 +61,7 @@ function resolveSimplexGroupRequireMention(params: {
 }
 
 async function sendSimplexPayload(params: {
-  client: SimplexNodeClient;
+  client: SimplexClient;
   chatRef: string;
   cfg: OpenClawConfig;
   accountId: string;
@@ -104,10 +104,10 @@ async function sendSimplexPayload(params: {
 }
 
 export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
-  client: SimplexNodeClient;
+  client: SimplexClient;
 }> {
   const { account, cfg, runtime, statusSink } = params;
-  const client = new SimplexNodeClient({
+  const client = new SimplexClient({
     account,
     logger: {
       info: (message) => runtime?.log?.(message),
@@ -174,7 +174,7 @@ async function handleSimplexEvent(params: {
   cfg: OpenClawConfig;
   runtime: RuntimeEnv;
   statusSink?: (patch: Partial<ChannelAccountSnapshot>) => void;
-  client: SimplexNodeClient;
+  client: SimplexClient;
 }): Promise<void> {
   const { event, account, cfg, runtime, statusSink, client } = params;
   statusSink?.({ lastEventAt: Date.now() });

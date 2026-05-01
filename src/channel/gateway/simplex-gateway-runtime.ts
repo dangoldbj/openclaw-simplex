@@ -1,9 +1,9 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import {
-  activeSimplexNodeClients,
-  registerActiveSimplexNodeClient,
-  unregisterActiveSimplexNodeClient,
-} from "../../simplex/simplex-transport.js";
+  activeSimplexClients,
+  registerActiveSimplexClient,
+  unregisterActiveSimplexClient,
+} from "../../simplex/runtime/transport.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { startSimplexMonitor } from "../events/simplex-monitor.js";
 
@@ -32,7 +32,7 @@ export function buildSimplexGatewayRuntime(): NonNullable<
       });
       ctx.log?.info?.(`[${account.accountId}] SimpleX monitor started`);
 
-      await registerActiveSimplexNodeClient(account, monitor.client);
+      await registerActiveSimplexClient(account, monitor.client);
 
       await new Promise<void>((resolve) => {
         ctx.abortSignal.addEventListener(
@@ -44,14 +44,14 @@ export function buildSimplexGatewayRuntime(): NonNullable<
         );
       });
 
-      unregisterActiveSimplexNodeClient(account, monitor.client);
+      unregisterActiveSimplexClient(account, monitor.client);
       await monitor.client.close().catch(() => undefined);
     },
     stopAccount: async (ctx) => {
-      const client = activeSimplexNodeClients.get(ctx.account.accountId);
+      const client = activeSimplexClients.get(ctx.account.accountId);
       if (client) {
         await client.close();
-        unregisterActiveSimplexNodeClient(ctx.account, client);
+        unregisterActiveSimplexClient(ctx.account, client);
       }
     },
   };

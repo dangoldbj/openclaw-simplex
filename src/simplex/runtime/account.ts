@@ -1,9 +1,9 @@
 import { createRequire } from "node:module";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../config/accounts.js";
-import type { ResolvedSimplexAccount } from "../types/config.js";
-import type { SimplexChatApi, SimplexLogger } from "../types/simplex.js";
-import { withSimplexApi } from "./simplex-transport.js";
+import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../../config/accounts.js";
+import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { SimplexChatApi, SimplexLogger } from "../../types/simplex.js";
+import { withSimplexApi } from "../runtime/transport.js";
 
 const require = createRequire(import.meta.url);
 

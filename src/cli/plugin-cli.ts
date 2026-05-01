@@ -1,27 +1,30 @@
 import { renderQrTerminal } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { LEGACY_SIMPLEX_PLUGIN_ID, SIMPLEX_PLUGIN_ID } from "../constants.js";
-import { connectSimplexLink, planSimplexConnectionLink } from "../simplex/simplex-connect-link.js";
+import {
+  connectSimplexLink,
+  planSimplexConnectionLink,
+} from "../simplex/services/connect-links.js";
 import {
   acceptSimplexContactRequest,
   listSimplexContactRequests,
   rejectSimplexContactRequest,
-} from "../simplex/simplex-contact-requests.js";
+} from "../simplex/services/contact-requests.js";
 import {
   createSimplexGroup,
   createSimplexGroupLink,
   listSimplexGroupLink,
   revokeSimplexGroupLink,
-} from "../simplex/simplex-groups.js";
+} from "../simplex/services/groups.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
   revokeSimplexInvite,
-} from "../simplex/simplex-invite-service.js";
+} from "../simplex/services/invites.js";
 import {
   doctorSimplexRuntime,
   getSimplexRuntimeStatus,
-} from "../simplex/simplex-runtime-status.js";
+} from "../simplex/services/runtime-status.js";
 import { runMigration } from "./migration.js";
 
 export { migrateConfigObject, migrateStateFiles } from "./migration.js";
