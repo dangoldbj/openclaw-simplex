@@ -1,6 +1,6 @@
 {
   "name": "@dangoldbj/openclaw-simplex",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "SimpleX channel plugin for OpenClaw using the official Node runtime",
   "homepage": "https://openclaw-simplex.mintlify.app/",
   "repository": {
