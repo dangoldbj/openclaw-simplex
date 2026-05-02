@@ -21,10 +21,7 @@ const channelSchema = channelPlugin?.configSchema;
 const existingChannelConfig = manifest.channelConfigs?.[channelId] ?? {};
 
 function mergeUiHints(runtimeUiHints, existingUiHints) {
-  const keys = new Set([
-    ...Object.keys(existingUiHints ?? {}),
-    ...Object.keys(runtimeUiHints ?? {}),
-  ]);
+  const keys = Object.keys(runtimeUiHints ?? {});
 
   return Object.fromEntries(
     [...keys].map((key) => [
@@ -43,6 +40,10 @@ if (!channelId || !channelSchema?.schema || typeof channelSchema.schema !== "obj
 
 const packageChannelMeta =
   packageJson?.openclaw?.channel?.id === channelId ? packageJson.openclaw.channel : {};
+
+if (packageJson?.description) {
+  manifest.description = packageJson.description;
+}
 
 manifest.channelConfigs = {
   ...(manifest.channelConfigs ?? {}),

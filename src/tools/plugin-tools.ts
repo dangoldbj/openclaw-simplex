@@ -2,17 +2,13 @@ import { type Static, Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { executeSimplexAction } from "../actions/execute.js";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
-import { resolveInviteMode } from "../simplex/simplex-invite.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
+  resolveInviteMode,
   revokeSimplexInvite,
-} from "../simplex/simplex-invite-service.js";
-
-type ToolResult = {
-  content: Array<{ type: "text"; text: string }>;
-  details: unknown;
-};
+} from "../simplex/services/invites.js";
+import type { ToolResult } from "../types/actions.js";
 
 const destructiveToolNames = new Set([
   "simplex_invite_revoke",
@@ -173,7 +169,7 @@ export function registerSimplexTools(api: OpenClawPluginApi): void {
           accountId: resolveToolAccountId(api, rawParams?.accountId, ctx.agentAccountId),
           logger: api.logger,
         });
-        return jsonResult({ ...result, revoked: true });
+        return jsonResult(result);
       },
     }),
     { name: "simplex_invite_revoke" }

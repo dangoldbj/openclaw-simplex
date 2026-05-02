@@ -1,23 +1,32 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
+import { resolveSimplexCliDefaultDbPrefix } from "../simplex/runtime/db-path.js";
+import type { ResolvedSimplexAccount, SimplexConnectionConfig } from "../types/config.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
-import type {
-  ResolvedSimplexAccount,
-  SimplexConnectionConfig,
-  SimplexConnectionMode,
-} from "./types.js";
 
-const DEFAULT_WS_HOST = "127.0.0.1";
-const DEFAULT_WS_PORT = 5225;
+export const SIMPLEX_CLI_DEFAULT_DB_PREFIX = resolveSimplexCliDefaultDbPrefix();
 
-function hasMeaningfulConnectionConfig(connection: SimplexConnectionConfig | undefined): boolean {
-  if (!connection) {
-    return false;
+type LegacySimplexAccountConfig = SimplexAccountConfig & {
+  connection?: SimplexConnectionConfig;
+};
+
+function flattenRuntimeConfig(config: LegacySimplexAccountConfig): SimplexAccountConfig {
+  const { connection, ...rest } = config;
+  const flattened: SimplexAccountConfig = { ...rest };
+  for (const [key, value] of Object.entries({
+    dbFilePrefix: rest.dbFilePrefix ?? connection?.dbFilePrefix,
+    displayName: rest.displayName ?? connection?.displayName,
+    fullName: rest.fullName ?? connection?.fullName,
+    migrationConfirmation: rest.migrationConfirmation ?? connection?.migrationConfirmation,
+    autoAcceptFiles: rest.autoAcceptFiles ?? connection?.autoAcceptFiles,
+    connectTimeoutMs: rest.connectTimeoutMs ?? connection?.connectTimeoutMs,
+  }) as Array<[keyof SimplexAccountConfig, unknown]>) {
+    if (value !== undefined) {
+      flattened[key] = value as never;
+    }
   }
-  return Boolean(
-    connection.wsUrl?.trim() || connection.wsHost?.trim() || connection.wsPort !== undefined
-  );
+  return flattened;
 }
 
 function resolveRawSimplexAccountConfig(
@@ -26,10 +35,12 @@ function resolveRawSimplexAccountConfig(
 ): SimplexAccountConfig {
   if (accountId === DEFAULT_ACCOUNT_ID) {
     const { accounts: _ignored, ...base } = (cfg.channels?.[SIMPLEX_CHANNEL_ID] ??
-      {}) as SimplexChannelConfig;
-    return base;
+      {}) as LegacySimplexAccountConfig & SimplexChannelConfig;
+    return flattenRuntimeConfig(base);
   }
-  return (cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId] ?? {}) as SimplexAccountConfig;
+  return flattenRuntimeConfig(
+    (cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId] ?? {}) as LegacySimplexAccountConfig
+  );
 }
 
 function listConfiguredAccountIds(cfg: OpenClawConfig): string[] {
@@ -60,48 +71,42 @@ export function hasMeaningfulSimplexConfig(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;
 }): boolean {
+  if (!params.cfg.channels || !(SIMPLEX_CHANNEL_ID in params.cfg.channels)) {
+    return false;
+  }
   const accountId = normalizeAccountId(params.accountId);
   const raw = resolveRawSimplexAccountConfig(params.cfg, accountId);
-  return hasMeaningfulConnectionConfig(raw.connection);
-}
-
-function mergeConnection(
-  base: SimplexConnectionConfig = {},
-  account: SimplexConnectionConfig = {}
-): SimplexConnectionConfig {
-  return {
-    ...base,
-    ...account,
-  };
+  if (raw.dbFilePrefix?.trim()) {
+    return true;
+  }
+  if (accountId === DEFAULT_ACCOUNT_ID) {
+    return true;
+  }
+  return Boolean(
+    resolveRawSimplexAccountConfig(params.cfg, DEFAULT_ACCOUNT_ID).dbFilePrefix?.trim()
+  );
 }
 
 function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): SimplexAccountConfig {
   const { accounts: _ignored, ...base } = (cfg.channels?.[SIMPLEX_CHANNEL_ID] ??
-    {}) as SimplexChannelConfig;
+    {}) as LegacySimplexAccountConfig & SimplexChannelConfig;
   const account = (cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId] ??
-    {}) as SimplexAccountConfig;
+    {}) as LegacySimplexAccountConfig;
   return {
-    ...base,
-    ...account,
-    connection: mergeConnection(base.connection, account.connection),
+    ...flattenRuntimeConfig(base),
+    ...flattenRuntimeConfig(account),
   };
 }
 
-function resolveWsHost(connection: SimplexConnectionConfig): string {
-  return connection.wsHost?.trim() || DEFAULT_WS_HOST;
-}
-
-function resolveWsPort(connection: SimplexConnectionConfig): number {
-  return connection.wsPort ?? DEFAULT_WS_PORT;
-}
-
-function resolveWsUrl(connection: SimplexConnectionConfig): string {
-  if (connection.wsUrl?.trim()) {
-    return connection.wsUrl.trim();
+function resolveNodeDbFilePrefix(
+  config: SimplexAccountConfig,
+  accountId: string
+): string | undefined {
+  const configured = config.dbFilePrefix?.trim();
+  if (configured) {
+    return configured;
   }
-  const host = resolveWsHost(connection);
-  const port = resolveWsPort(connection);
-  return `ws://${host}:${port}`;
+  return accountId === DEFAULT_ACCOUNT_ID ? SIMPLEX_CLI_DEFAULT_DB_PREFIX : undefined;
 }
 
 export function resolveSimplexAccount(params: {
@@ -113,21 +118,14 @@ export function resolveSimplexAccount(params: {
   const hasMeaningfulConfig = hasMeaningfulSimplexConfig({ cfg: params.cfg, accountId });
   const baseEnabled = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.enabled !== false;
   const enabled = baseEnabled && merged.enabled !== false;
-  const connection = merged.connection ?? {};
-  const mode: SimplexConnectionMode = "external";
-  const wsUrl = resolveWsUrl(connection);
-  const wsHost = resolveWsHost(connection);
-  const wsPort = resolveWsPort(connection);
   const configured = hasMeaningfulConfig;
   return {
     accountId,
     enabled,
     name: merged.name?.trim() || undefined,
     configured,
-    mode,
-    wsUrl,
-    wsHost,
-    wsPort,
+    mode: "node",
+    dbFilePrefix: resolveNodeDbFilePrefix(merged, accountId),
     config: merged,
   };
 }

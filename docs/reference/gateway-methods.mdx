@@ -1,24 +1,24 @@
 ---
 title: Gateway Methods
-description: API reference for the OpenClaw SimpleX gateway RPC methods used to create invite links, generate address QR codes, and automate onboarding programmatically.
+description: API reference for OpenClaw SimpleX gateway RPC methods used for runtime status, one-time invite links, SimpleX addresses, contact requests, group links, and operator-controlled SimpleX onboarding.
 ---
 
-The plugin registers these gateway RPC methods for invite/address automation and programmatic onboarding flows.
+The plugin registers these gateway RPC methods for runtime diagnostics, one-time invite and SimpleX address automation, contact-request review, group-link lifecycle, and operator-controlled SimpleX link onboarding.
 
 <Info>
-  For day-to-day operator workflows, prefer the plugin CLI commands in [Example Commands](/reference/example-commands). Use these gateway methods when another system needs the same invite/address flow programmatically, including QR data URLs.
+  For day-to-day one-time invite and SimpleX address workflows, prefer the plugin CLI commands in [Example Commands](/reference/example-commands). Use these gateway methods when another system needs programmatic access to runtime status, contact-request review, group-link lifecycle, or link onboarding.
 </Info>
 
 ## Prerequisites and behavior
 
 - The target SimpleX account must be enabled and configured under <code>channels.openclaw-simplex</code>.
-- The <code>simplex-chat</code> WebSocket runtime must be reachable for that account.
+- The SimpleX Node runtime must start successfully for that account.
 - If <code>accountId</code> is omitted or blank, the plugin uses the channel's default account.
-- If the channel is not running, these methods ask OpenClaw to start <code>openclaw-simplex</code> for the target account and retry the SimpleX command.
+- These methods call the embedded SimpleX runtime API for the target account directly; they do not start a separate SimpleX CLI or WebSocket sidecar.
 
 ## `simplex.invite.create`
 
-Create a one-time connect link or an address link.
+Create a one-time connect link or return/create the account's reusable SimpleX address.
 
 Request params:
 
@@ -31,8 +31,8 @@ Request params:
 
 `mode` supports:
 
-- `connect` -> runs <code>/c</code>
-- `address` -> runs <code>/ad</code>
+- `connect` -> creates a one-time invitation link
+- `address` -> returns or creates the account's reusable SimpleX address
 
 Response highlights:
 
@@ -44,7 +44,7 @@ Example response shape:
 ```json
 {
   "accountId": "default",
-  "command": "/c",
+  "operation": "create-link",
   "mode": "connect",
   "link": "simplex://...",
   "qrDataUrl": "data:image/png;base64,..."
@@ -53,7 +53,7 @@ Example response shape:
 
 ## `simplex.invite.list`
 
-List current invite/address links and pending contact hints. Internally this combines <code>/show_address</code> and <code>/contacts</code>.
+List the current SimpleX address and related contact state through the SimpleX runtime APIs.
 
 Request params:
 
@@ -65,9 +65,9 @@ Request params:
 
 Response highlights:
 
-- `addressLink`: current address link if available
-- `links`: extracted invite/address links seen in the responses
-- `pendingHints`: pending contact hints from `/contacts`
+- `addressLink`: current SimpleX address link if available
+- `links`: extracted SimpleX address links seen in the responses
+- `pendingHints`: pending contact hints, if exposed by the runtime
 - `addressQrDataUrl`: PNG QR image as a `data:` URL for `addressLink`
 
 Example response shape:
@@ -84,7 +84,7 @@ Example response shape:
 
 ## `simplex.invite.revoke`
 
-Revoke the active address link by running <code>/delete_address</code>.
+Revoke the active SimpleX address through the SimpleX runtime API.
 
 Request params:
 
@@ -99,8 +99,120 @@ Example response shape:
 ```json
 {
   "accountId": "default",
-  "response": {
-    "corrId": "..."
+  "revoked": true
+}
+```
+
+## `simplex.runtime.status`
+
+Return runtime and account state for automation and Control UI surfaces.
+
+Response highlights:
+
+- `activeUser`: active SimpleX user profile, if available
+- `address`: current SimpleX address metadata, if available
+- `counts`: contact, group, and user counts
+- `runtime`: active client, connection state, and latest runtime error
+- `packageVersion`: installed `simplex-chat` package version
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "configured": true,
+  "mode": "node",
+  "dbFilePrefix": "~/.simplex/simplex_v1",
+  "packageVersion": "6.5.0",
+  "runtime": {
+    "activeClient": true,
+    "connected": true,
+    "lastError": null
+  },
+  "counts": {
+    "contacts": 1,
+    "groups": 0,
+    "users": 1
+  }
+}
+```
+
+## `simplex.runtime.doctor`
+
+Return the same runtime status plus `ok` and `issues` fields for operator diagnostics.
+
+## `simplex.requests.*`
+
+Manage pending SimpleX contact requests observed from runtime events.
+
+- `simplex.requests.list`: list stored pending requests for an account
+- `simplex.requests.accept`: accept a request by `contactRequestId`
+- `simplex.requests.reject`: reject a request by `contactRequestId`
+
+Example request:
+
+```json
+{
+  "accountId": "default",
+  "contactRequestId": 123
+}
+```
+
+## `simplex.groups.*`
+
+Create SimpleX groups and manage group invite links through the official Node runtime.
+
+- `simplex.groups.create`: create a group from `displayName`, optional `fullName`, and optional `description`
+- `simplex.groups.link.create`: create a group link for `groupId` and optional `role`
+- `simplex.groups.link.list`: return the current group link plus QR data URL
+- `simplex.groups.link.revoke`: delete the current group link
+
+Example group link request:
+
+```json
+{
+  "accountId": "default",
+  "groupId": 42,
+  "role": "member"
+}
+```
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "groupId": 42,
+  "role": "member",
+  "link": "simplex://...",
+  "qrDataUrl": "data:image/png;base64,..."
+}
+```
+
+## `simplex.connect.*`
+
+Let an operator connect the SimpleX runtime identity to a SimpleX contact/address/group link.
+
+- `simplex.connect.plan`: inspect what connecting to `link` would do
+- `simplex.connect`: connect the active SimpleX user to `link`
+
+Example request:
+
+```json
+{
+  "accountId": "default",
+  "link": "simplex://..."
+}
+```
+
+Example response shape:
+
+```json
+{
+  "accountId": "default",
+  "connected": true,
+  "result": {
+    "type": "sentConfirmation"
   }
 }
 ```
@@ -110,7 +222,7 @@ Example response shape:
 | Code | Meaning |
 | --- | --- |
 | `INVALID_REQUEST` | The request params are invalid. For example, <code>simplex.invite.create</code> received an unsupported <code>mode</code>. |
-| `UNAVAILABLE` | The account is disabled/unconfigured, the channel runtime is unavailable, or the underlying SimpleX command failed. The response message includes the failure reason. |
+| `UNAVAILABLE` | The account is disabled/unconfigured, the channel runtime is unavailable, or the underlying SimpleX runtime API call failed. The response message includes the failure reason. |
 
 ## Related agent tools
 

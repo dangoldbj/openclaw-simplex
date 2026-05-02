@@ -28,21 +28,16 @@ const SimplexActionConfigSchema = z
 
 const SimplexReactionLevelSchema = z.enum(["off", "ack", "minimal", "extensive"]).optional();
 
-const SimplexConnectionSchema = z
-  .object({
-    mode: z.literal("external").optional(),
-    wsUrl: z.string().url().optional(),
-    wsHost: z.string().optional(),
-    wsPort: z.number().int().positive().optional(),
-    autoAcceptFiles: z.boolean().optional(),
-    connectTimeoutMs: z.number().int().positive().optional(),
-  })
-  .strict();
-
 export const SimplexAccountConfigSchema = z
   .object({
     name: z.string().optional(),
     enabled: z.boolean().optional(),
+    dbFilePrefix: z.string().optional(),
+    displayName: z.string().optional(),
+    fullName: z.string().optional(),
+    migrationConfirmation: z.enum(["yesUp", "yesUpDown", "console", "error"]).optional(),
+    autoAcceptFiles: z.boolean().optional(),
+    connectTimeoutMs: z.number().int().positive().optional(),
     markdown: MarkdownConfigSchema,
     mediaMaxMb: z.number().int().positive().optional(),
     actions: SimplexActionConfigSchema.optional(),
@@ -56,7 +51,6 @@ export const SimplexAccountConfigSchema = z
     groupPolicy: GroupPolicySchema.optional(),
     groupAllowFrom: SimplexAllowFromListSchema,
     groups: z.object({}).catchall(groupConfigSchema).optional(),
-    connection: SimplexConnectionSchema.optional(),
   })
   .strict();
 

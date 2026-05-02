@@ -1,40 +1,64 @@
-import { access, mkdir, readdir, rename } from "node:fs/promises";
-import path from "node:path";
 import { renderQrTerminal } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { LEGACY_SIMPLEX_PLUGIN_ID, SIMPLEX_PLUGIN_ID } from "../constants.js";
 import {
-  LEGACY_SIMPLEX_CHANNEL_ID,
-  LEGACY_SIMPLEX_PLUGIN_ID,
-  SIMPLEX_CHANNEL_ID,
-  SIMPLEX_PLUGIN_ID,
-} from "../constants.js";
+  connectSimplexLink,
+  planSimplexConnectionLink,
+} from "../simplex/services/connect-links.js";
+import {
+  acceptSimplexContactRequest,
+  listSimplexContactRequests,
+  rejectSimplexContactRequest,
+} from "../simplex/services/contact-requests.js";
+import {
+  createSimplexGroup,
+  createSimplexGroupLink,
+  listSimplexGroupLink,
+  revokeSimplexGroupLink,
+} from "../simplex/services/groups.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
   revokeSimplexInvite,
-} from "../simplex/simplex-invite-service.js";
+} from "../simplex/services/invites.js";
+import {
+  doctorSimplexRuntime,
+  getSimplexRuntimeStatus,
+} from "../simplex/services/runtime-status.js";
+import { runMigration } from "./migration.js";
 
-export const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
-export const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
-export const LEGACY_CHANNEL_ID = LEGACY_SIMPLEX_CHANNEL_ID;
-export const CHANNEL_ID = SIMPLEX_CHANNEL_ID;
+export { migrateConfigObject, migrateStateFiles } from "./migration.js";
 
-type MigrationResult = {
-  changed: string[];
-  skipped: string[];
-};
-
-type SimplexMigrationStateApi = {
-  runtime: {
-    state: {
-      resolveStateDir: () => string;
-    };
-  };
-};
+const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
+const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
 
 type InviteCliOptions = {
   accountId?: string;
   qr?: boolean;
+};
+
+type AccountCliOptions = {
+  accountId?: string;
+};
+
+type RequestCliOptions = AccountCliOptions & {
+  contactRequestId?: string;
+};
+
+type GroupCreateCliOptions = AccountCliOptions & {
+  displayName?: string;
+  fullName?: string;
+  description?: string;
+};
+
+type GroupLinkCliOptions = AccountCliOptions & {
+  groupId?: string;
+  role?: string;
+  qr?: boolean;
+};
+
+type ConnectCliOptions = AccountCliOptions & {
+  link?: string;
 };
 
 function readOptionalAccountId(value?: string): string | null {
@@ -51,6 +75,22 @@ function printJson(value: unknown): void {
   console.log(JSON.stringify(value, null, 2));
 }
 
+function readPositiveInteger(value: string | undefined, label: string): number {
+  const parsed = Number(value?.trim() ?? "");
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${label} must be a positive integer`);
+  }
+  return parsed;
+}
+
+function readRequiredString(value: string | undefined, label: string): string {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    throw new Error(`${label} is required`);
+  }
+  return trimmed;
+}
+
 async function runInviteCreateCli(
   api: OpenClawPluginApi,
   mode: "connect" | "address",
@@ -65,7 +105,7 @@ async function runInviteCreateCli(
   printJson({
     accountId: result.accountId,
     mode: result.mode,
-    command: result.command,
+    operation: result.operation,
     link: result.link,
   });
   if (opts.qr && result.link) {
@@ -114,191 +154,140 @@ async function runAddressRevokeCli(api: OpenClawPluginApi, opts: InviteCliOption
   });
   printJson({
     accountId: result.accountId,
-    revoked: true,
+    revoked: result.revoked,
   });
 }
 
-function dedupeStrings(values: unknown[] | undefined): string[] | undefined {
-  if (!Array.isArray(values)) {
-    return values as string[] | undefined;
-  }
-  return [
-    ...new Set(
-      values.filter(
-        (value): value is string => typeof value === "string" && value.trim().length > 0
-      )
-    ),
-  ];
+async function runRuntimeStatusCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
+  printJson(
+    await getSimplexRuntimeStatus({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+    })
+  );
 }
 
-function mergeObjects<T extends Record<string, unknown>>(
-  legacy: T | undefined,
-  next: T | undefined
-): T | undefined {
-  if (!legacy && !next) {
-    return undefined;
-  }
-  if (!legacy) {
-    return next;
-  }
-  if (!next) {
-    return legacy;
-  }
-  const merged: Record<string, unknown> = { ...legacy, ...next };
-  if ("connection" in legacy || "connection" in next) {
-    merged.connection = {
-      ...((legacy.connection as Record<string, unknown> | undefined) ?? {}),
-      ...((next.connection as Record<string, unknown> | undefined) ?? {}),
-    };
-  }
-  if ("accounts" in legacy || "accounts" in next) {
-    merged.accounts = {
-      ...((legacy.accounts as Record<string, unknown> | undefined) ?? {}),
-      ...((next.accounts as Record<string, unknown> | undefined) ?? {}),
-    };
-  }
-  return merged as T;
+async function runRuntimeDoctorCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
+  printJson(
+    await doctorSimplexRuntime({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+    })
+  );
 }
 
-export function migrateConfigObject(rawConfig: Record<string, unknown>): {
-  nextConfig: Record<string, unknown>;
-  result: MigrationResult;
-} {
-  const result: MigrationResult = { changed: [], skipped: [] };
-  const nextConfig: Record<string, unknown> = {
-    ...rawConfig,
-    plugins: { ...((rawConfig.plugins as Record<string, unknown> | undefined) ?? {}) },
-    channels: { ...((rawConfig.channels as Record<string, unknown> | undefined) ?? {}) },
-  };
-
-  const plugins = nextConfig.plugins as Record<string, unknown>;
-  const channels = nextConfig.channels as Record<string, unknown>;
-
-  const entries = { ...((plugins.entries as Record<string, unknown> | undefined) ?? {}) };
-  if (LEGACY_PLUGIN_ID in entries) {
-    entries[PLUGIN_ID] = mergeObjects(
-      entries[LEGACY_PLUGIN_ID] as Record<string, unknown> | undefined,
-      entries[PLUGIN_ID] as Record<string, unknown> | undefined
-    );
-    delete entries[LEGACY_PLUGIN_ID];
-    plugins.entries = entries;
-    result.changed.push(
-      `config: plugins.entries.${LEGACY_PLUGIN_ID} -> plugins.entries.${PLUGIN_ID}`
-    );
-  }
-
-  const installs = { ...((plugins.installs as Record<string, unknown> | undefined) ?? {}) };
-  if (LEGACY_PLUGIN_ID in installs) {
-    installs[PLUGIN_ID] = mergeObjects(
-      installs[LEGACY_PLUGIN_ID] as Record<string, unknown> | undefined,
-      installs[PLUGIN_ID] as Record<string, unknown> | undefined
-    );
-    delete installs[LEGACY_PLUGIN_ID];
-    plugins.installs = installs;
-    result.changed.push(
-      `config: plugins.installs.${LEGACY_PLUGIN_ID} -> plugins.installs.${PLUGIN_ID}`
-    );
-  }
-
-  for (const key of ["allow", "deny"] as const) {
-    const values = dedupeStrings(plugins[key] as unknown[] | undefined);
-    if (!values?.includes(LEGACY_PLUGIN_ID)) {
-      continue;
-    }
-    const migrated = dedupeStrings(
-      values.map((value) => (value === LEGACY_PLUGIN_ID ? PLUGIN_ID : value))
-    );
-    plugins[key] = migrated;
-    result.changed.push(
-      `config: plugins.${key} replaced "${LEGACY_PLUGIN_ID}" with "${PLUGIN_ID}"`
-    );
-  }
-
-  if (LEGACY_CHANNEL_ID in channels) {
-    channels[CHANNEL_ID] = mergeObjects(
-      channels[LEGACY_CHANNEL_ID] as Record<string, unknown> | undefined,
-      channels[CHANNEL_ID] as Record<string, unknown> | undefined
-    );
-    delete channels[LEGACY_CHANNEL_ID];
-    result.changed.push(`config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`);
-  }
-
-  return { nextConfig, result };
+async function runRequestsListCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
+  printJson(
+    await listSimplexContactRequests({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+    })
+  );
 }
 
-export async function migrateStateFiles(
-  api: SimplexMigrationStateApi,
-  dryRun: boolean
-): Promise<MigrationResult> {
-  const result: MigrationResult = { changed: [], skipped: [] };
-  const credentialsDir = path.join(api.runtime.state.resolveStateDir(), "credentials");
-  await mkdir(credentialsDir, { recursive: true });
-  const entries = await readdir(credentialsDir, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (!entry.isFile()) {
-      continue;
-    }
-    const source = entry.name;
-    let target: string | null = null;
-    if (source === `${LEGACY_CHANNEL_ID}-pairing.json`) {
-      target = `${CHANNEL_ID}-pairing.json`;
-    } else if (source === `${LEGACY_CHANNEL_ID}-allowFrom.json`) {
-      target = `${CHANNEL_ID}-allowFrom.json`;
-    } else {
-      const accountMatch = source.match(/^simplex-(.+)-allowFrom\.json$/);
-      if (accountMatch?.[1]) {
-        target = `${CHANNEL_ID}-${accountMatch[1]}-allowFrom.json`;
-      }
-    }
-    if (!target) {
-      continue;
-    }
-    const sourcePath = path.join(credentialsDir, source);
-    const targetPath = path.join(credentialsDir, target);
-    try {
-      await access(targetPath);
-      result.skipped.push(`state: skipped ${source} because ${target} already exists`);
-      continue;
-    } catch {}
-    if (!dryRun) {
-      await rename(sourcePath, targetPath);
-    }
-    result.changed.push(`state: ${source} -> ${target}`);
-  }
-
-  return result;
+async function runRequestsAcceptCli(
+  api: OpenClawPluginApi,
+  opts: RequestCliOptions
+): Promise<void> {
+  printJson(
+    await acceptSimplexContactRequest({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      contactRequestId: readPositiveInteger(opts.contactRequestId, "contactRequestId"),
+    })
+  );
 }
 
-function printMigrationResult(result: MigrationResult, dryRun: boolean): void {
-  const title = dryRun
-    ? "OpenClaw SimpleX migration dry run"
-    : "OpenClaw SimpleX migration complete";
-  console.log(title);
-  if (result.changed.length === 0) {
-    console.log("- No changes were needed.");
-  } else {
-    for (const line of result.changed) {
-      console.log(`- ${line}`);
-    }
-  }
-  for (const line of result.skipped) {
-    console.log(`- ${line}`);
+async function runRequestsRejectCli(
+  api: OpenClawPluginApi,
+  opts: RequestCliOptions
+): Promise<void> {
+  printJson(
+    await rejectSimplexContactRequest({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      contactRequestId: readPositiveInteger(opts.contactRequestId, "contactRequestId"),
+    })
+  );
+}
+
+async function runGroupCreateCli(
+  api: OpenClawPluginApi,
+  opts: GroupCreateCliOptions
+): Promise<void> {
+  printJson(
+    await createSimplexGroup({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      displayName: readRequiredString(opts.displayName, "displayName"),
+      fullName: opts.fullName,
+      description: opts.description,
+    })
+  );
+}
+
+async function runGroupLinkCreateCli(
+  api: OpenClawPluginApi,
+  opts: GroupLinkCliOptions
+): Promise<void> {
+  const result = await createSimplexGroupLink({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    groupId: readPositiveInteger(opts.groupId, "groupId"),
+    role: opts.role,
+  });
+  printJson(result);
+  if (opts.qr && result.link) {
+    await printTerminalQr(result.link);
   }
 }
 
-export async function runMigration(api: OpenClawPluginApi, dryRun: boolean): Promise<void> {
-  const currentConfig = api.runtime.config.loadConfig() as Record<string, unknown>;
-  const { nextConfig, result: configResult } = migrateConfigObject(currentConfig);
-  const stateResult = await migrateStateFiles(api, dryRun);
-  const result: MigrationResult = {
-    changed: [...configResult.changed, ...stateResult.changed],
-    skipped: [...configResult.skipped, ...stateResult.skipped],
-  };
-  if (!dryRun && configResult.changed.length > 0) {
-    await api.runtime.config.writeConfigFile(nextConfig);
+async function runGroupLinkListCli(
+  api: OpenClawPluginApi,
+  opts: GroupLinkCliOptions
+): Promise<void> {
+  const result = await listSimplexGroupLink({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+    groupId: readPositiveInteger(opts.groupId, "groupId"),
+  });
+  printJson(result);
+  if (opts.qr && result.link) {
+    await printTerminalQr(result.link);
   }
-  printMigrationResult(result, dryRun);
+}
+
+async function runGroupLinkRevokeCli(
+  api: OpenClawPluginApi,
+  opts: GroupLinkCliOptions
+): Promise<void> {
+  printJson(
+    await revokeSimplexGroupLink({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      groupId: readPositiveInteger(opts.groupId, "groupId"),
+    })
+  );
+}
+
+async function runConnectPlanCli(api: OpenClawPluginApi, opts: ConnectCliOptions): Promise<void> {
+  printJson(
+    await planSimplexConnectionLink({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      link: readRequiredString(opts.link, "link"),
+    })
+  );
+}
+
+async function runConnectCli(api: OpenClawPluginApi, opts: ConnectCliOptions): Promise<void> {
+  printJson(
+    await connectSimplexLink({
+      cfg: api.config,
+      accountId: readOptionalAccountId(opts.accountId),
+      link: readRequiredString(opts.link, "link"),
+    })
+  );
 }
 
 const SIMPLEX_CLI_COMMANDS = [PLUGIN_ID, LEGACY_PLUGIN_ID];
@@ -326,7 +315,7 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
 
       command
         .command("migrate")
-        .description("Migrate config and OpenClaw state from simplex -> openclaw-simplex ids")
+        .description("Migrate SimpleX ids and legacy WebSocket runtime config")
         .option("--dry-run", "Show planned changes without writing files", false)
         .action(async (opts: { dryRun?: boolean }) => {
           await runMigration(api, opts.dryRun === true);
@@ -378,6 +367,117 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
         .option("--account-id <accountId>", "Use a specific SimpleX account")
         .action(async (opts: InviteCliOptions) => {
           await runAddressRevokeCli(api, opts);
+        });
+
+      const runtime = command.command("runtime").description("SimpleX runtime diagnostics");
+
+      runtime
+        .command("status")
+        .description("Show SimpleX runtime status for an account")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: AccountCliOptions) => {
+          await runRuntimeStatusCli(api, opts);
+        });
+
+      runtime
+        .command("doctor")
+        .description("Run SimpleX runtime diagnostics for an account")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: AccountCliOptions) => {
+          await runRuntimeDoctorCli(api, opts);
+        });
+
+      const requests = command.command("requests").description("SimpleX contact request helpers");
+
+      requests
+        .command("list")
+        .description("List pending SimpleX contact requests seen by the runtime")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: AccountCliOptions) => {
+          await runRequestsListCli(api, opts);
+        });
+
+      requests
+        .command("accept")
+        .description("Accept a pending SimpleX contact request")
+        .requiredOption("--contact-request-id <id>", "SimpleX contact request id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: RequestCliOptions) => {
+          await runRequestsAcceptCli(api, opts);
+        });
+
+      requests
+        .command("reject")
+        .description("Reject a pending SimpleX contact request")
+        .requiredOption("--contact-request-id <id>", "SimpleX contact request id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: RequestCliOptions) => {
+          await runRequestsRejectCli(api, opts);
+        });
+
+      const groups = command.command("groups").description("SimpleX group helpers");
+
+      groups
+        .command("create")
+        .description("Create a SimpleX group")
+        .requiredOption("--display-name <name>", "SimpleX group display name")
+        .option("--full-name <name>", "SimpleX group full name")
+        .option("--description <text>", "SimpleX group description")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: GroupCreateCliOptions) => {
+          await runGroupCreateCli(api, opts);
+        });
+
+      const groupLink = groups.command("link").description("SimpleX group link helpers");
+
+      groupLink
+        .command("create")
+        .description("Create a SimpleX group invite link")
+        .requiredOption("--group-id <id>", "SimpleX group id")
+        .option("--role <role>", "Accepted member role for the group link", "member")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the group link", false)
+        .action(async (opts: GroupLinkCliOptions) => {
+          await runGroupLinkCreateCli(api, opts);
+        });
+
+      groupLink
+        .command("list")
+        .description("Show the current SimpleX group invite link")
+        .requiredOption("--group-id <id>", "SimpleX group id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .option("--qr", "Print a terminal QR code for the group link", false)
+        .action(async (opts: GroupLinkCliOptions) => {
+          await runGroupLinkListCli(api, opts);
+        });
+
+      groupLink
+        .command("revoke")
+        .description("Revoke the current SimpleX group invite link")
+        .requiredOption("--group-id <id>", "SimpleX group id")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: GroupLinkCliOptions) => {
+          await runGroupLinkRevokeCli(api, opts);
+        });
+
+      const connect = command.command("connect").description("SimpleX link onboarding helpers");
+
+      connect
+        .command("plan")
+        .description("Inspect what connecting to a SimpleX link would do")
+        .requiredOption("--link <link>", "SimpleX contact, address, or group link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: ConnectCliOptions) => {
+          await runConnectPlanCli(api, opts);
+        });
+
+      connect
+        .command("run")
+        .description("Connect the active SimpleX user to a contact, address, or group link")
+        .requiredOption("--link <link>", "SimpleX contact, address, or group link")
+        .option("--account-id <accountId>", "Use a specific SimpleX account")
+        .action(async (opts: ConnectCliOptions) => {
+          await runConnectCli(api, opts);
         });
     },
     {

@@ -1,15 +1,58 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { describe, expect, it, vi } from "vitest";
 import {
-  CHANNEL_ID,
-  LEGACY_CHANNEL_ID,
-  LEGACY_PLUGIN_ID,
+  LEGACY_SIMPLEX_CHANNEL_ID,
+  LEGACY_SIMPLEX_PLUGIN_ID,
+  SIMPLEX_CHANNEL_ID,
+  SIMPLEX_PLUGIN_ID,
+} from "../constants.js";
+import { runMigration } from "./migration.js";
+import {
   migrateConfigObject,
   migrateStateFiles,
-  PLUGIN_ID,
+  registerSimplexCliMetadata,
 } from "./plugin-cli.js";
+
+const CHANNEL_ID = SIMPLEX_CHANNEL_ID;
+const LEGACY_CHANNEL_ID = LEGACY_SIMPLEX_CHANNEL_ID;
+const LEGACY_PLUGIN_ID = LEGACY_SIMPLEX_PLUGIN_ID;
+const PLUGIN_ID = SIMPLEX_PLUGIN_ID;
+
+class FakeCliCommand {
+  constructor(
+    private readonly path: string[],
+    private readonly commands: string[][]
+  ) {}
+
+  command(name: string): FakeCliCommand {
+    const commandPath = [...this.path, name];
+    this.commands.push(commandPath);
+    return new FakeCliCommand(commandPath, this.commands);
+  }
+
+  alias(): this {
+    return this;
+  }
+
+  description(): this {
+    return this;
+  }
+
+  option(): this {
+    return this;
+  }
+
+  requiredOption(): this {
+    return this;
+  }
+
+  action(): this {
+    return this;
+  }
+}
 
 describe("simplex migration config", () => {
   it("migrates legacy plugin and channel ids", () => {
@@ -27,7 +70,7 @@ describe("simplex migration config", () => {
       channels: {
         [LEGACY_CHANNEL_ID]: {
           enabled: true,
-          connection: { wsUrl: "ws://127.0.0.1:5225" },
+          connection: {},
           accounts: {
             ops: {
               allowFrom: ["*"],
@@ -51,7 +94,7 @@ describe("simplex migration config", () => {
       channels: {
         [CHANNEL_ID]: {
           enabled: true,
-          connection: { wsUrl: "ws://127.0.0.1:5225" },
+          dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex",
           accounts: {
             ops: {
               allowFrom: ["*"],
@@ -68,6 +111,113 @@ describe("simplex migration config", () => {
     );
     expect(result.changed).toContain(
       `config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`
+    );
+  });
+
+  it("removes legacy WebSocket and CLI runtime config while preserving policies and accounts", () => {
+    const { nextConfig, result } = migrateConfigObject({
+      channels: {
+        [LEGACY_CHANNEL_ID]: {
+          enabled: true,
+          wsUrl: "ws://127.0.0.1:5225",
+          managed: true,
+          cliPath: "/usr/local/bin/simplex-chat",
+          connection: {
+            wsUrl: "ws://127.0.0.1:5225",
+            authToken: "legacy-token",
+            dbFilePrefix: "~/.openclaw/simplex/kept",
+            connectTimeoutMs: 7000,
+          },
+          dmPolicy: "pairing",
+          allowFrom: ["alice"],
+          accounts: {
+            ops: {
+              name: "Ops",
+              allowFrom: ["bob"],
+              groupAllowFrom: ["group:ops"],
+              connection: {
+                wsUrl: "ws://127.0.0.1:5226",
+                displayName: "Ops Bot",
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(nextConfig.channels).toEqual({
+      [CHANNEL_ID]: {
+        enabled: true,
+        dbFilePrefix: "~/.openclaw/simplex/kept",
+        connectTimeoutMs: 7000,
+        dmPolicy: "pairing",
+        allowFrom: ["alice"],
+        accounts: {
+          ops: {
+            name: "Ops",
+            allowFrom: ["bob"],
+            groupAllowFrom: ["group:ops"],
+            dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-ops",
+            displayName: "Ops Bot",
+          },
+        },
+      },
+    });
+    expect(result.changed).toContain(
+      `config: channels.${LEGACY_CHANNEL_ID} -> channels.${CHANNEL_ID}`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}: cliPath, managed, wsUrl`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.connection: authToken, wsUrl`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.accounts.ops.connection: wsUrl`
+    );
+  });
+
+  it("normalizes already-renamed configs when migrate is run after a partial manual upgrade", () => {
+    const { nextConfig, result } = migrateConfigObject({
+      channels: {
+        [CHANNEL_ID]: {
+          connection: {
+            wsUrl: "ws://localhost:5225",
+            fullName: "SimpleX Agent",
+          },
+          accounts: {
+            support: {
+              managed: false,
+              connection: {
+                token: "old",
+                autoAcceptFiles: false,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(nextConfig.channels).toEqual({
+      [CHANNEL_ID]: {
+        dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex",
+        fullName: "SimpleX Agent",
+        accounts: {
+          support: {
+            autoAcceptFiles: false,
+            dbFilePrefix: "~/.openclaw/simplex/openclaw-simplex-support",
+          },
+        },
+      },
+    });
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.connection: wsUrl`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.accounts.support: managed`
+    );
+    expect(result.changed).toContain(
+      `config: removed legacy runtime field(s) from channels.${CHANNEL_ID}.accounts.support.connection: token`
     );
   });
 });
@@ -152,5 +302,106 @@ describe("simplex migration state", () => {
     ]);
     const files = (await readdir(credentialsDir)).sort();
     expect(files).toEqual([`${LEGACY_CHANNEL_ID}-pairing.json`]);
+  });
+});
+
+describe("simplex migration command", () => {
+  it("uses the runtime config snapshot and explicit replacement writer", async () => {
+    const stateDir = path.join(os.tmpdir(), `openclaw-simplex-test-${Date.now()}-runtime`);
+    const writes: unknown[] = [];
+    const api = {
+      runtime: {
+        config: {
+          current: () => ({
+            channels: {
+              [CHANNEL_ID]: {
+                connection: {
+                  wsUrl: "ws://127.0.0.1:5225",
+                  dbFilePrefix: "~/.openclaw/simplex/kept",
+                },
+              },
+            },
+          }),
+          replaceConfigFile: async (params: unknown) => {
+            writes.push(params);
+          },
+          loadConfig: () => {
+            throw new Error("deprecated loadConfig() must not be used");
+          },
+          writeConfigFile: () => {
+            throw new Error("deprecated writeConfigFile() must not be used");
+          },
+        },
+        state: {
+          resolveStateDir: () => stateDir,
+        },
+      },
+    } as unknown as OpenClawPluginApi;
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      await runMigration(api, false);
+    } finally {
+      log.mockRestore();
+    }
+
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toEqual({
+      nextConfig: {
+        plugins: {},
+        channels: {
+          [CHANNEL_ID]: {
+            dbFilePrefix: "~/.openclaw/simplex/kept",
+          },
+        },
+      },
+      afterWrite: {
+        mode: "restart",
+        reason: "SimpleX migration updated plugin or channel configuration",
+      },
+    });
+  });
+});
+
+describe("simplex cli metadata", () => {
+  it("registers operator commands for runtime, requests, groups, links, and migration", () => {
+    const commands: string[][] = [];
+    const api = {
+      registerCli: (registrar: (ctx: { program: FakeCliCommand }) => void) => {
+        registrar({ program: new FakeCliCommand([], commands) });
+      },
+    } as unknown as OpenClawPluginApi;
+
+    registerSimplexCliMetadata(api);
+
+    expect(commands).toEqual(
+      expect.arrayContaining([
+        [PLUGIN_ID],
+        [PLUGIN_ID, "migrate"],
+        [PLUGIN_ID, "invite"],
+        [PLUGIN_ID, "invite", "create"],
+        [PLUGIN_ID, "invite", "list"],
+        [PLUGIN_ID, "address"],
+        [PLUGIN_ID, "address", "show"],
+        [PLUGIN_ID, "address", "create"],
+        [PLUGIN_ID, "address", "revoke"],
+        [PLUGIN_ID, "runtime"],
+        [PLUGIN_ID, "runtime", "status"],
+        [PLUGIN_ID, "runtime", "doctor"],
+        [PLUGIN_ID, "requests"],
+        [PLUGIN_ID, "requests", "list"],
+        [PLUGIN_ID, "requests", "accept"],
+        [PLUGIN_ID, "requests", "reject"],
+        [PLUGIN_ID, "groups"],
+        [PLUGIN_ID, "groups", "create"],
+        [PLUGIN_ID, "groups", "link"],
+        [PLUGIN_ID, "groups", "link", "create"],
+        [PLUGIN_ID, "groups", "link", "list"],
+        [PLUGIN_ID, "groups", "link", "revoke"],
+        [PLUGIN_ID, "connect"],
+        [PLUGIN_ID, "connect", "plan"],
+        [PLUGIN_ID, "connect", "run"],
+      ])
+    );
   });
 });

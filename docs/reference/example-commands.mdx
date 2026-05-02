@@ -1,21 +1,11 @@
 ---
 title: Example Commands
-description: Copy-paste CLI commands for common OpenClaw SimpleX tasks like generating invite links, approving contacts, listing paired users, and managing addresses.
+description: Copy-paste CLI commands for common OpenClaw SimpleX tasks like setup, runtime diagnostics, one-time invites, SimpleX addresses, contact requests, group links, pairing approval, and migration.
 ---
 
 Use this page as a command cookbook after the first setup is working. For the full first-run flow, start with [Getting Started](/guide/getting-started).
 
-<Info>
-  The long-running <code>simplex-chat -p 5225</code> process should run in a separate terminal or as a host-managed service. See [Runtime Setup](/guide/runtime-setup) for persistent startup.
-</Info>
-
 ## Install and verify
-
-Start the SimpleX WebSocket runtime:
-
-```bash
-simplex-chat -p 5225
-```
 
 Install plugin in OpenClaw:
 
@@ -38,10 +28,10 @@ openclaw config set plugins.allow "$(
 )" --strict-json
 ```
 
-Configure the WebSocket endpoint:
+Configure the default Node runtime:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex
 ```
 
 Verify that OpenClaw sees and trusts the plugin:
@@ -54,9 +44,29 @@ openclaw plugins list
 openclaw plugins info openclaw-simplex
 ```
 
-If you already completed the first setup flow, you can skip this section and jump straight to invite, pairing, or migration commands below.
+If you already completed the first setup flow, you can skip this section and jump straight to runtime, invite, contact-request, group-link, pairing, or migration commands below.
 
-## Invite and address management
+## Runtime diagnostics
+
+Show the active SimpleX runtime state:
+
+```bash
+openclaw simplex runtime status
+```
+
+Run the higher-level diagnostic summary:
+
+```bash
+openclaw simplex runtime doctor
+```
+
+Use a named account when the channel has multiple accounts:
+
+```bash
+openclaw simplex runtime doctor --account-id support
+```
+
+## One-time invites and SimpleX addresses
 
 Create a one-time invite link and print a terminal QR code:
 
@@ -64,28 +74,94 @@ Create a one-time invite link and print a terminal QR code:
 openclaw simplex invite create --qr
 ```
 
-List current invite and address state:
+List current SimpleX address state:
 
 ```bash
 openclaw simplex invite list
 ```
 
-Show the current address link:
+Show the current SimpleX address:
 
 ```bash
 openclaw simplex address show --qr
 ```
 
-Create or return the current address link:
+Create or return the current SimpleX address:
 
 ```bash
 openclaw simplex address create --qr
 ```
 
-Revoke the current address link:
+Revoke the current SimpleX address:
 
 ```bash
 openclaw simplex address revoke
+```
+
+## Contact requests
+
+List pending SimpleX contact requests observed by the runtime:
+
+```bash
+openclaw simplex requests list
+```
+
+Accept a pending request:
+
+```bash
+openclaw simplex requests accept --contact-request-id <id>
+```
+
+Reject a pending request:
+
+```bash
+openclaw simplex requests reject --contact-request-id <id>
+```
+
+With multiple accounts:
+
+```bash
+openclaw simplex requests list --account-id support
+```
+
+## Groups and group links
+
+Create a SimpleX group:
+
+```bash
+openclaw simplex groups create --display-name "OpenClaw Ops"
+```
+
+Create a group invite link and print a terminal QR code:
+
+```bash
+openclaw simplex groups link create --group-id <id> --role member --qr
+```
+
+Show the current group invite link:
+
+```bash
+openclaw simplex groups link list --group-id <id> --qr
+```
+
+Revoke the current group invite link:
+
+```bash
+openclaw simplex groups link revoke --group-id <id>
+```
+
+## Link onboarding
+
+Preview what connecting to a SimpleX link would do:
+
+```bash
+openclaw simplex connect plan --link "<simplex-link>"
+```
+
+Connect the active SimpleX user to a contact, address, or group link:
+
+```bash
+openclaw simplex connect run --link "<simplex-link>"
 ```
 
 ## Pairing
@@ -104,7 +180,7 @@ openclaw pairing approve openclaw-simplex <pairingCode>
 
 ## Migration
 
-Migrate older <code>simplex</code> installs to <code>openclaw-simplex</code>:
+Migrate older <code>simplex</code> ids and legacy WebSocket/CLI runtime config to the current <code>openclaw-simplex</code> Node runtime shape:
 
 ```bash
 openclaw simplex migrate
@@ -116,17 +192,6 @@ Preview migration only:
 openclaw simplex migrate --dry-run
 ```
 
-## SimpleX console commands
-
-Run these inside the <code>simplex-chat</code> console if you want to manage links directly from the runtime:
-
-| Command | Meaning |
-| --- | --- |
-| `/c` | Create a one-time connect link. |
-| `/ad` | Create or return the account address link. |
-| `/show_address` | Show the current address link. |
-| `/delete_address` | Revoke the current address link. |
-
 ## Gateway method names
 
-For programmatic invite/address automation, the plugin exposes <code>simplex.invite.create</code>, <code>simplex.invite.list</code>, and <code>simplex.invite.revoke</code>. See [Gateway Methods](/reference/gateway-methods) for request and response shapes.
+For programmatic automation, the plugin exposes gateway methods for one-time invite and SimpleX address management, runtime diagnostics, contact-request review, group-link lifecycle, and SimpleX link onboarding. See [Gateway Methods](/reference/gateway-methods) for request and response shapes.

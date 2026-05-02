@@ -5,7 +5,7 @@ description: Discover why SimpleX gives OpenClaw a private, invitation-first mes
 
 Most OpenClaw channels start from a registered platform identity: a bot username, a phone number, or an application account that lives inside someone else's platform.
 
-This plugin takes a different shape. With SimpleX, the agent becomes reachable when you hand someone a link. There is no phone-number binding and no hosted bot account to provision before the first conversation starts.
+This plugin takes a different shape. With SimpleX, the agent becomes reachable when you hand someone a one-time invite link or share the account's reusable SimpleX address. There is no phone-number binding and no hosted bot account to provision before the first conversation starts.
 
 That makes the channel especially useful for OpenClaw deployments where privacy, local control, and explicit network boundaries matter.
 
@@ -13,7 +13,7 @@ The point is not that this channel replaces every platform-backed integration. I
 
 <Columns cols={2}>
   <Card title="Invitation-first reachability" icon="key-round">
-    Create a one-time connect link or an address link, share it only with intended users, and revoke it when that access should disappear.
+    Create a one-time connect link for bounded onboarding, or share a reusable SimpleX address when you want ongoing reachability.
   </Card>
   <Card title="No platform account dependency" icon="shield">
     No phone number, no bot username, and no bot registration step before your OpenClaw agent can receive a message.
@@ -22,7 +22,7 @@ The point is not that this channel replaces every platform-backed integration. I
 
 <Columns cols={2}>
   <Card title="Operator-controlled runtime" icon="server">
-    Run <code>simplex-chat</code> yourself, choose where the runtime and relay path live, and keep OpenClaw policy enforcement local.
+    Use the official SimpleX Node runtime and choose where the local database and relay path live.
   </Card>
   <Card title="OpenClaw-native operations" icon="message-circle">
     Pairing approval, exec approvals, allowlists, invite helpers, media support, reactions, polls, and channel status all exist in the plugin, not in ad hoc glue code.
@@ -31,13 +31,14 @@ The point is not that this channel replaces every platform-backed integration. I
 
 ## What the plugin provides
 
-A SimpleX channel backed by a local <code>simplex-chat</code> WebSocket runtime:
+A SimpleX channel backed by the official Node runtime:
 
 - send/receive (text and media)
 - pairing with allowlist enforcement and same-chat exec approvals
 - shared `message` actions, including `upload-file`, reactions, polls, edits, deletes, and group actions
 - plugin tools for invite generation/list/revoke and group administration
-- invite link and QR generation
+- gateway methods for runtime diagnostics, contact-request review, group-link lifecycle, and operator link onboarding
+- one-time invite link, SimpleX address, group-link, and QR generation
 - runtime status and heartbeat readiness support
 - Control UI configuration
 
@@ -50,13 +51,13 @@ A SimpleX channel backed by a local <code>simplex-chat</code> WebSocket runtime:
 
 ## Why this plugin matters
 
-Without this plugin, using SimpleX with OpenClaw usually means custom integration work around event parsing, outbound command translation, pairing state, and invite management. This package turns that into a standard channel implementation.
+Without this plugin, using SimpleX with OpenClaw usually means custom integration work around event parsing, outbound runtime API calls, pairing state, and invite management. This package turns that into a standard channel implementation.
 
 The contribution is not just “another channel”. It adds a channel model that is structurally different from bot-account integrations:
 
 - no phone number requirement
 - no hosted bot account or bot API dependency
-- access starts from an invitation link, not a public platform identity
+- access starts from a one-time invite link or SimpleX address, not a public platform bot identity
 
 <Note>
   Low risk to existing OpenClaw channels: the implementation stays isolated and is only active when <code>openclaw-simplex</code> is configured and enabled.

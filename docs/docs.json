@@ -19,7 +19,6 @@
         "pages": [
           "guide/getting-started",
           "guide/why-simplex",
-          "guide/how-it-works",
           "guide/architecture",
           "guide/runtime-setup",
           "guide/security-model",
@@ -29,12 +28,7 @@
       },
       {
         "group": "Reference",
-        "pages": [
-          "reference/config",
-          "reference/gateway-methods",
-          "reference/example-commands",
-          "reference/screenshots"
-        ]
+        "pages": ["reference/config", "reference/gateway-methods", "reference/example-commands"]
       }
     ]
   },

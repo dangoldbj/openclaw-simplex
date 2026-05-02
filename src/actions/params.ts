@@ -1,5 +1,5 @@
-import { stripSimplexPrefix } from "../channel/simplex-common.js";
-import type { DeleteMode, SimplexActionParams } from "./types.js";
+import { stripSimplexPrefix } from "../channel/shared/simplex-common.js";
+import type { DeleteMode, SimplexActionParams } from "../types/actions.js";
 
 export function readStringParam(
   params: SimplexActionParams,

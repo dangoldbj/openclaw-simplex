@@ -1,4 +1,4 @@
-import type { ToolResult } from "./types.js";
+import type { ToolResult } from "../types/actions.js";
 
 export function jsonResult(payload: unknown): ToolResult {
   return {

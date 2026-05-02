@@ -1,47 +1,15 @@
 ---
 title: Getting Started
-description: Install simplex-chat, configure the OpenClaw SimpleX plugin, generate your first invite link, and pair your first contact with the agent step by step.
+description: Install the OpenClaw SimpleX plugin, start the official Node runtime, generate your first one-time invite link, and pair your first contact with the agent step by step.
 ---
 
 This path gets you from zero to the first invited contact talking to your OpenClaw agent over SimpleX.
 
+<Warning>
+  <strong>Breaking in 2.0.0:</strong> OpenClaw SimpleX now uses the official <code>simplex-chat</code> Node runtime only. The old WebSocket/CLI runtime configuration is no longer supported. If you are upgrading from any pre-2.0.0 install, run <code>openclaw simplex migrate</code> before relying on the channel; see the [Migration guide](/guide/migration).
+</Warning>
+
 <Steps>
-  <Step title="Install SimpleX CLI">
-    Install the official <code>simplex-chat</code> CLI:
-
-    ```bash
-    curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/install.sh | bash
-    ```
-
-    Verify the CLI:
-
-    ```bash
-    simplex-chat -h
-    ```
-
-    <Note>
-      If the official installer picks the wrong Darwin/Linux build for your host, use the temporary arch-matrix installer:
-
-      ```bash
-      curl -o- https://raw.githubusercontent.com/dangoldbj/simplex-chat/install-arch-matrix/install.sh | bash
-      ```
-    </Note>
-  </Step>
-
-  <Step title="Start the SimpleX runtime">
-    Start the WebSocket runtime in a separate terminal:
-
-    ```bash
-    simplex-chat -p 5225
-    ```
-
-    Expected result: <code>simplex-chat</code> stays in the foreground and serves the WebSocket API on port <code>5225</code>.
-
-    <Info>
-      This is a long-running foreground process. If you want it to start automatically, use the host-managed service examples in <a href="/guide/runtime-setup">Runtime Setup</a>.
-    </Info>
-  </Step>
-
   <Step title="Install and enable the plugin">
     Install the plugin in OpenClaw:
 
@@ -67,35 +35,30 @@ This path gets you from zero to the first invited contact talking to your OpenCl
   </Step>
 
   <Step title="Configure the channel">
-    Point OpenClaw at the local SimpleX WebSocket endpoint:
+    Add the channel:
 
     ```bash
-    openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+    openclaw channels add --channel openclaw-simplex
     ```
 
-    That command writes channel config equivalent to:
+    That writes channel config equivalent to:
 
     ```json
     {
       "channels": {
         "openclaw-simplex": {
-          "enabled": true,
-          "connection": {
-            "wsUrl": "ws://127.0.0.1:5225"
-          },
-          "dmPolicy": "pairing",
-          "allowFrom": ["*"]
+          "enabled": true
         }
       }
     }
     ```
 
     <Info>
-      OpenClaw will not start the channel until <code>channels.openclaw-simplex.connection</code> exists. If <code>simplex-chat</code> is not running at that endpoint, OpenClaw will mark the channel disconnected and record the connection error in channel status.
+      By default, direct messages use <code>dmPolicy: "pairing"</code>. A new SimpleX contact can reach the runtime, but OpenClaw will not run the agent until you approve the pairing request. The plugin also uses the same database prefix as the SimpleX terminal CLI: <code>~/.simplex/simplex_v1</code> on Linux/macOS and <code>%APPDATA%/simplex/simplex_v1</code> on Windows. Set <code>dbFilePrefix</code> only when you want a separate bot identity or a named account.
     </Info>
   </Step>
 
-  <Step title="Generate the first invite and verify">
+  <Step title="Generate the first one-time invite and verify">
     Confirm the plugin is installed and enabled:
 
     ```bash
@@ -114,7 +77,7 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     openclaw simplex invite create --qr
     ```
 
-    Expected result: the command prints a SimpleX invite link, and <code>--qr</code> renders a scannable QR code in the terminal.
+    Expected result: the command prints a SimpleX one-time invite link, and <code>--qr</code> renders a scannable QR code in the terminal.
 
     In Control UI, you can also open <code>Control -&gt; Channels -&gt; SimpleX</code> to inspect the channel config and runtime state.
 
@@ -142,13 +105,11 @@ openclaw pairing approve openclaw-simplex <pairingCode>
 
 5. Send another message in SimpleX and verify the agent responds.
 
-For a visual walkthrough, see [Screenshots](/reference/screenshots).
+For the reusable SimpleX address, address display, revoke flows, and automation APIs, see [Example Commands](/reference/example-commands) and [Gateway Methods](/reference/gateway-methods).
 
-For recurring address links, invite listing, revoke flows, and automation APIs, see [Example Commands](/reference/example-commands) and [Gateway Methods](/reference/gateway-methods).
+## Upgrading from an older install
 
-## Upgrading from an older `simplex` install
-
-If you are upgrading from an older `simplex` plugin/channel install, run the migration helper before switching your config and commands to `openclaw-simplex`:
+If you are upgrading from an older `simplex` plugin/channel install, or from an early `openclaw-simplex` install that used WebSocket/CLI runtime fields, run the migration helper before relying on the channel:
 
 ```bash
 openclaw simplex migrate

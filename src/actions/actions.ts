@@ -1,4 +1,5 @@
 import type { ChannelMessageActionAdapter } from "openclaw/plugin-sdk/channel-contract";
+import { resolveSimplexRouteTarget } from "../channel/shared/simplex-common.js";
 import { describeSimplexMessageActions } from "./discovery.js";
 import { executeSimplexAction } from "./execute.js";
 import { buildSimplexMessageToolSchema, SIMPLEX_SUPPORTED_ACTIONS } from "./schema.js";
@@ -17,9 +18,8 @@ function extractSimplexToolSend(args: Record<string, unknown>) {
     return null;
   }
   const accountId = readString(args.accountId);
-  const threadId =
-    typeof args.threadId === "number" ? String(args.threadId) : readString(args.threadId);
-  return { to, accountId, threadId };
+  const threadId = typeof args.threadId === "number" ? args.threadId : readString(args.threadId);
+  return resolveSimplexRouteTarget({ rawTarget: to, accountId, fallbackThreadId: threadId });
 }
 
 export const simplexMessageActions: ChannelMessageActionAdapter = {
