@@ -315,7 +315,7 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
 
       command
         .command("migrate")
-        .description("Migrate config and OpenClaw state from simplex -> openclaw-simplex ids")
+        .description("Migrate SimpleX ids and legacy WebSocket runtime config")
         .option("--dry-run", "Show planned changes without writing files", false)
         .action(async (opts: { dryRun?: boolean }) => {
           await runMigration(api, opts.dryRun === true);

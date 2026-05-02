@@ -5,6 +5,10 @@ description: Install the OpenClaw SimpleX plugin, start the official Node runtim
 
 This path gets you from zero to the first invited contact talking to your OpenClaw agent over SimpleX.
 
+<Warning>
+  <strong>Breaking in 2.0.0:</strong> OpenClaw SimpleX now uses the official <code>simplex-chat</code> Node runtime only. The old WebSocket/CLI runtime configuration is no longer supported. If you are upgrading from any pre-2.0.0 install, run <code>openclaw simplex migrate</code> before relying on the channel; see the [Migration guide](/guide/migration).
+</Warning>
+
 <Steps>
   <Step title="Install and enable the plugin">
     Install the plugin in OpenClaw:
@@ -103,9 +107,9 @@ openclaw pairing approve openclaw-simplex <pairingCode>
 
 For the reusable SimpleX address, address display, revoke flows, and automation APIs, see [Example Commands](/reference/example-commands) and [Gateway Methods](/reference/gateway-methods).
 
-## Upgrading from an older `simplex` install
+## Upgrading from an older install
 
-If you are upgrading from an older `simplex` plugin/channel install, run the migration helper before switching your config and commands to `openclaw-simplex`:
+If you are upgrading from an older `simplex` plugin/channel install, or from an early `openclaw-simplex` install that used WebSocket/CLI runtime fields, run the migration helper before relying on the channel:
 
 ```bash
 openclaw simplex migrate

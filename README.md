@@ -2,6 +2,8 @@
 
 > **TL;DR:** An OpenClaw channel for SimpleX Chat: invite-based reachability, end-to-end encrypted messaging, and no public bot account or hosted bot platform in the middle.
 
+> **Breaking in 2.0.0:** The plugin now uses the official `simplex-chat` Node runtime only. The old WebSocket/CLI runtime configuration is no longer supported. If you are upgrading from any pre-2.0.0 install, run `openclaw simplex migrate`; see the [Migration guide](https://openclaw-simplex.mintlify.app/guide/migration).
+
 ---
 
 Most agent chat channels in OpenClaw assume a platform bot identity: a bot username, a phone number, an app registration, or some other platform-managed endpoint.
@@ -51,7 +53,7 @@ openclaw simplex invite create --qr
 
 Scan it with the SimpleX app. That's it: your agent is reachable over SimpleX without a public bot account.
 
-**Upgrade from older `simplex` ids:**
+**Upgrade from older installs:**
 
 ```bash
 openclaw simplex migrate
@@ -224,11 +226,11 @@ For automation and integrations, OpenClaw exposes gateway methods for one-time i
 
 ---
 
-## Migration from `simplex`
+## Migration
 
-Older `0.x` installs used the `simplex` plugin and channel ids.
+Older `0.x` installs used the `simplex` plugin and channel ids. Early `openclaw-simplex` installs could also contain legacy WebSocket/CLI runtime fields. Current installs use `openclaw-simplex` for both plugin and channel ids, with the official SimpleX Node runtime config shape.
 
-If you are upgrading from `0.x`, run:
+If you are upgrading either shape, run:
 
 ```bash
 openclaw simplex migrate
@@ -246,6 +248,8 @@ This migrates:
 - `plugins.installs.simplex` → `plugins.installs.openclaw-simplex`
 - `plugins.allow` / `plugins.deny` entries from `simplex` → `openclaw-simplex`
 - `channels.simplex` → `channels.openclaw-simplex`
+- legacy nested `connection.*` runtime fields to top-level account fields where applicable
+- legacy WebSocket/CLI runtime fields such as `wsUrl`, `url`, `host`, `port`, `token`, `managed`, and `cliPath` out of the SimpleX channel config
 - OpenClaw pairing and allowlist state files under the OpenClaw state directory
 
 Current note:

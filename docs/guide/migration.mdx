@@ -1,21 +1,31 @@
 ---
 title: Migration to openclaw-simplex
-description: Migrate from the legacy simplex plugin and channel identifiers to the renamed openclaw-simplex format introduced in version 1.0.0 with step-by-step commands.
+description: Migrate legacy SimpleX installs to the openclaw-simplex id and the current Node runtime config shape with step-by-step commands.
 ---
 
-Use this guide only if you previously configured or paired the plugin under the old <code>simplex</code> ids. For a fresh install, start with [Getting Started](/guide/getting-started).
+Use this guide if you previously configured or paired the plugin under the old <code>simplex</code> ids, or if you already used <code>openclaw-simplex</code> with the old WebSocket/CLI runtime config. For a fresh install, start with [Getting Started](/guide/getting-started).
 
-## What changed in `1.0.0`
+<Warning>
+  <strong>Breaking in 2.0.0:</strong> the SimpleX runtime model changed from the old WebSocket/CLI setup to the official <code>simplex-chat</code> Node runtime. Pre-2.0.0 runtime fields such as <code>wsUrl</code>, <code>url</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code> are no longer supported.
+</Warning>
 
-- plugin id: `simplex` -> `openclaw-simplex`
-- channel id: `simplex` -> `openclaw-simplex`
-- pairing approval commands now use `openclaw-simplex`
+## What changed
+
+- Legacy `0.x` installs used plugin id `simplex` and channel id `simplex`; current installs use `openclaw-simplex` for both.
+- Version `2.0.0` replaced the old WebSocket/CLI runtime setup with the official SimpleX Node runtime.
+- Early `openclaw-simplex` installs could still contain WebSocket/CLI runtime fields; current installs use the Node runtime config shape.
+- Pairing approval commands now use `openclaw-simplex`.
 
 <Info>
   Legacy invite gateway method names did not change. Programmatic invite flows still use <code>simplex.invite.create</code>, <code>simplex.invite.list</code>, and <code>simplex.invite.revoke</code>.
 </Info>
 
-The migration helper updates config keys and stored pairing/allowlist state so existing approvals can carry forward. It also removes legacy WebSocket/CLI runtime fields such as <code>wsUrl</code>, <code>url</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code> from the SimpleX channel config. Policy fields and multi-account settings remain in place.
+The migration helper is idempotent and covers two independent migrations:
+
+- It renames legacy config and state from <code>simplex</code> to <code>openclaw-simplex</code> so existing approvals can carry forward.
+- It normalizes existing <code>openclaw-simplex</code> channel config for the Node runtime by removing legacy WebSocket/CLI fields such as <code>wsUrl</code>, <code>url</code>, <code>host</code>, <code>port</code>, <code>token</code>, <code>managed</code>, and <code>cliPath</code>.
+
+Policy fields and multi-account settings remain in place. If the helper prints <code>No changes were needed</code>, neither the old id shape nor the old runtime config shape was present.
 
 <Steps>
   <Step title="Use the Node runtime">

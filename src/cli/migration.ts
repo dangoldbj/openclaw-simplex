@@ -1,5 +1,6 @@
 import { access, mkdir, readdir, rename } from "node:fs/promises";
 import path from "node:path";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/config-types";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import {
   LEGACY_SIMPLEX_CHANNEL_ID,
@@ -360,7 +361,7 @@ function printMigrationResult(result: MigrationResult, dryRun: boolean): void {
 }
 
 export async function runMigration(api: OpenClawPluginApi, dryRun: boolean): Promise<void> {
-  const currentConfig = api.runtime.config.loadConfig() as Record<string, unknown>;
+  const currentConfig = api.runtime.config.current() as OpenClawConfig;
   const { nextConfig, result: configResult } = migrateConfigObject(currentConfig);
   const stateResult = await migrateStateFiles(api, dryRun);
   const result: MigrationResult = {
@@ -368,7 +369,13 @@ export async function runMigration(api: OpenClawPluginApi, dryRun: boolean): Pro
     skipped: [...configResult.skipped, ...stateResult.skipped],
   };
   if (!dryRun && configResult.changed.length > 0) {
-    await api.runtime.config.writeConfigFile(nextConfig);
+    await api.runtime.config.replaceConfigFile({
+      nextConfig: nextConfig as OpenClawConfig,
+      afterWrite: {
+        mode: "restart",
+        reason: "SimpleX migration updated plugin or channel configuration",
+      },
+    });
   }
   printMigrationResult(result, dryRun);
 }

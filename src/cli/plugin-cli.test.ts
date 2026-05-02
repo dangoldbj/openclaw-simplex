@@ -2,13 +2,14 @@ import { mkdir, readdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   LEGACY_SIMPLEX_CHANNEL_ID,
   LEGACY_SIMPLEX_PLUGIN_ID,
   SIMPLEX_CHANNEL_ID,
   SIMPLEX_PLUGIN_ID,
 } from "../constants.js";
+import { runMigration } from "./migration.js";
 import {
   migrateConfigObject,
   migrateStateFiles,
@@ -301,6 +302,64 @@ describe("simplex migration state", () => {
     ]);
     const files = (await readdir(credentialsDir)).sort();
     expect(files).toEqual([`${LEGACY_CHANNEL_ID}-pairing.json`]);
+  });
+});
+
+describe("simplex migration command", () => {
+  it("uses the runtime config snapshot and explicit replacement writer", async () => {
+    const stateDir = path.join(os.tmpdir(), `openclaw-simplex-test-${Date.now()}-runtime`);
+    const writes: unknown[] = [];
+    const api = {
+      runtime: {
+        config: {
+          current: () => ({
+            channels: {
+              [CHANNEL_ID]: {
+                connection: {
+                  wsUrl: "ws://127.0.0.1:5225",
+                  dbFilePrefix: "~/.openclaw/simplex/kept",
+                },
+              },
+            },
+          }),
+          replaceConfigFile: async (params: unknown) => {
+            writes.push(params);
+          },
+          loadConfig: () => {
+            throw new Error("deprecated loadConfig() must not be used");
+          },
+          writeConfigFile: () => {
+            throw new Error("deprecated writeConfigFile() must not be used");
+          },
+        },
+        state: {
+          resolveStateDir: () => stateDir,
+        },
+      },
+    } as unknown as OpenClawPluginApi;
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    try {
+      await runMigration(api, false);
+    } finally {
+      log.mockRestore();
+    }
+
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toEqual({
+      nextConfig: {
+        plugins: {},
+        channels: {
+          [CHANNEL_ID]: {
+            dbFilePrefix: "~/.openclaw/simplex/kept",
+          },
+        },
+      },
+      afterWrite: {
+        mode: "restart",
+        reason: "SimpleX migration updated plugin or channel configuration",
+      },
+    });
   });
 });
 
