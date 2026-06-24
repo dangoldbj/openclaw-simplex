@@ -4,8 +4,10 @@ import { setSimplexRuntime } from "../runtime.js";
 import {
   dispatchInbound,
   finalizePendingFile,
+  markFileAccepted,
   type PendingInboundFile,
   queuePendingFile,
+  shouldRetryFileAccept,
 } from "./simplex-inbound-files.js";
 
 const simplexClientMock = vi.hoisted(() => ({
@@ -133,6 +135,29 @@ describe("simplex inbound live replies", () => {
     await vi.advanceTimersByTimeAsync(90_000);
 
     expect(cancelFile).not.toHaveBeenCalled();
+  });
+
+  it("tracks accept retries for queued pending files", async () => {
+    vi.useFakeTimers();
+    installRuntime(async () => undefined);
+    const current = pending();
+    current.fileId = 42;
+    current.client = fileClient(vi.fn(async () => undefined));
+
+    // Unknown file: nothing queued, nothing to retry.
+    expect(shouldRetryFileAccept(current.account.accountId, 42)).toBe(false);
+
+    // Queued but not yet accepted (initial /freceive failed): retry wanted.
+    queuePendingFile({ pending: current, accountId: current.account.accountId, fileId: 42 });
+    expect(shouldRetryFileAccept(current.account.accountId, 42)).toBe(true);
+
+    // Accepted: no further retries.
+    markFileAccepted(current.account.accountId, 42);
+    expect(shouldRetryFileAccept(current.account.accountId, 42)).toBe(false);
+
+    // Finalized: entry removed entirely.
+    await finalizePendingFile({ accountId: current.account.accountId, fileId: 42 });
+    expect(shouldRetryFileAccept(current.account.accountId, 42)).toBe(false);
   });
 
   it("replaces an older pending file timeout for the same key", async () => {

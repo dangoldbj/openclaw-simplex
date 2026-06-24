@@ -25,9 +25,12 @@ import {
   dispatchInbound,
   finalizePendingFile,
   hasPendingFile,
+  isFileAutoAcceptEnabled,
+  markFileAccepted,
   type PendingInboundFile,
   queuePendingFile,
   requestFileDownload,
+  shouldRetryFileAccept,
 } from "./simplex-inbound-files.js";
 
 export type SimplexMonitorOpts = {
@@ -163,8 +166,19 @@ async function handleSimplexEvent(params: {
 
   if (event.type === "rcvFileDescrReady") {
     const fileId = (event as { rcvFileTransfer?: { fileId?: unknown } })?.rcvFileTransfer?.fileId;
-    if (typeof fileId === "number" && Number.isInteger(fileId) && fileId > 0) {
-      await requestFileDownload({ fileId, account, client, runtime });
+    if (
+      typeof fileId === "number" &&
+      Number.isInteger(fileId) &&
+      fileId > 0 &&
+      // Retry the accept for a queued pending file whose initial /freceive
+      // failed (issued on newChatItems, before the file description was
+      // ready). Skip files we never queued (e.g. oversize) or that were
+      // already accepted.
+      shouldRetryFileAccept(account.accountId, fileId)
+    ) {
+      if (await requestFileDownload({ fileId, account, client, runtime })) {
+        markFileAccepted(account.accountId, fileId);
+      }
     }
     return;
   }
@@ -179,6 +193,7 @@ async function handleSimplexEvent(params: {
         accountId: account.accountId,
         fileId,
         filePath,
+        fileName: typeof file?.fileName === "string" ? file.fileName : undefined,
       });
     }
     return;
@@ -328,9 +343,17 @@ async function handleSimplexEvent(params: {
         );
         continue;
       }
-      const accepted = await requestFileDownload({ fileId, account, client, runtime });
-      if (accepted) {
+      if (isFileAutoAcceptEnabled(account)) {
+        // Queue BEFORE attempting the accept: at this point the file may
+        // still be an invitation whose XFTP file description is not ready,
+        // so /freceive can fail. The accept is retried on rcvFileDescrReady
+        // and the dispatch happens on rcvFileComplete with the downloaded
+        // file's absolute path. If the transfer never completes, the
+        // pending-file timeout dispatches without media.
         queuePendingFile({ pending, accountId: account.accountId, fileId });
+        if (await requestFileDownload({ fileId, account, client, runtime })) {
+          markFileAccepted(account.accountId, fileId);
+        }
         continue;
       }
     }

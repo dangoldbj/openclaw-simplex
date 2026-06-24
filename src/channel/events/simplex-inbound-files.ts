@@ -1,8 +1,11 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import type { SimplexClient } from "../../simplex/runtime/client.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
+import { resolveSimplexMediaMaxBytes } from "../media/simplex-media.js";
 import {
   createSimplexLiveReplyController,
   type SimplexLiveReplyPayload,
@@ -10,6 +13,22 @@ import {
 import { getSimplexRuntime } from "../runtime.js";
 
 const PENDING_FILE_TIMEOUT_MS = 90_000;
+
+/**
+ * Where simplex-chat saves received files when started without --files-folder.
+ */
+const DEFAULT_INBOUND_DIR = "/tmp";
+
+/**
+ * Directory where the simplex-chat runtime saves received files. The WS API
+ * reports received files with a path relative to this directory
+ * (`fileSource.filePath` is typically just the file name), so the plugin needs
+ * it to locate the file on disk. Defaults to /tmp, where simplex-chat saves
+ * files when no --files-folder is configured.
+ */
+function resolveSimplexInboundDir(): string {
+  return DEFAULT_INBOUND_DIR;
+}
 
 type SimplexReplyPayload = {
   text?: string;
@@ -37,12 +56,19 @@ export type PendingInboundFile = {
 type QueuedPendingInboundFile = {
   pending: PendingInboundFile;
   timeout: ReturnType<typeof setTimeout>;
+  accepted: boolean;
 };
 
 const pendingFiles = new Map<string, QueuedPendingInboundFile>();
 
 function pendingKey(accountId: string, fileId: number): string {
   return `${accountId}:${fileId}`;
+}
+
+export function isFileAutoAcceptEnabled(account: ResolvedSimplexAccount): boolean {
+  return (
+    account.config.filePolicy?.autoAccept ?? account.config.connection?.autoAcceptFiles !== false
+  );
 }
 
 export async function requestFileDownload(params: {
@@ -52,9 +78,7 @@ export async function requestFileDownload(params: {
   runtime: RuntimeEnv;
 }): Promise<boolean> {
   const { fileId, account, client, runtime } = params;
-  const autoAccept =
-    account.config.filePolicy?.autoAccept ?? account.config.connection?.autoAcceptFiles !== false;
-  if (!autoAccept) {
+  if (!isFileAutoAcceptEnabled(account)) {
     return false;
   }
   try {
@@ -64,6 +88,23 @@ export async function requestFileDownload(params: {
     return false;
   }
   return true;
+}
+
+/**
+ * Whether a pending file still needs its download accepted. The initial
+ * /freceive issued on newChatItems can fail because the XFTP file
+ * description is not ready yet; the accept is retried on rcvFileDescrReady.
+ */
+export function shouldRetryFileAccept(accountId: string, fileId: number): boolean {
+  const queued = pendingFiles.get(pendingKey(accountId, fileId));
+  return Boolean(queued && !queued.accepted);
+}
+
+export function markFileAccepted(accountId: string, fileId: number): void {
+  const queued = pendingFiles.get(pendingKey(accountId, fileId));
+  if (queued) {
+    queued.accepted = true;
+  }
 }
 
 export function queuePendingFile(params: {
@@ -99,13 +140,14 @@ export function queuePendingFile(params: {
     });
   }, PENDING_FILE_TIMEOUT_MS);
   timeout.unref?.();
-  pendingFiles.set(key, { pending, timeout });
+  pendingFiles.set(key, { pending, timeout, accepted: false });
 }
 
 export async function finalizePendingFile(params: {
   accountId: string;
   fileId: number;
   filePath?: string;
+  fileName?: string;
 }): Promise<void> {
   const queued = pendingFiles.get(pendingKey(params.accountId, params.fileId));
   if (!queued) {
@@ -114,10 +156,47 @@ export async function finalizePendingFile(params: {
   pendingFiles.delete(pendingKey(params.accountId, params.fileId));
   clearTimeout(queued.timeout);
   const { pending } = queued;
-  const mediaPath = params.filePath?.trim() || undefined;
+  let rawPath = params.filePath?.trim() || undefined;
+  // The WS API reports received files relative to the runtime's
+  // --files-folder (fileSource.filePath is typically just the file name).
+  // Resolve against the configured inbound dir (default: /tmp, where
+  // simplex-chat saves files when no --files-folder is configured).
+  if (rawPath && !path.isAbsolute(rawPath)) {
+    rawPath = path.join(
+      resolveSimplexInboundDir(),
+      rawPath
+    );
+  }
+  let mediaPath: string | undefined;
   let mediaType: string | undefined;
-  if (mediaPath) {
-    mediaType = await getSimplexRuntime().media.detectMime({ filePath: mediaPath });
+  if (rawPath) {
+    const core = getSimplexRuntime();
+    // Stage the file into OpenClaw's shared media store (media/inbound/*),
+    // like other bundled channels. The raw path from the SimpleX runtime
+    // (e.g. /tmp/... or ~/.simplex/files/...) lives outside the store,
+    // so media tools and sandboxed workspaces would reject it.
+    try {
+      mediaType = await core.media.detectMime({ filePath: rawPath });
+      const buffer = await readFile(rawPath);
+      const saved = await core.channel.media.saveMediaBuffer(
+        buffer,
+        mediaType,
+        "inbound",
+        resolveSimplexMediaMaxBytes({
+          cfg: pending.cfg,
+          accountId: pending.account.accountId,
+        }),
+        params.fileName ?? path.basename(rawPath),
+        rawPath
+      );
+      mediaPath = saved.path;
+      mediaType = saved.contentType ?? mediaType;
+    } catch (err) {
+      pending.runtime.error?.(
+        `[${params.accountId}] SimpleX inbound media staging failed, using raw path: ${String(err)}`
+      );
+      mediaPath = rawPath;
+    }
   }
   await dispatchInbound({ pending, mediaPath, mediaType });
 }
@@ -143,6 +222,7 @@ export async function dispatchInbound(params: {
   const ctxPayload = {
     ...pending.ctxPayload,
     MediaPath: mediaPath,
+    MediaPaths: mediaPath ? [mediaPath] : undefined,
     MediaType: mediaType,
     MediaUrl: mediaPath,
   };
