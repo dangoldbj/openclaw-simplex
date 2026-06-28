@@ -160,21 +160,26 @@ export function collectSimplexSecurityAuditFindings(params: {
     });
   }
 
-  const endpoint = describeSimplexWsEndpointSecurity(account.wsUrl, {
-    allowUnsafeRemoteWs: account.config.connection?.allowUnsafeRemoteWs,
-  });
-  for (const warning of endpoint.warnings) {
-    findings.push({
-      checkId:
-        endpoint.blockingWarnings.length > 0
-          ? "simplex.ws-endpoint-blocked"
-          : "simplex.ws-endpoint-warning",
-      severity: endpoint.blockingWarnings.length > 0 ? "critical" : "warn",
-      title: "SimpleX WebSocket endpoint weakens transport privacy",
-      detail: warning,
-      remediation:
-        "Prefer ws://127.0.0.1, a private sidecar network, or wss:// behind authenticated network controls.",
+  // The WebSocket endpoint audit only applies to the external runtime. In
+  // native mode the core runs in-process, so there is no network endpoint to
+  // assess (account.wsUrl is just an unused default).
+  if (account.mode !== "native") {
+    const endpoint = describeSimplexWsEndpointSecurity(account.wsUrl, {
+      allowUnsafeRemoteWs: account.config.connection?.allowUnsafeRemoteWs,
     });
+    for (const warning of endpoint.warnings) {
+      findings.push({
+        checkId:
+          endpoint.blockingWarnings.length > 0
+            ? "simplex.ws-endpoint-blocked"
+            : "simplex.ws-endpoint-warning",
+        severity: endpoint.blockingWarnings.length > 0 ? "critical" : "warn",
+        title: "SimpleX WebSocket endpoint weakens transport privacy",
+        detail: warning,
+        remediation:
+          "Prefer ws://127.0.0.1, a private sidecar network, or wss:// behind authenticated network controls.",
+      });
+    }
   }
 
   return findings;

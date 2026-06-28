@@ -2,6 +2,7 @@ import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { describe, expect, it } from "vitest";
 import {
+  assertUniqueNativeDbPrefixes,
   hasMeaningfulSimplexConfig,
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
@@ -128,6 +129,68 @@ describe("simplex accounts", () => {
     expect(account.mode).toBe("external");
     expect(account.configured).toBe(true);
     expect(account.wsUrl).toBe("ws://127.0.0.1:5225");
+  });
+
+  it("defaults the native db file prefix under the state dir and counts as configured", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          connection: {
+            mode: "native",
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    const account = resolveSimplexAccount({ cfg, accountId: "default" });
+    expect(account.mode).toBe("native");
+    expect(account.configured).toBe(true);
+    expect(account.db?.filePrefix).toMatch(/[/\\]simplex[/\\]default$/);
+  });
+
+  it("honors an explicit native db file prefix and encryption key", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          connection: {
+            mode: "native",
+            db: { filePrefix: "/data/simplex-bot", encryptionKey: "secret" },
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    const account = resolveSimplexAccount({ cfg, accountId: "default" });
+    expect(account.db?.filePrefix).toBe("/data/simplex-bot");
+    expect(account.db?.encryptionKey).toBe("secret");
+  });
+
+  it("rejects two native accounts sharing the same db file prefix", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          accounts: {
+            a: { connection: { mode: "native", db: { filePrefix: "/data/shared" } } },
+            b: { connection: { mode: "native", db: { filePrefix: "/data/shared" } } },
+          },
+        },
+      },
+    } as OpenClawConfig;
+    expect(() => assertUniqueNativeDbPrefixes(cfg)).toThrow(/unique db\.filePrefix/);
+  });
+
+  it("allows native accounts with distinct (and defaulted) db file prefixes", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          accounts: {
+            a: { connection: { mode: "native", db: { filePrefix: "/data/a" } } },
+            b: { connection: { mode: "native" } }, // defaults to <state>/simplex/b
+          },
+        },
+      },
+    } as OpenClawConfig;
+    expect(() => assertUniqueNativeDbPrefixes(cfg)).not.toThrow();
   });
 
   it("does not treat an empty channel section as configured", () => {

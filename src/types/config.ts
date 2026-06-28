@@ -1,7 +1,39 @@
 import type { SimplexAccountConfig } from "../config/config-schema.js";
 
+export type SimplexConnectionMode = "external" | "native";
+
+/** Fully-resolved bot profile applied to the embedded native user. */
+export type SimplexBotProfile = {
+  displayName: string;
+  fullName: string;
+  /** base64 data URI, or undefined for no avatar. */
+  image?: string;
+  peerType: "bot" | "human";
+};
+
+export type SimplexNativeDbConfig = {
+  type?: "sqlite";
+  filePrefix: string;
+  encryptionKey?: string;
+};
+
+export type SimplexNativeProfileConfig = {
+  displayName?: string;
+  fullName?: string;
+  /** Avatar: data URI, http(s) URL, or local file path. Converted to a base64 data URI. */
+  image?: string;
+  /** SimpleX peer type shown to contacts. Defaults to "bot" when omitted. */
+  peerType?: "bot" | "human";
+};
+
+export type SimplexNativeAddressSettings = {
+  autoAccept?: boolean;
+  welcomeMessage?: string;
+  businessAddress?: boolean;
+};
+
 export type SimplexConnectionConfig = {
-  mode?: "external";
+  mode?: SimplexConnectionMode;
   wsUrl?: string;
   wsHost?: string;
   wsPort?: number;
@@ -10,6 +42,10 @@ export type SimplexConnectionConfig = {
   connectTimeoutMs?: number;
   commandTimeoutMs?: number;
   directoryTimeoutMs?: number;
+  // native mode (embedded simplex-chat core)
+  db?: SimplexNativeDbConfig;
+  profile?: SimplexNativeProfileConfig;
+  addressSettings?: SimplexNativeAddressSettings;
 };
 
 export type SimplexStreamingConfig = {
@@ -29,9 +65,13 @@ export type ResolvedSimplexAccount = {
   enabled: boolean;
   name?: string;
   configured: boolean;
-  mode: "external";
+  mode: SimplexConnectionMode;
   wsUrl: string;
   wsHost: string;
   wsPort: number;
+  // present when mode === "native"
+  db?: SimplexNativeDbConfig;
+  profile?: SimplexNativeProfileConfig;
+  addressSettings?: SimplexNativeAddressSettings;
   config: SimplexAccountConfig;
 };

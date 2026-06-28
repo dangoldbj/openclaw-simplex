@@ -1,7 +1,7 @@
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { readSimplexRuntimeVersion } from "../runtime/account.js";
 import type { SimplexClient } from "../runtime/client.js";
-import { withSimplexClient } from "../runtime/transport.js";
+import { SimplexNativeCoreUnavailableError, withSimplexClient } from "../runtime/transport.js";
 import {
   isSimplexEmptyRuntimeListError,
   readSimplexActiveUserInfo,
@@ -453,16 +453,52 @@ async function collectWithClient(
   };
 }
 
+/** All-unknown report, used when the runtime can't be probed (e.g. native core not accessible). */
+function unavailableCapabilityReport(detail: string): SimplexRuntimeCapabilityReport {
+  const base = { runtimeVersion: null as string | null, detail };
+  return {
+    runtimeVersion: null,
+    version: valueProbe("unknown", { ...base, value: null }),
+    activeUser: valueProbe("unknown", { ...base, value: null }),
+    users: countProbe("unknown", { ...base, count: null }),
+    contacts: countProbe("unknown", { ...base, count: null }),
+    groups: countProbe("unknown", { ...base, count: null }),
+    liveMessages: probe("unknown", base),
+    ttl: probe("unknown", base),
+    verification: probe("unknown", base),
+    moderation: probe("unknown", base),
+    files: probe("unknown", base),
+    experimentalChannels: probe("unknown", base),
+  };
+}
+
 export async function probeSimplexRuntimeCapabilities(
   params: SimplexRuntimeCapabilityProbeOptions
 ): Promise<SimplexRuntimeCapabilityProbeData> {
   if (params.client) {
     return await collectWithClient({ ...params, client: params.client });
   }
-  return await withSimplexClient({
-    account: params.account,
-    run: async (client) => await collectWithClient({ ...params, client }),
-  });
+  try {
+    return await withSimplexClient({
+      account: params.account,
+      run: async (client) => await collectWithClient({ ...params, client }),
+    });
+  } catch (err) {
+    if (err instanceof SimplexNativeCoreUnavailableError) {
+      // Native core is owned by the gateway; an out-of-process probe can't
+      // open a second connection. Report capabilities as unknown rather than
+      // failing the status read.
+      return {
+        activeUser: null,
+        address: null,
+        contacts: [],
+        groups: [],
+        users: [],
+        capabilities: unavailableCapabilityReport(err.message),
+      };
+    }
+    throw err;
+  }
 }
 
 export function collectSimplexCapabilityIssues(params: {

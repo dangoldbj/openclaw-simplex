@@ -1,6 +1,7 @@
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
+import { assertUniqueNativeDbPrefixes } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import { formatSimplexChatRef } from "../../simplex/runtime/api.js";
 import { SimplexClient } from "../../simplex/runtime/client.js";
@@ -12,6 +13,7 @@ import type { SimplexChatEvent } from "../../types/simplex.js";
 import { resolveSimplexMediaMaxBytes } from "../media/simplex-media.js";
 import { buildAndSendSimplexMessages } from "../messaging/simplex-send.js";
 import { getSimplexRuntime } from "../runtime.js";
+import { resolveSimplexBotProfile } from "../simplex-bot-profile.js";
 import { connectSimplexWithRetry } from "../transport/simplex-connect.js";
 import {
   isInboundSimplexChatItem,
@@ -45,6 +47,11 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
   client: SimplexClient;
 }> {
   const { account, cfg, runtime, statusSink } = params;
+  if (account.mode === "native") {
+    // Fail fast before opening the embedded core if another enabled native
+    // account would share the same database.
+    assertUniqueNativeDbPrefixes(cfg);
+  }
   const client = new SimplexClient({
     account,
     logger: {
@@ -52,6 +59,15 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
       warn: (message) => runtime?.error?.(message),
       error: (message) => runtime?.error?.(message),
     },
+    ...(account.mode === "native"
+      ? {
+          nativeProfileResolver: () =>
+            resolveSimplexBotProfile({
+              account,
+              logger: { warn: (message) => runtime?.error?.(message) },
+            }),
+        }
+      : {}),
   });
 
   let initialConnectComplete = false;

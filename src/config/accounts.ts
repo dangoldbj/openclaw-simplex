@@ -1,3 +1,5 @@
+import os from "node:os";
+import path from "node:path";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
@@ -7,12 +9,40 @@ import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema
 const DEFAULT_WS_HOST = "127.0.0.1";
 const DEFAULT_WS_PORT = 5225;
 
+/**
+ * OpenClaw's state directory (mutable data), overridable via OPENCLAW_STATE_DIR,
+ * default ~/.openclaw — mirrors the gateway's own resolution. Used to anchor the
+ * default native database location so it lands beside the rest of OpenClaw's
+ * state regardless of the gateway's working directory.
+ */
+function resolveOpenClawStateDir(): string {
+  const override = process.env.OPENCLAW_STATE_DIR?.trim();
+  if (override) {
+    return override;
+  }
+  return path.join(os.homedir(), ".openclaw");
+}
+
+/**
+ * Default native db file prefix for an account. The core creates
+ * `<prefix>_chat.db` and `<prefix>_agent.db`, so we namespace per account under
+ * the state dir to keep multiple accounts isolated.
+ */
+function resolveDefaultNativeFilePrefix(accountId: string): string {
+  return path.join(resolveOpenClawStateDir(), "simplex", accountId || DEFAULT_ACCOUNT_ID);
+}
+
 function hasMeaningfulConnectionConfig(connection: SimplexConnectionConfig | undefined): boolean {
   if (!connection) {
     return false;
   }
   return Boolean(
-    connection.wsUrl?.trim() || connection.wsHost?.trim() || connection.wsPort !== undefined
+    connection.wsUrl?.trim() ||
+      connection.wsHost?.trim() ||
+      connection.wsPort !== undefined ||
+      // Native mode is self-configuring: the database path defaults under the
+      // OpenClaw state dir, so selecting the mode is enough.
+      connection.mode === "native"
   );
 }
 
@@ -110,18 +140,30 @@ export function resolveSimplexAccount(params: {
   const baseEnabled = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.enabled !== false;
   const enabled = baseEnabled && merged.enabled !== false;
   const connection = merged.connection ?? {};
+  const mode = connection.mode === "native" ? "native" : "external";
   const wsUrl = resolveWsUrl(connection);
   const wsHost = resolveWsHost(connection);
   const wsPort = resolveWsPort(connection);
+  const db = connection.db?.filePrefix?.trim()
+    ? {
+        filePrefix: connection.db.filePrefix.trim(),
+        ...(connection.db.encryptionKey ? { encryptionKey: connection.db.encryptionKey } : {}),
+      }
+    : mode === "native"
+      ? { filePrefix: resolveDefaultNativeFilePrefix(accountId) }
+      : undefined;
   return {
     accountId,
     enabled,
     name: merged.name?.trim() || undefined,
     configured: hasMeaningfulConfig,
-    mode: "external",
+    mode,
     wsUrl,
     wsHost,
     wsPort,
+    ...(db ? { db } : {}),
+    ...(connection.profile ? { profile: connection.profile } : {}),
+    ...(connection.addressSettings ? { addressSettings: connection.addressSettings } : {}),
     config: merged,
   };
 }
@@ -130,4 +172,33 @@ export function listEnabledSimplexAccounts(cfg: OpenClawConfig): ResolvedSimplex
   return listSimplexAccountIds(cfg)
     .map((accountId) => resolveSimplexAccount({ cfg, accountId }))
     .filter((account) => account.enabled);
+}
+
+/**
+ * Guard against two enabled native accounts resolving to the same db.filePrefix.
+ * The embedded core cannot be opened twice on the same SQLite database, so a
+ * shared prefix would corrupt or lock it. Throws with the conflicting accounts.
+ */
+export function assertUniqueNativeDbPrefixes(cfg: OpenClawConfig): void {
+  const accountsByPrefix = new Map<string, string[]>();
+  for (const account of listEnabledSimplexAccounts(cfg)) {
+    const prefix = account.mode === "native" ? account.db?.filePrefix : undefined;
+    if (!prefix) {
+      continue;
+    }
+    const ids = accountsByPrefix.get(prefix) ?? [];
+    ids.push(account.accountId);
+    accountsByPrefix.set(prefix, ids);
+  }
+  const conflicts = [...accountsByPrefix.entries()].filter(([, ids]) => ids.length > 1);
+  if (conflicts.length === 0) {
+    return;
+  }
+  const detail = conflicts
+    .map(([prefix, ids]) => `${prefix} (accounts: ${ids.join(", ")})`)
+    .join("; ");
+  throw new Error(
+    `SimpleX native accounts must each use a unique db.filePrefix — the embedded core ` +
+      `cannot be opened twice on the same database. Conflicting prefixes: ${detail}`
+  );
 }

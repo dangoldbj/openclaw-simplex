@@ -54,6 +54,11 @@
     "ws": "^8.20.0",
     "zod": "^4.4.3"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "simplex-chat"
+    ]
+  },
   "peerDependencies": {
     "openclaw": ">=2026.5.27"
   },

@@ -29,9 +29,34 @@ const SimplexActionConfigSchema = z
 
 const SimplexReactionLevelSchema = z.enum(["off", "ack", "minimal", "extensive"]).optional();
 
+const SimplexNativeDbSchema = z
+  .object({
+    type: z.literal("sqlite").optional(),
+    filePrefix: z.string().min(1),
+    encryptionKey: z.string().optional(),
+  })
+  .strict();
+
+const SimplexNativeProfileSchema = z
+  .object({
+    displayName: z.string().min(1).optional(),
+    fullName: z.string().optional(),
+    image: z.string().optional(),
+    peerType: z.enum(["bot", "human"]).optional(),
+  })
+  .strict();
+
+const SimplexNativeAddressSettingsSchema = z
+  .object({
+    autoAccept: z.boolean().optional(),
+    welcomeMessage: z.string().optional(),
+    businessAddress: z.boolean().optional(),
+  })
+  .strict();
+
 const SimplexConnectionSchema = z
   .object({
-    mode: z.literal("external").optional(),
+    mode: z.enum(["external", "native"]).optional(),
     wsUrl: z.string().url().optional(),
     wsHost: z.string().optional(),
     wsPort: z.number().int().positive().optional(),
@@ -40,6 +65,10 @@ const SimplexConnectionSchema = z
     connectTimeoutMs: z.number().int().positive().optional(),
     commandTimeoutMs: z.number().int().positive().optional(),
     directoryTimeoutMs: z.number().int().positive().optional(),
+    // native mode (embedded simplex-chat core)
+    db: SimplexNativeDbSchema.optional(),
+    profile: SimplexNativeProfileSchema.optional(),
+    addressSettings: SimplexNativeAddressSettingsSchema.optional(),
   })
   .strict();
 

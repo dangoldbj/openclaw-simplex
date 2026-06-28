@@ -224,7 +224,7 @@
             "properties": {
               "mode": {
                 "type": "string",
-                "const": "external"
+                "enum": ["external", "native"]
               },
               "wsUrl": {
                 "type": "string",
@@ -258,6 +258,59 @@
                 "type": "integer",
                 "exclusiveMinimum": 0,
                 "maximum": 9007199254740991
+              },
+              "db": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "sqlite"
+                  },
+                  "filePrefix": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "encryptionKey": {
+                    "type": "string"
+                  }
+                },
+                "required": ["filePrefix"],
+                "additionalProperties": false
+              },
+              "profile": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "fullName": {
+                    "type": "string"
+                  },
+                  "image": {
+                    "type": "string"
+                  },
+                  "peerType": {
+                    "type": "string",
+                    "enum": ["bot", "human"]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "addressSettings": {
+                "type": "object",
+                "properties": {
+                  "autoAccept": {
+                    "type": "boolean"
+                  },
+                  "welcomeMessage": {
+                    "type": "string"
+                  },
+                  "businessAddress": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -461,7 +514,7 @@
                   "properties": {
                     "mode": {
                       "type": "string",
-                      "const": "external"
+                      "enum": ["external", "native"]
                     },
                     "wsUrl": {
                       "type": "string",
@@ -495,6 +548,59 @@
                       "type": "integer",
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "db": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "sqlite"
+                        },
+                        "filePrefix": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "encryptionKey": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["filePrefix"],
+                      "additionalProperties": false
+                    },
+                    "profile": {
+                      "type": "object",
+                      "properties": {
+                        "displayName": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "fullName": {
+                          "type": "string"
+                        },
+                        "image": {
+                          "type": "string"
+                        },
+                        "peerType": {
+                          "type": "string",
+                          "enum": ["bot", "human"]
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "addressSettings": {
+                      "type": "object",
+                      "properties": {
+                        "autoAccept": {
+                          "type": "boolean"
+                        },
+                        "welcomeMessage": {
+                          "type": "string"
+                        },
+                        "businessAddress": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "additionalProperties": false

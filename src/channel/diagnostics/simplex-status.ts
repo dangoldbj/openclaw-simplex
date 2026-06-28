@@ -9,6 +9,24 @@ import {
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { resolveSimplexHealthState } from "../shared/simplex-common.js";
 
+/**
+ * WS endpoint security only applies to the external runtime. In native mode the
+ * core runs in-process (no network endpoint), so report no transport warnings.
+ */
+function resolveEndpointSecurity(account: ResolvedSimplexAccount) {
+  if (account.mode === "native") {
+    return {
+      valid: true,
+      redactedUrl: "",
+      warnings: [] as string[],
+      blockingWarnings: [] as string[],
+    };
+  }
+  return describeSimplexWsEndpointSecurity(account.wsUrl, {
+    allowUnsafeRemoteWs: account.config.connection?.allowUnsafeRemoteWs,
+  });
+}
+
 export function buildSimplexStatus(): NonNullable<
   ChannelPlugin<ResolvedSimplexAccount, SimplexRuntimeCapabilityReport>["status"]
 > {
@@ -51,14 +69,11 @@ export function buildSimplexStatus(): NonNullable<
         return issues;
       }),
     buildChannelSummary: ({ snapshot, account }) => {
-      const connection = account.config.connection;
       const configured = snapshot.configured ?? account.configured;
       const running = snapshot.running ?? false;
       const connected = snapshot.connected ?? false;
       const lastError = snapshot.lastError ?? null;
-      const security = describeSimplexWsEndpointSecurity(account.wsUrl, {
-        allowUnsafeRemoteWs: connection?.allowUnsafeRemoteWs,
-      });
+      const security = resolveEndpointSecurity(account);
       return {
         configured,
         running,
@@ -106,10 +121,7 @@ export function buildSimplexStatus(): NonNullable<
       { text: `SimpleX channels: ${probe.experimentalChannels.state}` },
     ],
     buildAccountSnapshot: async ({ account, runtime, probe }) => {
-      const connection = account.config.connection;
-      const security = describeSimplexWsEndpointSecurity(account.wsUrl, {
-        allowUnsafeRemoteWs: connection?.allowUnsafeRemoteWs,
-      });
+      const security = resolveEndpointSecurity(account);
       return {
         accountId: account.accountId,
         name: account.name,

@@ -22,6 +22,7 @@
           "guide/how-it-works",
           "guide/architecture",
           "guide/runtime-setup",
+          "guide/native-setup",
           "guide/security-model",
           "guide/migration",
           "guide/troubleshooting"

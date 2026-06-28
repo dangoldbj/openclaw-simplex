@@ -15,16 +15,15 @@ import { getSimplexRuntime } from "../runtime.js";
 const PENDING_FILE_TIMEOUT_MS = 90_000;
 
 /**
- * Where simplex-chat saves received files when started without --files-folder.
+ * Default location where simplex-chat saves received files when started without
+ * `--files-folder`.
  */
 const DEFAULT_INBOUND_DIR = "/tmp";
 
 /**
- * Directory where the simplex-chat runtime saves received files. The WS API
- * reports received files with a path relative to this directory
- * (`fileSource.filePath` is typically just the file name), so the plugin needs
- * it to locate the file on disk. Defaults to /tmp, where simplex-chat saves
- * files when no --files-folder is configured.
+ * Base directory for resolving relative inbound file paths. The runtime reports
+ * received files relative to its files-folder (`fileSource.filePath` is usually
+ * just the file name), so relative paths are resolved against this default.
  */
 function resolveSimplexInboundDir(): string {
   return DEFAULT_INBOUND_DIR;
@@ -157,15 +156,11 @@ export async function finalizePendingFile(params: {
   clearTimeout(queued.timeout);
   const { pending } = queued;
   let rawPath = params.filePath?.trim() || undefined;
-  // The WS API reports received files relative to the runtime's
-  // --files-folder (fileSource.filePath is typically just the file name).
-  // Resolve against the configured inbound dir (default: /tmp, where
-  // simplex-chat saves files when no --files-folder is configured).
+  // The runtime reports received files relative to its --files-folder
+  // (fileSource.filePath is typically just the file name), so resolve relative
+  // paths against the default inbound dir (/tmp).
   if (rawPath && !path.isAbsolute(rawPath)) {
-    rawPath = path.join(
-      resolveSimplexInboundDir(),
-      rawPath
-    );
+    rawPath = path.join(resolveSimplexInboundDir(), rawPath);
   }
   let mediaPath: string | undefined;
   let mediaType: string | undefined;

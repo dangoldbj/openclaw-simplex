@@ -34,6 +34,7 @@ import type { SimplexClient } from "./client.js";
 import {
   getActiveSimplexClient,
   registerActiveSimplexClient,
+  SimplexNativeCoreUnavailableError,
   unregisterActiveSimplexClient,
   withSimplexClient,
 } from "./transport.js";
@@ -58,6 +59,24 @@ function account(
     config: {
       connection: { wsUrl, commandTimeoutMs },
     },
+  };
+}
+
+function nativeAccount(
+  accountId = "native",
+  filePrefix = `/tmp/${accountId}`
+): ResolvedSimplexAccount {
+  return {
+    accountId,
+    name: accountId,
+    enabled: true,
+    configured: true,
+    mode: "native",
+    wsUrl: "ws://127.0.0.1:5225",
+    wsHost: "127.0.0.1",
+    wsPort: 5225,
+    db: { filePrefix },
+    config: { connection: { mode: "native", db: { filePrefix } } },
   };
 }
 
@@ -170,5 +189,31 @@ describe("simplex runtime transport", () => {
 
     expect(clientMock.constructed).toBe(1);
     expect(clientMock.instances[0]).toMatchObject({ connected: 1, closed: 1 });
+  });
+
+  it("refuses to open a transient core for native mode without an active client", async () => {
+    const cfg = nativeAccount("native-guard");
+
+    await expect(
+      withSimplexClient({ account: cfg, run: async () => "ran" })
+    ).rejects.toBeInstanceOf(SimplexNativeCoreUnavailableError);
+
+    // Critically, it must NOT construct a second embedded core.
+    expect(clientMock.constructed).toBe(0);
+  });
+
+  it("uses the registered active client for native mode instead of a new core", async () => {
+    const cfg = nativeAccount("native-active");
+    const client = activeClient("active-native");
+    registeredAccounts.push({ account: cfg, client });
+    await registerActiveSimplexClient(cfg, client);
+
+    const result = await withSimplexClient({
+      account: cfg,
+      run: async (runtimeClient) => (runtimeClient as TestSimplexClient).source,
+    });
+
+    expect(result).toBe("active-native");
+    expect(clientMock.constructed).toBe(0);
   });
 });

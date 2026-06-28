@@ -5,13 +5,9 @@ import type {
   SimplexRuntimeEvent,
   SimplexRuntimeResponse,
 } from "../../types/simplex.js";
+import type { SimplexConnectionState, SimplexTransport } from "./transport-types.js";
 
-export type SimplexConnectionState = {
-  connected: boolean;
-  at: number;
-  expected?: boolean;
-  error?: string | null;
-};
+export type { SimplexConnectionState } from "./transport-types.js";
 
 type SimplexWsClientOptions = {
   url: string;
@@ -27,7 +23,7 @@ type PendingCommand = {
   timeout: NodeJS.Timeout;
 };
 
-export class SimplexWsClient {
+export class SimplexWsClient implements SimplexTransport {
   private readonly url: string;
   private readonly connectTimeoutMs: number;
   private readonly commandTimeoutMs: number;

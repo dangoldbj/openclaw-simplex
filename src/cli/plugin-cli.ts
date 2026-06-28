@@ -1,41 +1,35 @@
 import { renderQrTerminal } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { LEGACY_SIMPLEX_PLUGIN_ID, SIMPLEX_PLUGIN_ID } from "../constants.js";
-import {
-  connectSimplexLink,
-  planSimplexConnectionLink,
-} from "../simplex/services/connect-links.js";
+import { runMigration } from "./migration.js";
+// Native-aware wrappers: same signatures as the underlying services, but for
+// `mode: "native"` accounts they dispatch to the in-gateway gateway methods
+// (the embedded core can't be opened a second time from this CLI process).
+// External accounts keep the original local behavior. See ./plugin-cli-wrappers.
 import {
   acceptSimplexContactRequest,
-  listSimplexContactRequests,
-  rejectSimplexContactRequest,
-} from "../simplex/services/contact-requests.js";
-import {
-  createSimplexGroup,
-  createSimplexGroupLink,
-  listSimplexGroupLink,
-  revokeSimplexGroupLink,
-} from "../simplex/services/groups.js";
-import {
-  createSimplexInvite,
-  listSimplexInvites,
-  revokeSimplexInvite,
-} from "../simplex/services/invites.js";
-import {
   blockSimplexGroupMember,
   cancelSimplexFile,
   checkSimplexContactVerification,
+  connectSimplexLink,
+  createSimplexGroup,
+  createSimplexGroupLink,
+  createSimplexInvite,
   deleteSimplexGroupMemberMessages,
-  listSimplexRuntimeUsers,
-  receiveSimplexFile,
-  showSimplexContactVerification,
-  showSimplexRuntimeActiveUser,
-} from "../simplex/services/runtime-operations.js";
-import {
   doctorSimplexRuntime,
   getSimplexRuntimeStatus,
-} from "../simplex/services/runtime-status.js";
-import { runMigration } from "./migration.js";
+  listSimplexContactRequests,
+  listSimplexGroupLink,
+  listSimplexInvites,
+  listSimplexRuntimeUsers,
+  planSimplexConnectionLink,
+  receiveSimplexFile,
+  rejectSimplexContactRequest,
+  revokeSimplexGroupLink,
+  revokeSimplexInvite,
+  showSimplexContactVerification,
+  showSimplexRuntimeActiveUser,
+} from "./plugin-cli-wrappers.js";
 import { type RuntimeServiceOptions, runRuntimeServiceInstallCli } from "./runtime-service.js";
 
 export { migrateConfigObject, migrateStateFiles } from "./migration.js";

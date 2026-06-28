@@ -1,0 +1,198 @@
+---
+title: Native runtime (embedded core)
+description: Run the SimpleX channel with the embedded native simplex-chat core, without a separate WebSocket runtime.
+---
+
+By default this plugin connects to a **separately-run** `simplex-chat` process
+over WebSocket (see [Runtime setup](/guide/runtime-setup)). As an alternative,
+it can embed the SimpleX core **in-process** using the
+[`simplex-chat`](https://www.npmjs.com/package/simplex-chat) native package — no
+separate process to install, run, or supervise.
+
+<Warning>
+  The `simplex-chat` package is licensed **AGPL-3.0**, while this plugin is MIT.
+  It is **not a dependency** of this plugin and is never installed by default —
+  you install it yourself to enable native mode (see below). Installing and
+  running it brings the combined work under AGPL terms (including its network-use
+  clause). Review the licensing implications for your deployment before enabling
+  native mode.
+</Warning>
+
+## Install simplex-chat (native mode only)
+
+Native mode requires the `simplex-chat` package, which is **not installed by
+default** — default installs stay pure-JS and AGPL-free. Install it into the same
+project (`node_modules` tree) where the plugin runs, **using that project's
+package manager**.
+
+OpenClaw installs plugins with **npm** (the managed plugin project under
+`~/.openclaw/npm/projects/<…>` has a `package-lock.json`), so install it there
+with npm — which also runs the native build automatically:
+
+```bash
+# in the plugin's OpenClaw project directory
+npm install simplex-chat
+```
+
+<Warning>
+  Do not run `pnpm` in an npm-managed project (or vice versa). pnpm will try to
+  take the project over — moving the npm-installed plugin to `node_modules/.ignored`
+  and blocking build scripts — which breaks OpenClaw's view of the plugin. Match
+  the package manager the project already uses.
+</Warning>
+
+`simplex-chat` ships a platform-specific native addon (built via `node-gyp` on
+install), so the host needs a build toolchain (a C/C++ compiler, `make`, and
+Python) unless a prebuilt binary is available for your platform. If
+`simplex-chat` is missing when an account is set to `mode: "native"`, the channel
+fails to start with a clear message telling you to install it; external mode is
+unaffected.
+
+## Configure an account for native mode
+
+Setting `connection.mode` to `"native"` is enough — everything else has a
+default. The minimal config is just:
+
+```jsonc
+{
+  "channels": {
+    "openclaw-simplex": {
+      "connection": { "mode": "native" }
+    }
+  }
+}
+```
+
+By default the database lives under OpenClaw's state directory at
+`<OPENCLAW_STATE_DIR or ~/.openclaw>/simplex/<accountId>` — the core creates
+`<prefix>_chat.db` and `<prefix>_agent.db` there. Override any of it as needed:
+
+```jsonc
+{
+  "channels": {
+    "openclaw-simplex": {
+      "connection": {
+        "mode": "native",
+        "db": { "filePrefix": "/path/to/.openclaw/simplex/my-prefix" },   // optional override
+        "profile": {
+          "displayName": "My OpenClaw bot",   // optional; defaults to the account name
+          "fullName": "",
+          "image": "/path/to/.openclaw/workspace/avatars/my-avatar.jpg",  // optional; data URI, http(s) URL, or absolute file path
+          "peerType": "bot"                   // optional; "bot" (default) or "human"
+        },
+        "addressSettings": {
+          "autoAccept": true,
+          "welcomeMessage": "Connected. Send me a message."
+        }
+      }
+    }
+  }
+}
+```
+
+On first start the plugin creates the bot user and a long-term address (printed
+to the logs), then auto-accepts incoming contact requests. Subsequent starts
+reuse the identity stored in the database files.
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `mode` | yes | `"native"` selects the embedded core. Omit or `"external"` keeps the WebSocket runtime. |
+| `db.filePrefix` | no | Path prefix for the two SQLite files. Defaults to `<state dir>/simplex/<accountId>`. |
+| `db.encryptionKey` | no | SQLCipher key; omit for an unencrypted database. |
+| `profile.displayName` | no | Bot display name. Defaults to the account name, then `"OpenClaw"`. |
+| `profile.fullName` | no | Optional full name (defaults to empty). |
+| `profile.image` | no | Avatar as a data URI, http(s) URL, or file path (use an **absolute** path; relative paths resolve against the gateway's working directory). Downscaled to a small JPEG. Use a **square** image — SimpleX renders avatars square, so non-square images are stretched. |
+| `profile.peerType` | no | `"bot"` (default) or `"human"`. |
+| `addressSettings.autoAccept` | no | Default `true`. Auto-accept incoming contact requests (see below). |
+| `addressSettings.welcomeMessage` | no | Auto-reply text shown to people connecting via the address. |
+| `addressSettings.businessAddress` | no | Default `false`. `true` makes connections **business chats** (groups) instead of 1:1 contacts. |
+
+A SimpleX account has exactly one identity (one address and profile that every
+contact sees), so the profile is **account-level config** — it is not derived
+from agent identity (multiple agents can share one account, and agent identity is
+per-conversation). Set `connection.profile` to give the account a specific face.
+
+The profile is **reconciled on every start**: the plugin compares the desired
+display name, avatar, and peer type against the live profile and updates it if it
+has drifted — so editing `connection.profile` propagates on the next restart.
+Address settings (`addressSettings`) are reconciled the same way.
+
+### Address settings
+
+- **`welcomeMessage`** is the address **auto-reply** (text only). It is stored on
+  the address as a `MsgContent` and shown to anyone who opens your link — they
+  see it *before* tapping Connect — and the core sends it automatically on
+  connection. The plugin doesn't send it per message.
+- **`businessAddress`** changes the conversation model. With `false` (default), a
+  new contact becomes a normal **1:1 direct chat**. With `true`, each connection
+  creates a **business chat**, which in SimpleX is a *group* (the customer and
+  bot are members and you can add more participants, e.g. human agents). Because
+  business chats are groups, they are governed by your **group** policy
+  (`groupPolicy`, group allowlist, require-mention) rather than `dmPolicy`.
+- **`autoAccept`** (default `true`) accepts incoming contact requests
+  automatically. With `autoAccept: false`, a person who connects stays in a
+  "request sent" state until you accept it. Pending requests are recorded by the
+  gateway (silently — no log line); list and act on them with:
+
+  ```sh
+  openclaw simplex requests list
+  openclaw simplex requests accept --contact-request-id <id>
+  openclaw simplex requests reject --contact-request-id <id>
+  ```
+
+  In native mode these commands run against the gateway holding the embedded
+  core, so the gateway must be running.
+
+## How it differs from external mode
+
+- No external `simplex-chat` process, sidecar, Docker container, or `wsUrl`.
+- The core runs in the OpenClaw process, so there is no network transport to
+  secure and no reconnect loop — the channel reports the core as started/stopped.
+- Everything else (policy enforcement, pairing, allowlists, group policy,
+  actions, files, reactions) is identical to external mode: native mode only
+  swaps the transport.
+- The embedded core is owned by the gateway process, so the `openclaw simplex …`
+  CLI commands (invite, address, requests, groups, files, connect, runtime) are
+  dispatched to the running gateway in native mode instead of opening their own
+  connection. They work the same as in external mode (including terminal QR
+  output); they just require the gateway to be running.
+
+Policy, allowlist, and message handling behave exactly as documented elsewhere —
+see [Security model](/guide/security-model) and [How it works](/guide/how-it-works).
+
+## Treat the database as durable identity
+
+The native database (`<filePrefix>_chat.db` / `_agent.db`) **is** the bot's
+identity and its contact map. SimpleX is identifier-free by design: contacts are
+referenced by a **local, sequential id** (e.g. `4`) that is only stable for the
+life of that database. OpenClaw keys per-contact state (sessions, transcripts,
+pairing approvals, allowlist entries) on that id.
+
+<Warning>
+  Do not delete the database casually. If you delete it and let users reconnect,
+  SimpleX reuses the low ids (a new contact becomes `4` again), and OpenClaw will
+  treat that new person as the **old** contact — inheriting their session
+  history, pairing approval, and allowlist membership. Back up the database files
+  instead.
+</Warning>
+
+If you must reset the database, perform it as a deliberate runbook and purge the
+matching OpenClaw state for the channel/account afterwards, before users
+reconnect:
+
+```sh
+# 1. Revoke stale pairing approvals (a reused id would inherit approval)
+openclaw pairing list
+openclaw pairing remove <entry>
+
+# 2. Delete stale sessions/transcripts so a new contact can't see old context
+openclaw sessions list
+#    delete the openclaw-simplex sessions (see `openclaw sessions --help`,
+#    or the sessions.delete gateway method)
+
+# 3. If using allowlist policy, prune allowFrom / groupAllowFrom entries that
+#    reference the old numeric ids
+```
+
+This applies to external mode too (the external runtime's database has the same
+local-id behavior); native mode just makes the database an operator-managed file.

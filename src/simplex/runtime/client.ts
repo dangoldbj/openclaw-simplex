@@ -1,4 +1,4 @@
-import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { ResolvedSimplexAccount, SimplexBotProfile } from "../../types/config.js";
 import type {
   SimplexComposedMessage,
   SimplexDeleteMode,
@@ -38,6 +38,7 @@ import {
   buildUpdateGroupProfileCommand,
   INVITE_COMMANDS,
 } from "./commands.js";
+import { SimplexCoreClient } from "./core-client.js";
 import { extractSimplexLink } from "./links.js";
 import {
   readSimplexArrayField,
@@ -46,11 +47,14 @@ import {
   unwrapSimplexCommandResponse,
 } from "./responses.js";
 import { assertSimplexWsEndpointAllowed } from "./security.js";
-import { type SimplexConnectionState, SimplexWsClient } from "./ws-client.js";
+import type { SimplexConnectionState, SimplexTransport } from "./transport-types.js";
+import { SimplexWsClient } from "./ws-client.js";
 
 type SimplexClientParams = {
   account: ResolvedSimplexAccount;
   logger?: SimplexLogger;
+  /** Native mode only: resolves the bot profile to apply at connect time. */
+  nativeProfileResolver?: () => Promise<SimplexBotProfile>;
 };
 
 type SimplexCommandOptions = {
@@ -58,19 +62,27 @@ type SimplexCommandOptions = {
 };
 
 export class SimplexClient {
-  private readonly ws: SimplexWsClient;
+  private readonly ws: SimplexTransport;
 
   constructor(params: SimplexClientParams) {
-    assertSimplexWsEndpointAllowed({
-      wsUrl: params.account.wsUrl,
-      allowUnsafeRemoteWs: params.account.config.connection?.allowUnsafeRemoteWs,
-    });
-    this.ws = new SimplexWsClient({
-      url: params.account.wsUrl,
-      connectTimeoutMs: params.account.config.connection?.connectTimeoutMs,
-      commandTimeoutMs: params.account.config.connection?.commandTimeoutMs,
-      logger: params.logger,
-    });
+    if (params.account.mode === "native") {
+      this.ws = new SimplexCoreClient({
+        account: params.account,
+        logger: params.logger,
+        ...(params.nativeProfileResolver ? { profileResolver: params.nativeProfileResolver } : {}),
+      });
+    } else {
+      assertSimplexWsEndpointAllowed({
+        wsUrl: params.account.wsUrl,
+        allowUnsafeRemoteWs: params.account.config.connection?.allowUnsafeRemoteWs,
+      });
+      this.ws = new SimplexWsClient({
+        url: params.account.wsUrl,
+        connectTimeoutMs: params.account.config.connection?.connectTimeoutMs,
+        commandTimeoutMs: params.account.config.connection?.commandTimeoutMs,
+        logger: params.logger,
+      });
+    }
   }
 
   onEvent(handler: (event: SimplexRuntimeEvent) => void): () => void {

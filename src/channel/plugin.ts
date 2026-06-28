@@ -120,9 +120,8 @@ export const simplexPlugin: SimplexPlugin = {
       enabled: account.enabled,
       configured: account.configured,
       mode: account.mode,
-      application: {
-        wsUrl: account.wsUrl,
-      },
+      application:
+        account.mode === "native" ? { db: account.db?.filePrefix } : { wsUrl: account.wsUrl },
     }),
   },
   allowlist: buildDmGroupAccountAllowlistAdapter({
