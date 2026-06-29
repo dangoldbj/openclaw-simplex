@@ -51,7 +51,7 @@
   "dependencies": {
     "@sinclair/typebox": "^0.34.49",
     "qrcode": "^1.5.4",
-    "ws": "^8.20.0",
+    "ws": "^8.21.0",
     "zod": "^4.4.3"
   },
   "pnpm": {
