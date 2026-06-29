@@ -49,6 +49,7 @@ Plugin-side settings:
 - <code>connection.allowUnsafeRemoteWs</code>
 - <code>connection.connectTimeoutMs</code>
 - <code>connection.autoAcceptFiles</code>
+- <code>connection.filesFolder</code>
 - <code>streaming.nativeTransport</code> and related live-reply throttling fields
 - <code>messageTtlSeconds</code> and <code>filePolicy</code>
 - <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>
@@ -58,6 +59,33 @@ Runtime-side startup flags:
 - relay and proxy selection: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--host-mode</code>, <code>--smp-proxy</code>
 - local storage/layout: <code>--database</code>, <code>--files-folder</code>, <code>--temp-folder</code>, <code>--log-file</code>
 - runtime process behavior: <code>--device-name</code>, <code>--maintenance</code>, <code>--mute</code>, <code>--mark-read</code>
+
+### Locating received files (`connection.filesFolder`)
+
+<Note>
+  <code>connection.filesFolder</code> is the path where <strong>OpenClaw</strong> reads files the runtime received. When the runtime is started with <code>--files-folder</code>, it reports received files by <em>name only</em> (not a full path), and the plugin joins that name to <code>connection.filesFolder</code> (default <code>~/.simplex/files</code>) to read the bytes. Without <code>--files-folder</code> the runtime reports absolute paths and this setting is unused.
+</Note>
+
+The name-only reporting is deliberate, and it is what lets the runtime and OpenClaw refer to the same files from <em>different</em> locations. How you set <code>connection.filesFolder</code> depends on the topology:
+
+- <strong>Shared filesystem</strong> (both processes on one host or in one container): set <code>connection.filesFolder</code> to the same path as <code>--files-folder</code>.
+- <strong>Separate containers with a shared volume</strong>: each container usually mounts the volume at a different path, and that is fine — set <code>--files-folder</code> to the sidecar's mount and <code>connection.filesFolder</code> to OpenClaw's mount of the same volume. An absolute path would break here, because the sidecar's directory does not exist inside the OpenClaw container; the name-only reporting is exactly what bridges the two mounts.
+
+```yaml
+services:
+  simplex-chat:
+    volumes:
+      - simplex-files:/data/files
+    command: ["...", "--files-folder", "/data/files"]
+  openclaw:
+    volumes:
+      - simplex-files:/shared/simplex
+    # channels.openclaw-simplex.connection.filesFolder = /shared/simplex
+volumes:
+  simplex-files:
+```
+
+The sidecar writes `/data/files/photo.jpg` and reports `photo.jpg`; OpenClaw reads it from `/shared/simplex/photo.jpg` — same volume, different mount paths, bridged by the file name.
 
 ### Manual service files
 

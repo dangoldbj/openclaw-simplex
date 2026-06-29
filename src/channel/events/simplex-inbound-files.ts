@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
@@ -15,18 +16,34 @@ import { getSimplexRuntime } from "../runtime.js";
 const PENDING_FILE_TIMEOUT_MS = 90_000;
 
 /**
- * Default location where simplex-chat saves received files when started without
- * `--files-folder`.
+ * Default files-folder used by the external runtime, matching the default the
+ * plugin's own `runtime` service launches `simplex-chat` with (`--files-folder
+ * ~/.simplex/files`). Used only to resolve relative inbound paths.
  */
-const DEFAULT_INBOUND_DIR = "/tmp";
+const DEFAULT_INBOUND_FILES_FOLDER = "~/.simplex/files";
+
+function expandHome(value: string): string {
+  if (value === "~") {
+    return os.homedir();
+  }
+  if (value.startsWith("~/") || value.startsWith("~\\")) {
+    return path.join(os.homedir(), value.slice(2));
+  }
+  return value;
+}
 
 /**
- * Base directory for resolving relative inbound file paths. The runtime reports
- * received files relative to its files-folder (`fileSource.filePath` is usually
- * just the file name), so relative paths are resolved against this default.
+ * Base directory for resolving relative inbound file paths. When the runtime is
+ * started with `--files-folder`, it reports received files as a bare file name
+ * relative to that folder, so the plugin must join them against the same path
+ * to locate the bytes on disk. Set `connection.filesFolder` to match the
+ * runtime's `--files-folder`; it defaults to `~/.simplex/files` (the default the
+ * bundled `runtime` service uses). Absolute paths — what the runtime reports
+ * when no `--files-folder` is set — bypass this entirely.
  */
-function resolveSimplexInboundDir(): string {
-  return DEFAULT_INBOUND_DIR;
+export function resolveSimplexInboundDir(account: ResolvedSimplexAccount): string {
+  const configured = account.config.connection?.filesFolder?.trim();
+  return expandHome(configured || DEFAULT_INBOUND_FILES_FOLDER);
 }
 
 type SimplexReplyPayload = {
@@ -156,11 +173,19 @@ export async function finalizePendingFile(params: {
   clearTimeout(queued.timeout);
   const { pending } = queued;
   let rawPath = params.filePath?.trim() || undefined;
+  // Diagnostic: log the path exactly as the runtime reported it, before any
+  // resolution, so the inbound files-folder behavior is observable per
+  // transport — whether it is absolute or relative (filename-only), and the
+  // literal directory used (e.g. /tmp vs. a $TMPDIR-derived path).
+  pending.runtime.log?.(
+    `[${params.accountId}] SimpleX inbound file path: ${JSON.stringify(rawPath ?? null)}` +
+      (rawPath ? ` (${path.isAbsolute(rawPath) ? "absolute" : "relative"})` : "")
+  );
   // The runtime reports received files relative to its --files-folder
-  // (fileSource.filePath is typically just the file name), so resolve relative
-  // paths against the default inbound dir (/tmp).
+  // (fileSource.filePath is then just the file name), so resolve relative paths
+  // against the configured files-folder (default ~/.simplex/files).
   if (rawPath && !path.isAbsolute(rawPath)) {
-    rawPath = path.join(resolveSimplexInboundDir(), rawPath);
+    rawPath = path.join(resolveSimplexInboundDir(pending.account), rawPath);
   }
   let mediaPath: string | undefined;
   let mediaType: string | undefined;
@@ -168,7 +193,7 @@ export async function finalizePendingFile(params: {
     const core = getSimplexRuntime();
     // Stage the file into OpenClaw's shared media store (media/inbound/*),
     // like other bundled channels. The raw path from the SimpleX runtime
-    // (e.g. /tmp/... or ~/.simplex/files/...) lives outside the store,
+    // (e.g. ~/Downloads/... or ~/.simplex/files/...) lives outside the store,
     // so media tools and sandboxed workspaces would reject it.
     try {
       mediaType = await core.media.detectMime({ filePath: rawPath });

@@ -69,6 +69,7 @@ const SimplexConnectionSchema = z
     wsPort: z.number().int().positive().optional(),
     allowUnsafeRemoteWs: z.boolean().optional(),
     autoAcceptFiles: z.boolean().optional(),
+    filesFolder: z.string().min(1).optional(),
     connectTimeoutMs: z.number().int().positive().optional(),
     commandTimeoutMs: z.number().int().positive().optional(),
     directoryTimeoutMs: z.number().int().positive().optional(),

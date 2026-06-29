@@ -128,6 +128,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `connection.wsPort` | Optional port fallback when `wsUrl` is not set. Default: `5225`. |
 | `connection.allowUnsafeRemoteWs` | Allow plaintext remote WebSocket endpoints. Keep this false unless the endpoint is protected by a private network, firewall, or authenticated TLS proxy. |
 | `connection.autoAcceptFiles` | Whether incoming file transfers should be auto-accepted by the SimpleX runtime. |
+| `connection.filesFolder` | Path where OpenClaw reads files the external runtime received. Only used when the runtime runs with `--files-folder` (it then reports file names only, and the plugin joins them to this path). Set it to OpenClaw's view of the runtime's files folder — the same path on a shared filesystem, or OpenClaw's mount of the shared volume across containers. Default: `~/.simplex/files`. Ignored in native mode (the core reports absolute paths). |
 | `connection.connectTimeoutMs` | WebSocket connection timeout in milliseconds. |
 | `connection.commandTimeoutMs` | Default SimpleX WebSocket command timeout in milliseconds. |
 | `connection.directoryTimeoutMs` | Shorter timeout for advisory contact and group directory lookups. |

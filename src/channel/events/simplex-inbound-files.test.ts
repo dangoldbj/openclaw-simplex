@@ -1,3 +1,5 @@
+import os from "node:os";
+import path from "node:path";
 import type { PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setSimplexRuntime } from "../runtime.js";
@@ -7,6 +9,7 @@ import {
   markFileAccepted,
   type PendingInboundFile,
   queuePendingFile,
+  resolveSimplexInboundDir,
   shouldRetryFileAccept,
 } from "./simplex-inbound-files.js";
 
@@ -83,6 +86,29 @@ function pending(sendPayload = vi.fn(async () => undefined)): PendingInboundFile
     sendPayload,
   };
 }
+
+describe("resolveSimplexInboundDir", () => {
+  it("defaults the inbound files-folder to ~/.simplex/files", () => {
+    expect(resolveSimplexInboundDir(pending().account)).toBe(
+      path.join(os.homedir(), ".simplex/files")
+    );
+  });
+
+  it("uses a configured files-folder when set", () => {
+    const account = pending().account;
+    account.config.connection = {
+      ...account.config.connection,
+      filesFolder: "/var/lib/simplex-files",
+    };
+    expect(resolveSimplexInboundDir(account)).toBe("/var/lib/simplex-files");
+  });
+
+  it("expands a leading ~ in a configured files-folder", () => {
+    const account = pending().account;
+    account.config.connection = { ...account.config.connection, filesFolder: "~/custom/files" };
+    expect(resolveSimplexInboundDir(account)).toBe(path.join(os.homedir(), "custom/files"));
+  });
+});
 
 describe("simplex inbound live replies", () => {
   afterEach(() => {

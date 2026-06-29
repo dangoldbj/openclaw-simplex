@@ -48,6 +48,12 @@ export type SimplexConnectionConfig = {
   wsPort?: number;
   allowUnsafeRemoteWs?: boolean;
   autoAcceptFiles?: boolean;
+  /**
+   * Files-folder the external runtime stores received files in (its
+   * `--files-folder`). Used to resolve relative inbound file paths. Defaults to
+   * `~/.simplex/files`. Ignored in native mode (the core reports absolute paths).
+   */
+  filesFolder?: string;
   connectTimeoutMs?: number;
   commandTimeoutMs?: number;
   directoryTimeoutMs?: number;
