@@ -311,6 +311,26 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "servers": {
+                "type": "object",
+                "properties": {
+                  "smp": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "xftp": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "additionalProperties": false
               }
             },
             "additionalProperties": false
@@ -598,6 +618,26 @@
                         },
                         "businessAddress": {
                           "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "servers": {
+                      "type": "object",
+                      "properties": {
+                        "smp": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "xftp": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
                         }
                       },
                       "additionalProperties": false

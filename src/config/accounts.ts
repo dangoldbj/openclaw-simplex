@@ -164,6 +164,7 @@ export function resolveSimplexAccount(params: {
     ...(db ? { db } : {}),
     ...(connection.profile ? { profile: connection.profile } : {}),
     ...(connection.addressSettings ? { addressSettings: connection.addressSettings } : {}),
+    ...(connection.servers ? { servers: connection.servers } : {}),
     config: merged,
   };
 }

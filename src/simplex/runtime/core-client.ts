@@ -74,6 +74,25 @@ function welcomeMessageText(welcome: unknown): string | undefined {
   return undefined;
 }
 
+/**
+ * Render a native chat-command error for logs. The library throws an Error
+ * whose message is the opaque "Chat command error (see chatError property)" and
+ * attaches the structured reason on a `chatError` field; include it so a
+ * rejected command is diagnosable.
+ */
+function describeChatError(err: unknown): string {
+  const base = err instanceof Error ? err.message : String(err);
+  const chatError = (err as { chatError?: unknown })?.chatError;
+  if (chatError === undefined) return base;
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(chatError);
+  } catch {
+    serialized = String(chatError);
+  }
+  return `${base} ${serialized}`;
+}
+
 async function loadNativeModule(): Promise<NativeModule> {
   // Non-literal specifier: keeps tsc from requiring the optional package at
   // build time, and surfaces a friendly error if it is missing at runtime.
@@ -172,6 +191,7 @@ export class SimplexCoreClient implements SimplexTransport {
         );
         await this.ensureUser(desired);
         await chat.startChat();
+        await this.configureServers();
         await this.reconcileProfile(desired);
         await this.ensureAddress(util);
         this.logger?.info?.(`SimpleX native core started (db: ${db.filePrefix})`);
@@ -319,6 +339,46 @@ export class SimplexCoreClient implements SimplexTransport {
       } catch {
         // address link formatting is best-effort
       }
+    }
+  }
+
+  /**
+   * Apply custom SMP/XFTP servers. Maps to the console `/smp` and `/xftp`
+   * commands the core exposes via `sendChatCmd` (which dispatch to
+   * `SetUserProtoServers`). Must run AFTER startChat(). Multiple servers are
+   * space-separated (the `/smp` and `/xftp` parsers split on whitespace).
+   *
+   * A rejected configuration throws and aborts startup rather than falling back
+   * to the default servers: an operator who sets `connection.servers` is opting
+   * out of the presets (self-hosting, privacy, compliance), so silently routing
+   * over the defaults would violate that intent. Errors here are deterministic
+   * (bad URI / fingerprint), so failing fast surfaces them immediately.
+   */
+  private async configureServers(): Promise<void> {
+    if (!this.chat) return;
+    const servers = this.account.servers;
+    if (!servers) return;
+    const groups: Array<{ kind: "smp" | "xftp"; uris: string[] }> = [
+      { kind: "smp", uris: (servers.smp ?? []).map((s) => s.trim()).filter(Boolean) },
+      { kind: "xftp", uris: (servers.xftp ?? []).map((s) => s.trim()).filter(Boolean) },
+    ];
+    for (const { kind, uris } of groups) {
+      if (uris.length === 0) continue;
+      const cmd = `/${kind} ${uris.join(" ")}`;
+      try {
+        await this.chat.sendChatCmd(cmd);
+      } catch (err) {
+        // The native library throws on a chat-command error and tucks the
+        // structured reason on a `chatError` property; surface it so a rejected
+        // server config is diagnosable instead of an opaque one-liner.
+        const detail = describeChatError(err);
+        throw new Error(
+          `SimpleX custom ${kind.toUpperCase()} server configuration failed: ${detail}. ` +
+            `Verify each "${kind}" entry in connection.servers is a full ` +
+            `${kind}://<fingerprint>@host URI reachable from the gateway.`
+        );
+      }
+      this.logger?.info?.(`SimpleX custom ${kind.toUpperCase()} servers applied (${uris.length})`);
     }
   }
 

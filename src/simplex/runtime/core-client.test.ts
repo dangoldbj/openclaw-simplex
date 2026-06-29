@@ -235,4 +235,49 @@ describe("SimplexCoreClient", () => {
     const client = new SimplexCoreClient({ account: nativeAccount({ db: undefined }) });
     await expect(client.connect()).rejects.toThrow(/no db\.filePrefix/);
   });
+
+  it("sends /smp and /xftp (space-joined) after startChat when servers are configured", async () => {
+    const client = new SimplexCoreClient({
+      account: nativeAccount({
+        servers: {
+          smp: ["smp://abc@s1.example", "smp://def@s2.example"],
+          xftp: ["xftp://ghi@x1.example"],
+        },
+      }),
+    });
+    await client.connect();
+    const startIdx = h.calls.indexOf("startChat");
+    const smpIdx = h.calls.indexOf("cmd:/smp smp://abc@s1.example smp://def@s2.example");
+    const xftpIdx = h.calls.indexOf("cmd:/xftp xftp://ghi@x1.example");
+    expect(smpIdx).toBeGreaterThan(startIdx);
+    expect(xftpIdx).toBeGreaterThan(startIdx);
+  });
+
+  it("does not send server commands when servers are not configured", async () => {
+    const client = new SimplexCoreClient({ account: nativeAccount() });
+    await client.connect();
+    expect(h.calls.some((c) => c.startsWith("cmd:/smp"))).toBe(false);
+    expect(h.calls.some((c) => c.startsWith("cmd:/xftp"))).toBe(false);
+  });
+
+  it("fails startup (does not fall back to defaults) when the core rejects a custom server command", async () => {
+    const original = h.chat.sendChatCmd;
+    h.chat.sendChatCmd = async (cmd: string) => {
+      h.calls.push(`cmd:${cmd}`);
+      const err = new Error("Chat command error (see chatError property)") as Error & {
+        chatError?: unknown;
+      };
+      err.chatError = { type: "error", errorType: { type: "commandError" } };
+      throw err;
+    };
+    try {
+      const client = new SimplexCoreClient({
+        account: nativeAccount({ servers: { smp: ["smp://abc@s1.example"] } }),
+      });
+      await expect(client.connect()).rejects.toThrow(/custom SMP server configuration failed/);
+      expect(client.getConnectionState().connected).toBe(false);
+    } finally {
+      h.chat.sendChatCmd = original;
+    }
+  });
 });

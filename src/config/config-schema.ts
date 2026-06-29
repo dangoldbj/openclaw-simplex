@@ -54,6 +54,13 @@ const SimplexNativeAddressSettingsSchema = z
   })
   .strict();
 
+const SimplexNativeServersSchema = z
+  .object({
+    smp: z.array(z.string().min(1)).optional(),
+    xftp: z.array(z.string().min(1)).optional(),
+  })
+  .strict();
+
 const SimplexConnectionSchema = z
   .object({
     mode: z.enum(["external", "native"]).optional(),
@@ -69,6 +76,7 @@ const SimplexConnectionSchema = z
     db: SimplexNativeDbSchema.optional(),
     profile: SimplexNativeProfileSchema.optional(),
     addressSettings: SimplexNativeAddressSettingsSchema.optional(),
+    servers: SimplexNativeServersSchema.optional(),
   })
   .strict();
 

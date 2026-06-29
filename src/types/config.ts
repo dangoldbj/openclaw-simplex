@@ -32,6 +32,15 @@ export type SimplexNativeAddressSettings = {
   businessAddress?: boolean;
 };
 
+/**
+ * Custom SMP/XFTP servers for native mode (experimental). Each entry is a full
+ * server URI, e.g. `smp://<fingerprint>@host` / `xftp://<fingerprint>@host`.
+ */
+export type SimplexNativeServersConfig = {
+  smp?: string[];
+  xftp?: string[];
+};
+
 export type SimplexConnectionConfig = {
   mode?: SimplexConnectionMode;
   wsUrl?: string;
@@ -46,6 +55,7 @@ export type SimplexConnectionConfig = {
   db?: SimplexNativeDbConfig;
   profile?: SimplexNativeProfileConfig;
   addressSettings?: SimplexNativeAddressSettings;
+  servers?: SimplexNativeServersConfig;
 };
 
 export type SimplexStreamingConfig = {
@@ -73,5 +83,6 @@ export type ResolvedSimplexAccount = {
   db?: SimplexNativeDbConfig;
   profile?: SimplexNativeProfileConfig;
   addressSettings?: SimplexNativeAddressSettings;
+  servers?: SimplexNativeServersConfig;
   config: SimplexAccountConfig;
 };

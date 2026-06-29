@@ -73,16 +73,21 @@ By default the database lives under OpenClaw's state directory at
     "openclaw-simplex": {
       "connection": {
         "mode": "native",
-        "db": { "filePrefix": "/path/to/.openclaw/simplex/my-prefix" },   // optional override
+        "db": { "filePrefix": "/path/to/.openclaw/simplex/my-prefix" },   // optional
         "profile": {
-          "displayName": "My OpenClaw bot",   // optional; defaults to the account name
-          "fullName": "",
+          "displayName": "Friendly Bot",                      // optional; defaults to the account name
+          "fullName": "",                                     // optional
           "image": "/path/to/.openclaw/workspace/avatars/my-avatar.jpg",  // optional; data URI, http(s) URL, or absolute file path
-          "peerType": "bot"                   // optional; "bot" (default) or "human"
+          "peerType": "bot"                                   // optional; "bot" (default) or "human"
         },
         "addressSettings": {
-          "autoAccept": true,
-          "welcomeMessage": "Connected. Send me a message."
+          "autoAccept": true,                                 // optional; defaults to true
+          "welcomeMessage": "Connected. Send me a message.",  // optional
+          "businessAddress": false                            // optional; defaults to false
+        },
+        "servers": {
+          "smp": ["smp://<fingerprint>@smp.example.com"],     // optional
+          "xftp": ["xftp://<fingerprint>@xftp.example.com"]   // optional
         }
       }
     }
@@ -106,6 +111,8 @@ reuse the identity stored in the database files.
 | `addressSettings.autoAccept` | no | Default `true`. Auto-accept incoming contact requests (see below). |
 | `addressSettings.welcomeMessage` | no | Auto-reply text shown to people connecting via the address. |
 | `addressSettings.businessAddress` | no | Default `false`. `true` makes connections **business chats** (groups) instead of 1:1 contacts. |
+| `servers.smp` | no | Messaging (SMP) server URIs. Replaces the default SMP server list when set. |
+| `servers.xftp` | no | File-transfer (XFTP) server URIs. Replaces the default XFTP server list when set. |
 
 A SimpleX account has exactly one identity (one address and profile that every
 contact sees), so the profile is **account-level config** — it is not derived
@@ -142,6 +149,33 @@ Address settings (`addressSettings`) are reconciled the same way.
 
   In native mode these commands run against the gateway holding the embedded
   core, so the gateway must be running.
+
+### Custom SMP/XFTP servers
+
+By default the embedded core uses SimpleX's preset public servers. Set
+`connection.servers` (shown above) to route through your own (or specific)
+servers instead. Each entry is a full server URI including the server's
+fingerprint, e.g. `smp://<fingerprint>@host`. On start the plugin applies these
+via the core's `/smp` and `/xftp` commands (space-separated for multiple
+servers). When set, your list **replaces** the corresponding preset servers.
+
+<Note>
+  Setting `connection.servers` is treated as a hard requirement: if the core
+  rejects the configuration (e.g. a malformed URI or wrong fingerprint), the
+  channel **fails to start** rather than silently falling back to the default
+  servers — selecting custom servers means opting out of the presets, so the
+  error is surfaced immediately. The startup log names the offending list
+  (`SMP`/`XFTP`) and includes the core's reason.
+</Note>
+
+<Warning>
+  Custom servers must be **reachable from the gateway**, and from every client
+  that connects to the bot. A server on a private address (e.g. `10.x.x.x`) is
+  only usable by clients on that LAN that also have the server configured, since
+  SimpleX's private message routing will otherwise try to reach it through a
+  public proxy that cannot route to a private host. For general use, host the
+  server on a publicly reachable address.
+</Warning>
 
 ## How it differs from external mode
 
