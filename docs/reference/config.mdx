@@ -108,6 +108,9 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `dms` | Per-DM config overrides using OpenClaw's shared DM config schema. |
 | `groupPolicy` | Group-message policy: `open` \| `allowlist` \| `disabled`. |
 | `groupAllowFrom` | Group allowlist entries. |
+| `mentionPatterns.mode` | Where agent name patterns count as a mention: `allow` limits pattern matching to the `allowIn` groups; `deny` disables it in the `denyIn` groups. |
+| `mentionPatterns.allowIn` | SimpleX group ids where agent name patterns count as a mention (used with `mode: "allow"`). |
+| `mentionPatterns.denyIn` | SimpleX group ids where agent name patterns must not count as a mention (used with `mode: "deny"`). |
 | `groups.<groupId>.requireMention` | Whether a group message must mention the bot before it is handled. |
 | `groups.<groupId>.tools` | Per-group tool policy using OpenClaw's shared tool policy schema. |
 | `mediaMaxMb` | Maximum accepted/uploaded media size in MB. |
@@ -118,6 +121,9 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `streaming.throttleMs` | Minimum delay between SimpleX live message edits. Default: `2000`. |
 | `streaming.minChars` | Minimum added characters before a SimpleX live message update is sent. Default: `24`. |
 | `streaming.wordBoundary` | Prefer live updates at word boundaries. Default: `true`. |
+| `draftChunk.minChars` | Minimum characters before the live draft updates. |
+| `draftChunk.maxChars` | Maximum characters shown in a single live draft update. The final reply is never truncated. |
+| `draftChunk.breakPreference` | Where a live draft update trims back to: `paragraph` \| `newline` \| `sentence`. |
 | `messageTtlSeconds` | Optional SimpleX message time-to-live applied to outbound text, media, poll, action, and reply sends for this account. |
 | `filePolicy.autoAccept` | Preferred file auto-accept setting. If omitted, the legacy `connection.autoAcceptFiles` setting is used. |
 | `filePolicy.maxSizeMb` | Operator-facing receive-side file size policy for diagnostics. |
@@ -144,6 +150,29 @@ If <code>accounts</code> is set, each account entry can override the shared root
   SimpleX-native live replies apply only to assistant text previews and final text. Media, polls, and explicit message actions continue to use normal SimpleX sends. If a live update fails or a payload contains media, the plugin falls back to normal delivery.
 </Note>
 
+<Note>
+  <code>draftChunk</code> is OpenClaw's standard live-draft chunking shape and is optional. When set, it takes precedence over <code>streaming.minChars</code> and <code>streaming.wordBoundary</code>; when unset, those legacy settings and their defaults are unchanged. It only shapes the live in-progress draft — the final reply is always delivered in full and never truncated.
+
+  ```json
+  "draftChunk": {
+    "minChars": 24,
+    "maxChars": 800,
+    "breakPreference": "sentence"
+  }
+  ```
+</Note>
+
+<Note>
+  <code>mentionPatterns</code> scopes where the agent's name patterns count as a mention, so a bot can stay quiet in some groups and respond to name mentions in others. It refines mention handling only; <code>groupPolicy</code>, <code>groupAllowFrom</code>, and per-group <code>requireMention</code> still decide whether a group is handled at all.
+
+  ```json
+  "mentionPatterns": {
+    "mode": "allow",
+    "allowIn": ["group:42"]
+  }
+  ```
+</Note>
+
 ## What belongs in plugin config vs runtime startup
 
 This plugin talks to an already running external <code>simplex-chat</code> process. That means the OpenClaw config only models settings the plugin can truthfully use at runtime.
@@ -155,8 +184,9 @@ This plugin talks to an already running external <code>simplex-chat</code> proce
 - <code>connection.connectTimeoutMs</code>, <code>connection.commandTimeoutMs</code>, and <code>connection.directoryTimeoutMs</code>
 - <code>connection.autoAcceptFiles</code>
 - <code>streaming.nativeTransport</code>, <code>streaming.throttleMs</code>, <code>streaming.minChars</code>, and <code>streaming.wordBoundary</code>
+- <code>draftChunk.minChars</code>, <code>draftChunk.maxChars</code>, and <code>draftChunk.breakPreference</code>
 - <code>messageTtlSeconds</code> and <code>filePolicy</code>
-- OpenClaw policy and UX settings such as <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, <code>contextVisibility</code>, <code>actions</code>, and <code>reactionLevel</code>
+- OpenClaw policy and UX settings such as <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, <code>groupAllowFrom</code>, <code>mentionPatterns</code>, <code>contextVisibility</code>, <code>actions</code>, and <code>reactionLevel</code>
 
 ### Intentionally not mirrored into plugin config
 
