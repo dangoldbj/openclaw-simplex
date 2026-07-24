@@ -7,6 +7,12 @@ import {
 } from "openclaw/plugin-sdk/setup";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
 
+type SimplexSetupInput = ChannelSetupInput & {
+  cliPath?: string;
+  httpUrl?: string;
+  url?: string;
+};
+
 function resolveSetupAccountId(params: {
   cfg: OpenClawConfig;
   accountId?: string;
@@ -46,11 +52,12 @@ export const simplexSetupAdapter: ChannelSetupAdapter = {
     });
   },
   validateInput: ({ input }) => {
-    const cliPath = input.cliPath?.trim();
+    const setupInput = input as SimplexSetupInput;
+    const cliPath = setupInput.cliPath?.trim();
     if (cliPath) {
       return "SimpleX CLI path is not configured in OpenClaw. Start simplex-chat separately with its WebSocket API enabled.";
     }
-    const runtimeUrl = input.url?.trim() || input.httpUrl?.trim();
+    const runtimeUrl = setupInput.url?.trim() || setupInput.httpUrl?.trim();
     if (runtimeUrl && !runtimeUrl.startsWith("ws://") && !runtimeUrl.startsWith("wss://")) {
       return "SimpleX runtime URL must be a ws:// or wss:// WebSocket URL.";
     }
