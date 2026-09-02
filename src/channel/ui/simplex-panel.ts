@@ -5,6 +5,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID, SIMPLEX_PLUGIN_ID } from "../../constants.js";
 import { describeError } from "../../errors.js";
+import { listSimplexContactRequests } from "../../simplex/services/contact-requests.js";
 import { listSimplexInvites } from "../../simplex/services/invites.js";
 import { getSimplexRuntimeStatus } from "../../simplex/services/runtime-status.js";
 
@@ -16,6 +17,12 @@ export const SIMPLEX_PANEL_PATH = `/plugins/${SIMPLEX_PLUGIN_ID}/panel`;
  * spinning request.
  */
 const PANEL_PROBE_TIMEOUT_MS = 4000;
+
+type PanelContactRequest = {
+  contactRequestId: number;
+  displayName?: string;
+  receivedAt?: string;
+};
 
 type PanelAccount = {
   accountId: string;
@@ -29,6 +36,8 @@ type PanelAccount = {
   hasActiveUser?: boolean;
   addressLink?: string | null;
   addressQrDataUrl?: string | null;
+  requests: PanelContactRequest[];
+  requestsError?: string;
   warnings: string[];
 };
 
@@ -41,12 +50,40 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+async function collectPanelContactRequests(params: {
+  cfg: OpenClawConfig;
+  accountId: string;
+}): Promise<PanelContactRequest[]> {
+  const { requests } = await withTimeout(
+    listSimplexContactRequests({ cfg: params.cfg, accountId: params.accountId }),
+    PANEL_PROBE_TIMEOUT_MS
+  );
+  return requests.map((request) => ({
+    contactRequestId: request.contactRequestId,
+    displayName: request.displayName,
+    receivedAt: request.createdAt ?? new Date(request.storedAt).toISOString(),
+  }));
+}
+
 async function collectPanelAccount(params: {
   cfg: OpenClawConfig;
   accountId: string;
   name?: string;
   wsUrl: string;
 }): Promise<PanelAccount> {
+  // Contact requests are read from the plugin's own store rather than the
+  // runtime, so a queue that built up while `simplex-chat` was down stays
+  // visible on the offline card instead of disappearing with it.
+  const requests = collectPanelContactRequests({
+    cfg: params.cfg,
+    accountId: params.accountId,
+  }).then(
+    (list) => ({ requests: list }),
+    // A failed lookup must not render as "nobody is waiting": an operator would
+    // read that as an empty queue rather than an unanswered one.
+    (error) => ({ requests: [] as PanelContactRequest[], requestsError: describeError(error) })
+  );
+
   const base = {
     accountId: params.accountId,
     name: params.name,
@@ -87,11 +124,88 @@ async function collectPanelAccount(params: {
       hasActiveUser: Boolean(status.activeUser),
       addressLink,
       addressQrDataUrl,
+      ...(await requests),
       warnings: status.security.transportWarnings,
     };
   } catch (error) {
-    return { ...base, reachable: false, error: describeError(error) };
+    return { ...base, reachable: false, error: describeError(error), ...(await requests) };
   }
+}
+
+/**
+ * Commands are rendered rather than run: the Control UI plugin frame is
+ * authenticated by a cookie the gateway honours for GET and HEAD only, so a
+ * button that posted back to this route would be rejected. Copying the exact
+ * command is the closest the panel can get to a one-click action.
+ */
+function renderCommand(command: string): string {
+  return `<div class="cmd"><code>${escapeHtml(command)}</code><button class="copy" type="button" data-copy>Copy</button></div>`;
+}
+
+function renderRequestsSection(account: PanelAccount): string {
+  const accountFlag = `--account-id ${account.accountId}`;
+
+  if (account.requestsError) {
+    return `<div class="requests">
+      <div class="section-head"><span class="k">Contact requests</span></div>
+      <p class="v bad">Could not read pending requests: <span class="mono">${escapeHtml(account.requestsError)}</span></p>
+      ${renderCommand(`openclaw simplex requests list ${accountFlag}`)}
+    </div>`;
+  }
+
+  if (account.requests.length === 0) {
+    return `<div class="requests">
+      <div class="section-head"><span class="k">Contact requests</span></div>
+      <p class="hint">Nobody is waiting. New requests appear here as they arrive.</p>
+    </div>`;
+  }
+
+  const items = account.requests
+    .map((request) => {
+      const who = escapeHtml(request.displayName ?? "Unnamed contact");
+      const when = request.receivedAt
+        ? `<span class="when">${escapeHtml(request.receivedAt)}</span>`
+        : "";
+      const target = `--contact-request-id ${request.contactRequestId} ${accountFlag}`;
+      return `<li class="req">
+        <div class="req-head"><strong>${who}</strong><span class="mono">#${request.contactRequestId}</span>${when}</div>
+        ${renderCommand(`openclaw simplex requests accept ${target}`)}
+        ${renderCommand(`openclaw simplex requests reject ${target}`)}
+      </li>`;
+    })
+    .join("");
+
+  return `<div class="requests">
+    <div class="section-head"><span class="k">Contact requests</span><span class="count">${account.requests.length} pending</span></div>
+    <ul class="req-list">${items}</ul>
+  </div>`;
+}
+
+function renderAddressSection(account: PanelAccount): string {
+  const title = escapeHtml(account.name ?? account.accountId);
+  const accountFlag = `--account-id ${account.accountId}`;
+
+  if (!account.addressLink) {
+    return `<div class="addr-block">
+      <div class="section-head"><span class="k">Address link</span></div>
+      <p class="hint">No address link yet. Create one so people can reach this agent.</p>
+      ${renderCommand(`openclaw simplex address create ${accountFlag}`)}
+      ${renderCommand(`openclaw simplex invite create ${accountFlag}`)}
+    </div>`;
+  }
+
+  return `<div class="addr-block">
+    <div class="section-head"><span class="k">Address link</span></div>
+    <div class="addr">
+      ${account.addressQrDataUrl ? `<img class="qr" alt="SimpleX address QR code for ${title}" src="${escapeHtml(account.addressQrDataUrl)}" />` : ""}
+      <div class="addr-text">
+        <code class="link">${escapeHtml(account.addressLink)}</code>
+        <p class="hint">Scan with the SimpleX app, or share this link, to start a conversation with this agent.</p>
+        ${renderCommand(`openclaw simplex invite create ${accountFlag}`)}
+        ${renderCommand(`openclaw simplex address revoke ${accountFlag}`)}
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderAccountCard(account: PanelAccount): string {
@@ -108,6 +222,7 @@ function renderAccountCard(account: PanelAccount): string {
     );
     return `<section class="card"><h2>${title}</h2>${rows.join("")}
       <p class="hint">Start the <code>simplex-chat</code> runtime, then reload this tab.</p>
+      ${renderRequestsSection(account)}
     </section>`;
   }
 
@@ -132,18 +247,7 @@ function renderAccountCard(account: PanelAccount): string {
     );
   }
 
-  const address = account.addressLink
-    ? `<div class="addr">
-         ${account.addressQrDataUrl ? `<img class="qr" alt="SimpleX address QR code for ${title}" src="${escapeHtml(account.addressQrDataUrl)}" />` : ""}
-         <div class="addr-text">
-           <span class="k">Address link</span>
-           <code class="link">${escapeHtml(account.addressLink)}</code>
-           <p class="hint">Scan with the SimpleX app, or share this link, to start a conversation with this agent.</p>
-         </div>
-       </div>`
-    : `<p class="hint">No address link yet. Create one with <code>openclaw simplex address create</code>.</p>`;
-
-  return `<section class="card"><h2>${title}</h2>${rows.join("")}${address}</section>`;
+  return `<section class="card"><h2>${title}</h2>${rows.join("")}${renderRequestsSection(account)}${renderAddressSection(account)}</section>`;
 }
 
 export async function renderSimplexPanelHtml(cfg: OpenClawConfig): Promise<string> {
@@ -186,16 +290,66 @@ export async function renderSimplexPanelHtml(cfg: OpenClawConfig): Promise<strin
   .v { flex: 1 1 auto; word-break: break-word; }
   .mono, code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
   .good { color: #158a4a; } .warn { color: #9a6400; } .bad { color: #b3261e; }
-  .addr { display: flex; gap: 16px; align-items: flex-start; margin-top: 14px; flex-wrap: wrap; }
+  .addr { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
   .qr { width: 160px; height: 160px; image-rendering: pixelated; background: #fff; border-radius: 8px; }
   .addr-text { flex: 1 1 260px; min-width: 240px; }
-  .link { display: block; margin-top: 6px; word-break: break-all; }
+  .link { display: block; word-break: break-all; }
   .hint { opacity: .7; margin: 8px 0 0; }
+  .head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 16px; }
+  .head h1 { margin: 0; }
+  .section-head { display: flex; align-items: baseline; gap: 10px; margin: 16px 0 8px; padding-top: 12px; border-top: 1px solid rgba(128,128,128,.25); }
+  .count { font-size: 12px; opacity: .7; }
+  .req-list { list-style: none; margin: 0; padding: 0; }
+  .req { padding: 8px 0; }
+  .req + .req { border-top: 1px dashed rgba(128,128,128,.25); }
+  .req-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+  .when { font-size: 12px; opacity: .6; }
+  .cmd { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .cmd code { flex: 1 1 auto; padding: 5px 8px; border-radius: 6px; background: rgba(128,128,128,.14); word-break: break-all; }
+  button { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer;
+           border: 1px solid rgba(128,128,128,.45); background: transparent; color: inherit; }
+  button:hover { background: rgba(128,128,128,.14); }
 </style>
 </head>
 <body>
-<h1>SimpleX</h1>
+<div class="head"><h1>SimpleX</h1><button type="button" data-refresh>Refresh</button></div>
 ${cards}
+<script>
+function selectCommand(node) {
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return;
+  }
+  if (target.closest("button[data-refresh]")) {
+    location.reload();
+    return;
+  }
+  const button = target.closest("button[data-copy]");
+  const code = button?.previousElementSibling;
+  if (!button || !code) {
+    return;
+  }
+  // Clipboard access is unavailable in an opaque-origin frame, so selecting the
+  // command leaves the operator one keystroke away from copying it.
+  if (!navigator.clipboard) {
+    selectCommand(code);
+    return;
+  }
+  navigator.clipboard.writeText(code.textContent ?? "").then(() => {
+    button.textContent = "Copied";
+    setTimeout(() => {
+      button.textContent = "Copy";
+    }, 1200);
+  }, () => selectCommand(code));
+});
+</script>
 </body>
 </html>`;
 }
