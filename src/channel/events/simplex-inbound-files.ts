@@ -2,7 +2,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { formatInboundMediaUnavailableText } from "openclaw/plugin-sdk/channel-inbound";
+import {
+  formatInboundMediaUnavailableText,
+  type InboundMediaFacts,
+  toInboundMediaFacts,
+  toInboundMediaFactsWithMetadata,
+} from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { DEFAULT_SIMPLEX_FILES_FOLDER } from "../../constants.js";
 import { expandHome } from "../../fs-paths.js";
@@ -244,6 +249,49 @@ function describeMediaUnavailable(unavailable: SimplexInboundMediaUnavailable): 
   }
 }
 
+/**
+ * Builds the canonical `media` facts for an inbound attachment.
+ *
+ * SimpleX resolves media only after the turn context has been finalized, so the
+ * facts are attached here rather than through `finalizeInboundContext`. That
+ * means the host's own post-finalize normalization does not run over them, and
+ * the `application/octet-stream` fallback below has to be applied locally to
+ * match what a natively finalized context would carry.
+ *
+ * Metadata enrichment (duration, dimensions) is best-effort: SimpleX files are
+ * already on local disk, so it is cheap, but a probe failure must never cost the
+ * message. Inbound turns are dropped for no reason under no circumstances.
+ */
+async function resolveInboundMediaFacts(params: {
+  mediaPath?: string;
+  mediaType?: string;
+}): Promise<InboundMediaFacts[] | undefined> {
+  if (!params.mediaPath) {
+    return undefined;
+  }
+  const input = [
+    {
+      path: params.mediaPath,
+      url: params.mediaPath,
+      contentType: params.mediaType,
+      fileName: path.basename(params.mediaPath),
+    },
+  ];
+
+  let facts: InboundMediaFacts[];
+  try {
+    facts = await toInboundMediaFactsWithMetadata(input);
+  } catch {
+    facts = toInboundMediaFacts(input);
+  }
+
+  return facts.map((fact) =>
+    (fact.path || fact.url) && !fact.contentType && !fact.kind
+      ? { ...fact, contentType: "application/octet-stream" }
+      : fact
+  );
+}
+
 export async function dispatchInbound(params: {
   pending: PendingInboundFile;
   mediaPath?: string;
@@ -269,13 +317,12 @@ export async function dispatchInbound(params: {
         })
       : undefined;
 
+  const media = await resolveInboundMediaFacts({ mediaPath, mediaType });
+
   const ctxPayload = {
     ...pending.ctxPayload,
     ...(noticeBody === undefined ? {} : { Body: noticeBody }),
-    MediaPath: mediaPath,
-    MediaPaths: mediaPath ? [mediaPath] : undefined,
-    MediaType: mediaType,
-    MediaUrl: mediaPath,
+    ...(media ? { media } : {}),
   };
 
   await core.channel.session.recordInboundSession({

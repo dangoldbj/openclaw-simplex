@@ -119,7 +119,7 @@ describe("finalizePendingFile media staging", () => {
     }
   });
 
-  it("stages the file into media/inbound and exposes MediaPath/MediaPaths", async () => {
+  it("stages the file into media/inbound and exposes canonical media facts", async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), "sx-inbound-"));
     const filePath = path.join(dir, "photo.jpg");
     await writeFile(filePath, "IMG-BYTES");
@@ -164,9 +164,13 @@ describe("finalizePendingFile media staging", () => {
       "photo.jpg",
       filePath
     );
-    expect(capturedCtx?.MediaPath).toBe("/store/media/inbound/photo---uuid.jpg");
-    expect(capturedCtx?.MediaPaths).toEqual(["/store/media/inbound/photo---uuid.jpg"]);
-    expect(capturedCtx?.MediaType).toBe("image/jpeg");
+    expect(capturedCtx?.media).toMatchObject([
+      {
+        path: "/store/media/inbound/photo---uuid.jpg",
+        url: "/store/media/inbound/photo---uuid.jpg",
+        contentType: "image/jpeg",
+      },
+    ]);
   });
 });
 
@@ -331,6 +335,32 @@ describe("inbound media unavailable notices", () => {
     });
 
     expect(recorded[0]?.Body).toBe("look at this");
-    expect(recorded[0]?.MediaPath).toBe("/media/inbound/photo.jpg");
+    expect(recorded[0]?.media).toMatchObject([{ path: "/media/inbound/photo.jpg" }]);
+  });
+
+  // The host applies this fallback inside `finalizeInboundContext`, which has
+  // already run by the time SimpleX resolves media, so the plugin applies it.
+  it("falls back to application/octet-stream when the runtime reports no type", async () => {
+    const { recorded } = installCapturingRuntime();
+
+    await dispatchInbound({
+      pending: pending(),
+      mediaPath: "/media/inbound/blob.bin",
+    });
+
+    expect(recorded[0]?.media).toMatchObject([
+      { path: "/media/inbound/blob.bin", contentType: "application/octet-stream" },
+    ]);
+  });
+
+  it("omits media entirely when nothing was delivered", async () => {
+    const { recorded } = installCapturingRuntime();
+
+    await dispatchInbound({
+      pending: pending(),
+      mediaUnavailable: { reason: "transfer-incomplete" },
+    });
+
+    expect(recorded[0]?.media).toBeUndefined();
   });
 });
