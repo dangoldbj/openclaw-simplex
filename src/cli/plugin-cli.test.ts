@@ -11,6 +11,7 @@ import {
 } from "../constants.js";
 import { runMigration } from "./migration.js";
 import {
+  applyOutputOptions,
   migrateConfigObject,
   migrateStateFiles,
   registerSimplexCliMetadata,
@@ -420,5 +421,54 @@ describe("simplex cli metadata", () => {
         [PLUGIN_ID, "connect", "run"],
       ])
     );
+  });
+});
+
+describe("cli output options", () => {
+  type FakeCommand = {
+    name: string;
+    commands: FakeCommand[];
+    options: string[];
+    hooks: string[];
+    option: (flags: string) => FakeCommand;
+    opts: () => Record<string, unknown>;
+    hook: (event: string) => FakeCommand;
+  };
+
+  function fakeCommand(name: string, children: FakeCommand[] = []): FakeCommand {
+    const cmd: FakeCommand = {
+      name,
+      commands: children,
+      options: [],
+      hooks: [],
+      option: (flags: string) => {
+        cmd.options.push(flags);
+        return cmd;
+      },
+      opts: () => ({}),
+      hook: (event: string) => {
+        cmd.hooks.push(event);
+        return cmd;
+      },
+    };
+    return cmd;
+  }
+
+  it("adds --json to leaf commands only", () => {
+    const leaf = fakeCommand("list");
+    const group = fakeCommand("invite", [leaf]);
+    const root = fakeCommand("openclaw-simplex", [group]);
+
+    applyOutputOptions(root);
+
+    expect(leaf.options).toEqual(["--json"]);
+    // Option groups do not run actions, so a flag there would be dead help text.
+    expect(group.options).toEqual([]);
+    expect(root.hooks).toEqual(["preAction"]);
+  });
+
+  it("does not throw when the host provides a reduced command object", () => {
+    // Output formatting is a convenience; it must never break registration.
+    expect(() => applyOutputOptions({})).not.toThrow();
   });
 });

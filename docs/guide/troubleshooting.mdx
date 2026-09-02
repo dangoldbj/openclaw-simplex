@@ -154,6 +154,17 @@ Run runtime diagnostics:
 openclaw simplex runtime doctor
 ```
 
+In a terminal this prints a readable summary; it **exits non-zero when the
+runtime is unhealthy**, so it can gate a script or CI step:
+
+```bash
+openclaw simplex runtime doctor || echo "SimpleX is not healthy"
+```
+
+Every SimpleX command prints a human-readable summary on a terminal and raw
+JSON when redirected or piped, so existing automation is unaffected. Pass
+<code>--json</code> to force JSON in a terminal.
+
 Run the runtime doctor again after enabling SimpleX-native live replies with
 <code>streaming.nativeTransport</code>. The doctor reports advisory capability
 probe states from the active WebSocket runtime, but it does not spawn, supervise,

@@ -42,6 +42,7 @@ import {
   getSimplexRuntimeStatus,
 } from "../simplex/services/runtime-status.js";
 import { runMigration } from "./migration.js";
+import { emit, formatRuntimeDoctor, type OutputCliOptions } from "./output.js";
 import { type RuntimeServiceOptions, runRuntimeServiceInstallCli } from "./runtime-service.js";
 
 export { migrateConfigObject, migrateStateFiles } from "./migration.js";
@@ -104,8 +105,16 @@ async function printTerminalQr(value: string): Promise<void> {
   console.log(qr);
 }
 
-function printJson(value: unknown): void {
-  console.log(JSON.stringify(value, null, 2));
+/**
+ * Output mode for the command currently executing. A CLI process runs exactly
+ * one command, and a `preAction` hook sets this before any action body runs, so
+ * a single module-level value is sufficient and keeps every call site from
+ * having to thread options through purely for formatting.
+ */
+let outputOpts: OutputCliOptions = {};
+
+function printResult<T>(value: T, formatter?: (value: T) => string): void {
+  emit(value, outputOpts, formatter);
 }
 
 function readRequiredString(value: string | undefined, label: string): string {
@@ -127,7 +136,7 @@ async function runInviteCreateCli(
     mode,
     logger: api.logger,
   });
-  printJson({
+  printResult({
     accountId: result.accountId,
     mode: result.mode,
     operation: result.operation,
@@ -144,7 +153,7 @@ async function runInviteListCli(api: OpenClawPluginApi, opts: InviteCliOptions):
     accountId: readOptionalAccountId(opts.accountId),
     logger: api.logger,
   });
-  printJson({
+  printResult({
     accountId: result.accountId,
     addressLink: result.addressLink,
     links: result.links,
@@ -161,7 +170,7 @@ async function runAddressShowCli(api: OpenClawPluginApi, opts: InviteCliOptions)
     accountId: readOptionalAccountId(opts.accountId),
     logger: api.logger,
   });
-  printJson({
+  printResult({
     accountId: result.accountId,
     addressLink: result.addressLink,
     pendingHints: result.pendingHints,
@@ -177,14 +186,14 @@ async function runInviteRevokeCli(api: OpenClawPluginApi, opts: InviteCliOptions
     accountId: readOptionalAccountId(opts.accountId),
     logger: api.logger,
   });
-  printJson({
+  printResult({
     accountId: result.accountId,
     revoked: result.revoked,
   });
 }
 
 async function runRuntimeStatusCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
-  printJson(
+  printResult(
     await getSimplexRuntimeStatus({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -193,16 +202,20 @@ async function runRuntimeStatusCli(api: OpenClawPluginApi, opts: AccountCliOptio
 }
 
 async function runRuntimeDoctorCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
-  printJson(
-    await doctorSimplexRuntime({
-      cfg: api.config,
-      accountId: readOptionalAccountId(opts.accountId),
-    })
-  );
+  const result = await doctorSimplexRuntime({
+    cfg: api.config,
+    accountId: readOptionalAccountId(opts.accountId),
+  });
+  printResult(result, formatRuntimeDoctor);
+  if (!result.ok) {
+    // The doctor previously reported problems and still exited 0, so it could
+    // not gate anything. `exitCode` rather than `exit()` so stdout still flushes.
+    process.exitCode = 1;
+  }
 }
 
 async function runRuntimeUsersCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
-  printJson(
+  printResult(
     await listSimplexRuntimeUsers({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -214,7 +227,7 @@ async function runRuntimeActiveUserCli(
   api: OpenClawPluginApi,
   opts: AccountCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await showSimplexRuntimeActiveUser({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -226,7 +239,7 @@ async function runVerificationShowCli(
   api: OpenClawPluginApi,
   opts: ContactVerificationCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await showSimplexContactVerification({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -239,7 +252,7 @@ async function runVerificationCheckCli(
   api: OpenClawPluginApi,
   opts: ContactVerificationCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await checkSimplexContactVerification({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -250,7 +263,7 @@ async function runVerificationCheckCli(
 }
 
 async function runRequestsListCli(api: OpenClawPluginApi, opts: AccountCliOptions): Promise<void> {
-  printJson(
+  printResult(
     await listSimplexContactRequests({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -262,7 +275,7 @@ async function runRequestsAcceptCli(
   api: OpenClawPluginApi,
   opts: RequestCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await acceptSimplexContactRequest({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -275,7 +288,7 @@ async function runRequestsRejectCli(
   api: OpenClawPluginApi,
   opts: RequestCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await rejectSimplexContactRequest({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -288,7 +301,7 @@ async function runGroupCreateCli(
   api: OpenClawPluginApi,
   opts: GroupCreateCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await createSimplexGroup({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -309,7 +322,7 @@ async function runGroupLinkCreateCli(
     groupId: readRequiredPositiveInteger(opts, "groupId"),
     role: opts.role,
   });
-  printJson(result);
+  printResult(result);
   if (opts.qr && result.link) {
     await printTerminalQr(result.link);
   }
@@ -324,7 +337,7 @@ async function runGroupLinkListCli(
     accountId: readOptionalAccountId(opts.accountId),
     groupId: readRequiredPositiveInteger(opts, "groupId"),
   });
-  printJson(result);
+  printResult(result);
   if (opts.qr && result.link) {
     await printTerminalQr(result.link);
   }
@@ -334,7 +347,7 @@ async function runGroupLinkRevokeCli(
   api: OpenClawPluginApi,
   opts: GroupLinkCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await revokeSimplexGroupLink({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -347,7 +360,7 @@ async function runGroupMemberBlockCli(
   api: OpenClawPluginApi,
   opts: GroupMemberCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await blockSimplexGroupMember({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -361,7 +374,7 @@ async function runGroupMemberDeleteMessagesCli(
   api: OpenClawPluginApi,
   opts: GroupMemberCliOptions
 ): Promise<void> {
-  printJson(
+  printResult(
     await deleteSimplexGroupMemberMessages({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -372,7 +385,7 @@ async function runGroupMemberDeleteMessagesCli(
 }
 
 async function runFileReceiveCli(api: OpenClawPluginApi, opts: FileCliOptions): Promise<void> {
-  printJson(
+  printResult(
     await receiveSimplexFile({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -382,7 +395,7 @@ async function runFileReceiveCli(api: OpenClawPluginApi, opts: FileCliOptions): 
 }
 
 async function runFileCancelCli(api: OpenClawPluginApi, opts: FileCliOptions): Promise<void> {
-  printJson(
+  printResult(
     await cancelSimplexFile({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -392,7 +405,7 @@ async function runFileCancelCli(api: OpenClawPluginApi, opts: FileCliOptions): P
 }
 
 async function runConnectPlanCli(api: OpenClawPluginApi, opts: ConnectCliOptions): Promise<void> {
-  printJson(
+  printResult(
     await planSimplexConnectionLink({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -402,7 +415,7 @@ async function runConnectPlanCli(api: OpenClawPluginApi, opts: ConnectCliOptions
 }
 
 async function runConnectCli(api: OpenClawPluginApi, opts: ConnectCliOptions): Promise<void> {
-  printJson(
+  printResult(
     await connectSimplexLink({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
@@ -425,6 +438,48 @@ const SIMPLEX_CLI_DESCRIPTORS = [
     hasSubcommands: true,
   },
 ] as const;
+
+/**
+ * Structural view of the commander `Command` passed to the CLI registrar.
+ * Commander is not a direct dependency and the SDK does not re-export its
+ * `Command` type, so the shape is declared to match commander's own signatures
+ * (`commands` is readonly there, and hook listeners may return a promise).
+ */
+type CommandLike = {
+  readonly commands?: readonly CommandLike[];
+  option?: (flags: string, description: string) => unknown;
+  opts?: () => Record<string, unknown>;
+  hook?: (
+    event: "preAction",
+    listener: (thisCommand: CommandLike, actionCommand: CommandLike) => void | Promise<void>
+  ) => unknown;
+};
+
+/**
+ * Adds `--json` to every leaf command and captures the resolved options before
+ * any action runs, so output formatting does not have to be threaded through
+ * each of the ~30 command handlers.
+ *
+ * Every member is treated as optional. Output formatting is a convenience, and
+ * a host that hands over a reduced command object must still get its commands
+ * registered rather than an exception during plugin load.
+ */
+export function applyOutputOptions(root: CommandLike): void {
+  const addJsonFlag = (cmd: CommandLike): void => {
+    for (const sub of cmd.commands ?? []) {
+      // Only leaves execute actions; option groups would just add noise to help.
+      if ((sub.commands?.length ?? 0) === 0) {
+        sub.option?.("--json", "Print raw JSON instead of a human-readable summary");
+      }
+      addJsonFlag(sub);
+    }
+  };
+  addJsonFlag(root);
+
+  root.hook?.("preAction", (_thisCommand, actionCommand) => {
+    outputOpts = { json: actionCommand.opts?.().json === true };
+  });
+}
 
 export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
   api.registerCli(
@@ -711,6 +766,8 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
         .action(async (opts: ConnectCliOptions) => {
           await runConnectCli(api, opts);
         });
+
+      applyOutputOptions(command);
     },
     {
       commands: [...SIMPLEX_CLI_COMMANDS],
