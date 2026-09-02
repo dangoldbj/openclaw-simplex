@@ -1,6 +1,6 @@
 import { createActionGate } from "openclaw/plugin-sdk/channel-actions";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { resolveReactionLevel } from "openclaw/plugin-sdk/text-runtime";
+import { resolveReactionLevel } from "openclaw/plugin-sdk/status-helpers";
 import { listEnabledSimplexAccounts, resolveSimplexAccount } from "../config/accounts.js";
 
 function areSimplexPollsEnabled(params: { cfg: OpenClawConfig; accountId?: string | null }) {

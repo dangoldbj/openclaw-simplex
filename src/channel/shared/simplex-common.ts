@@ -1,6 +1,9 @@
 import type { ChannelGroupContext } from "openclaw/plugin-sdk/channel-contract";
 import type { GroupToolPolicyConfig } from "openclaw/plugin-sdk/channel-policy";
-import { resolveChannelRouteTargetWithParser } from "openclaw/plugin-sdk/channel-route";
+import {
+  normalizeOptionalString,
+  normalizeOptionalStringifiedId,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
 import { resolveSimplexAccount } from "../../config/accounts.js";
 import { stripSimplexProviderPrefix } from "../../constants.js";
 import type { SimplexExplicitTarget, SimplexTargetKind } from "../../types/channel.js";
@@ -111,22 +114,24 @@ export function resolveSimplexRouteTarget(params: {
   threadId?: string;
   chatType?: "direct" | "group" | "channel";
 } | null {
-  const route = resolveChannelRouteTargetWithParser({
-    channel: "openclaw-simplex",
-    rawTarget: params.rawTarget,
-    fallbackThreadId: params.fallbackThreadId,
-    parseExplicitTarget: (_channel, rawTarget) => parseSimplexExplicitTarget(rawTarget),
-  });
-  if (!route) {
+  // The SimpleX grammar is applied here rather than through the SDK's
+  // `resolveChannelRouteTargetWithParser`: that helper is deprecated in
+  // 2026.7.x and gone from `openclaw/plugin-sdk/channel-route` in 2026.8.x.
+  const rawTo = normalizeOptionalString(params.rawTarget);
+  if (!rawTo) {
     return null;
   }
+  const parsed = parseSimplexExplicitTarget(rawTo);
   return {
-    to: route.to,
-    accountId:
-      params.accountId ?? (typeof route.accountId === "string" ? route.accountId : undefined),
-    threadId: route.threadId === undefined ? undefined : String(route.threadId),
+    to: parsed?.to ?? rawTo,
+    accountId: params.accountId ?? undefined,
+    threadId: normalizeOptionalStringifiedId(params.fallbackThreadId),
     chatType:
-      route.chatType === "group" ? "group" : route.chatType === "channel" ? "channel" : "direct",
+      parsed?.chatType === "group"
+        ? "group"
+        : parsed?.chatType === "channel"
+          ? "channel"
+          : "direct",
   };
 }
 

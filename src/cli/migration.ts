@@ -1,6 +1,6 @@
 import { access, mkdir, readdir, rename } from "node:fs/promises";
 import path from "node:path";
-import type { OpenClawConfig } from "openclaw/plugin-sdk/config-types";
+import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import {
   LEGACY_SIMPLEX_CHANNEL_ID,
