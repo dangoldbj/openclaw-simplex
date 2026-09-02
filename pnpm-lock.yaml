@@ -11,9 +11,6 @@ importers:
       '@sinclair/typebox':
         specifier: ^0.34.49
         version: 0.34.49
-      qrcode:
-        specifier: ^1.5.4
-        version: 1.5.4
       ws:
         specifier: ^8.21.0
         version: 8.21.0
