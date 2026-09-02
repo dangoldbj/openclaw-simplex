@@ -6,6 +6,7 @@ import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexChatContext } from "../../types/events.js";
 import { isSimplexAllowlisted } from "../security/simplex-security.js";
+import { readSimplexGroupRequireMention } from "../shared/simplex-common.js";
 
 export type SimplexInboundCore = {
   channel: {
@@ -63,17 +64,12 @@ function resolveSimplexGroupRequireMention(params: {
   account: ResolvedSimplexAccount;
   groupId?: number | null;
 }): boolean {
-  const groupId = params.groupId ? String(params.groupId) : undefined;
-  const groups = params.account.config.groups ?? {};
-  const entry = groupId ? groups[groupId] : undefined;
-  const fallback = groups["*"];
-  if (typeof entry?.requireMention === "boolean") {
-    return entry.requireMention;
-  }
-  if (typeof fallback?.requireMention === "boolean") {
-    return fallback.requireMention;
-  }
-  return true;
+  return (
+    readSimplexGroupRequireMention({
+      account: params.account,
+      groupId: params.groupId ? String(params.groupId) : undefined,
+    }) ?? true
+  );
 }
 
 function formatGroupDropDetails(params: { context: SimplexChatContext; reason: string }): string {

@@ -1,4 +1,5 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
@@ -39,23 +40,6 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-async function withTimeout<T>(run: () => Promise<T>, timeoutMs: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      run(),
-      new Promise<never>((_resolve, reject) => {
-        timer = setTimeout(() => reject(new Error(`timed out after ${timeoutMs}ms`)), timeoutMs);
-        timer.unref?.();
-      }),
-    ]);
-  } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
-  }
-}
-
 function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -75,8 +59,9 @@ async function collectPanelAccount(params: {
 
   try {
     const status = await withTimeout(
-      () => getSimplexRuntimeStatus({ cfg: params.cfg, accountId: params.accountId }),
-      PANEL_PROBE_TIMEOUT_MS
+      getSimplexRuntimeStatus({ cfg: params.cfg, accountId: params.accountId }),
+      PANEL_PROBE_TIMEOUT_MS,
+      { message: `SimpleX runtime did not respond within ${PANEL_PROBE_TIMEOUT_MS}ms` }
     );
 
     // The address link is fetched separately and is allowed to fail on its own:
@@ -84,7 +69,7 @@ async function collectPanelAccount(params: {
     let addressLink: string | null = null;
     try {
       const invites = await withTimeout(
-        () => listSimplexInvites({ cfg: params.cfg, accountId: params.accountId }),
+        listSimplexInvites({ cfg: params.cfg, accountId: params.accountId }),
         PANEL_PROBE_TIMEOUT_MS
       );
       addressLink = invites.addressLink ?? null;

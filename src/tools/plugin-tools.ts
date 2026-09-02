@@ -1,6 +1,7 @@
 import { type Static, Type } from "@sinclair/typebox";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { executeSimplexAction } from "../actions/execute.js";
+import { jsonResult } from "../actions/result.js";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
 import {
   createSimplexInvite,
@@ -15,13 +16,6 @@ const destructiveToolNames = new Set([
   "simplex_group_remove_participant",
   "simplex_group_leave",
 ]);
-
-function jsonResult(payload: unknown): ToolResult {
-  return {
-    content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
-    details: payload,
-  };
-}
 
 function resolveToolAccountId(
   api: OpenClawPluginApi,

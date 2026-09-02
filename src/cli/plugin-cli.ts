@@ -775,7 +775,3 @@ export function registerSimplexCliMetadata(api: OpenClawPluginApi): void {
     }
   );
 }
-
-export function registerSimplexCli(api: OpenClawPluginApi): void {
-  registerSimplexCliMetadata(api);
-}

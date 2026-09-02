@@ -14,13 +14,6 @@ export const INVITE_COMMANDS: Record<SimplexInviteMode, string> = {
   address: "/ad",
 };
 
-export function resolveInviteMode(value: unknown): SimplexInviteMode | null {
-  if (value === "connect" || value === "address") {
-    return value;
-  }
-  return null;
-}
-
 function isAsciiAlnumUnderscoreOrHyphen(value: string): boolean {
   for (const ch of value) {
     const code = ch.charCodeAt(0);

@@ -210,11 +210,20 @@ export function assertSimplexOutboundAccountReady(account: ResolvedSimplexAccoun
   }
 }
 
-export function resolveSimplexGroupRequireMention(
-  params: ChannelGroupContext
-): boolean | undefined {
-  const account = resolveSimplexAccount({ cfg: params.cfg, accountId: params.accountId });
-  const groups = account.config.groups ?? {};
+/**
+ * Per-group `requireMention` lookup: an exact group entry wins over the `"*"`
+ * fallback, and `undefined` means neither was configured.
+ *
+ * Callers apply their own default, which is why this returns `undefined` rather
+ * than a boolean. The channel adapter passes the absence through to the host,
+ * while the inbound auth path treats an unset value as "mention required".
+ * Keeping the precedence in one place stops those two from drifting apart.
+ */
+export function readSimplexGroupRequireMention(params: {
+  account: ResolvedSimplexAccount;
+  groupId?: string | null;
+}): boolean | undefined {
+  const groups = params.account.config.groups ?? {};
   const groupId = params.groupId?.trim();
   const entry = groupId ? groups[groupId] : undefined;
   const fallback = groups["*"];
@@ -225,6 +234,15 @@ export function resolveSimplexGroupRequireMention(
     return fallback.requireMention;
   }
   return undefined;
+}
+
+export function resolveSimplexGroupRequireMention(
+  params: ChannelGroupContext
+): boolean | undefined {
+  return readSimplexGroupRequireMention({
+    account: resolveSimplexAccount({ cfg: params.cfg, accountId: params.accountId }),
+    groupId: params.groupId,
+  });
 }
 
 export function resolveSimplexGroupToolPolicy(

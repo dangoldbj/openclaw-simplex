@@ -2,6 +2,7 @@ import { constants as fsConstants } from "node:fs";
 import { access, stat } from "node:fs/promises";
 import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "../../config/config-schema.js";
 import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../../constants.js";
@@ -21,34 +22,6 @@ const SKIP_PROBE_ENV = "OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE";
 function isProbeDisabled(env: NodeJS.ProcessEnv | undefined): boolean {
   const raw = env?.[SKIP_PROBE_ENV]?.trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
-}
-
-async function withTimeout<T>(
-  run: () => Promise<T>,
-  timeoutMs: number
-): Promise<{ ok: true; value: T } | { ok: false; timedOut: boolean; error?: unknown }> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<"timeout">((resolve) => {
-    timer = setTimeout(() => resolve("timeout"), timeoutMs);
-    timer.unref?.();
-  });
-  try {
-    const result = await Promise.race([run().then((value) => ({ value })), timeout]);
-    if (result === "timeout") {
-      return { ok: false, timedOut: true };
-    }
-    return { ok: true, value: result.value };
-  } catch (error) {
-    return { ok: false, timedOut: false, error };
-  } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
-  }
-}
-
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /**
@@ -78,21 +51,19 @@ async function collectRuntimeWarnings(params: {
   const perAccount = await Promise.all(
     accounts.map(async (account) => {
       const scope = accounts.length > 1 ? ` for account "${account.accountId}"` : "";
-      const probe = await withTimeout(
-        () => doctorSimplexRuntime({ cfg: params.cfg, accountId: account.accountId }),
-        RUNTIME_PROBE_TIMEOUT_MS
-      );
-
-      if (!probe.ok) {
-        const reason = probe.timedOut
-          ? `did not respond within ${RUNTIME_PROBE_TIMEOUT_MS}ms`
-          : `is unreachable (${describeError(probe.error)})`;
+      try {
+        const probe = await withTimeout(
+          doctorSimplexRuntime({ cfg: params.cfg, accountId: account.accountId }),
+          RUNTIME_PROBE_TIMEOUT_MS,
+          { message: `did not respond within ${RUNTIME_PROBE_TIMEOUT_MS}ms` }
+        );
+        return probe.issues.map((issue) => `- ${issue}${scope}`);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
         return [
-          `- SimpleX runtime at ${account.wsUrl}${scope} ${reason}. Start the simplex-chat runtime, or set ${SKIP_PROBE_ENV}=1 to skip this probe.`,
+          `- SimpleX runtime at ${account.wsUrl}${scope} is unavailable: ${reason}. Start the simplex-chat runtime, or set ${SKIP_PROBE_ENV}=1 to skip this probe.`,
         ];
       }
-
-      return probe.value.issues.map((issue) => `- ${issue}${scope}`);
     })
   );
   return perAccount.flat();
