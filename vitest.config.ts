@@ -16,10 +16,10 @@ export default defineConfig({
        * modules gain tests; never lower them to make a change pass.
        */
       thresholds: {
-        statements: 58,
-        branches: 52,
-        functions: 53,
-        lines: 58,
+        statements: 63,
+        branches: 58,
+        functions: 57,
+        lines: 63,
       },
     },
   },
