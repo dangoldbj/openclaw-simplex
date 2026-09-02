@@ -159,6 +159,17 @@ Run the runtime doctor again after enabling SimpleX-native live replies with
 probe states from the active WebSocket runtime, but it does not spawn, supervise,
 or manage <code>simplex-chat</code>.
 
+The top-level <code>openclaw doctor</code> also probes each configured SimpleX
+account's runtime, so an unreachable WebSocket, a missing user profile, or an
+unsafe remote endpoint is reported alongside the static config checks. The probe
+is bounded and never fails the run. Set
+<code>OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE=1</code> to skip it, which is
+useful in CI or when auditing config offline:
+
+```bash
+OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE=1 openclaw doctor
+```
+
 List pending SimpleX contact requests:
 
 ```bash

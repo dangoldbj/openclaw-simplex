@@ -5,9 +5,18 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { afterEach, describe, expect, it } from "vitest";
 import { simplexDoctor } from "./simplex-doctor.js";
 
-function previewWarnings(cfg: OpenClawConfig): Promise<string[]> {
+// Config-only assertions opt out of the live probe so they never depend on a
+// reachable simplex-chat runtime.
+function previewWarnings(
+  cfg: OpenClawConfig,
+  env: NodeJS.ProcessEnv = { OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE: "1" }
+): Promise<string[]> {
   return Promise.resolve(
-    simplexDoctor.collectPreviewWarnings?.({ cfg, doctorFixCommand: "openclaw doctor --fix" }) ?? []
+    simplexDoctor.collectPreviewWarnings?.({
+      cfg,
+      doctorFixCommand: "openclaw doctor --fix",
+      env,
+    }) ?? []
   );
 }
 
@@ -105,5 +114,58 @@ describe("simplex doctor files-folder check", () => {
 
     const warnings = await previewWarnings(cfg);
     expect(warnings.join("\n")).not.toContain("Received files");
+  });
+});
+
+describe("simplex doctor runtime probe", () => {
+  // Port 1 is reserved and never listening, so the probe fails fast rather than
+  // waiting out its timeout.
+  const unreachable = { connection: { wsUrl: "ws://127.0.0.1:1" } };
+
+  it("reports an unreachable runtime instead of throwing", async () => {
+    const cfg = {
+      channels: { "openclaw-simplex": unreachable },
+    } as OpenClawConfig;
+
+    const warnings = await previewWarnings(cfg, {});
+    expect(warnings.join("\n")).toContain("ws://127.0.0.1:1");
+    expect(warnings.join("\n")).toContain("simplex-chat runtime");
+  });
+
+  it("skips the probe when the opt-out env var is set", async () => {
+    const cfg = {
+      channels: { "openclaw-simplex": unreachable },
+    } as OpenClawConfig;
+
+    const warnings = await previewWarnings(cfg, {
+      OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE: "1",
+    });
+    expect(warnings.join("\n")).not.toContain("ws://127.0.0.1:1");
+  });
+
+  it("does not probe when no account is configured", async () => {
+    const cfg = {
+      channels: { "openclaw-simplex": { dmPolicy: "pairing" } },
+    } as OpenClawConfig;
+
+    const warnings = await previewWarnings(cfg, {});
+    expect(warnings.join("\n")).not.toContain("simplex-chat runtime");
+  });
+
+  it("scopes runtime warnings by account when several are configured", async () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          accounts: {
+            primary: { connection: { wsUrl: "ws://127.0.0.1:1" } },
+            alt: { connection: { wsUrl: "ws://127.0.0.1:2" } },
+          },
+        },
+      },
+    } as OpenClawConfig;
+
+    const warnings = await previewWarnings(cfg, {});
+    expect(warnings.join("\n")).toContain('for account "primary"');
+    expect(warnings.join("\n")).toContain('for account "alt"');
   });
 });
