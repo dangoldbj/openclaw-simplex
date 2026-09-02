@@ -22,6 +22,7 @@ type PanelAccount = {
   reachable: boolean;
   error?: string;
   connected?: boolean;
+  activeClient?: boolean;
   runtimeVersion?: string | null;
   hasActiveUser?: boolean;
   addressLink?: string | null;
@@ -99,6 +100,7 @@ async function collectPanelAccount(params: {
       ...base,
       reachable: true,
       connected: status.runtime.connected,
+      activeClient: status.runtime.activeClient,
       runtimeVersion: status.runtimeVersion,
       hasActiveUser: Boolean(status.activeUser),
       addressLink,
@@ -127,8 +129,17 @@ function renderAccountCard(account: PanelAccount): string {
     </section>`;
   }
 
+  // `runtime.connected` defaults to true whenever no client is registered, so
+  // it alone would report a healthy-looking "Connected" for an account whose
+  // monitor is not running at all. Both facts are needed to be honest here.
+  const [statusLabel, statusClass] = account.activeClient
+    ? account.connected
+      ? (["Connected", "good"] as const)
+      : (["Disconnected", "bad"] as const)
+    : (["Reachable, no active monitor", "warn"] as const);
+
   rows.push(
-    `<div class="row"><span class="k">Status</span><span class="v ${account.connected ? "good" : "warn"}">${account.connected ? "Connected" : "Reachable, not connected"}</span></div>`,
+    `<div class="row"><span class="k">Status</span><span class="v ${statusClass}">${statusLabel}</span></div>`,
     `<div class="row"><span class="k">Runtime</span><span class="v mono">${escapeHtml(account.runtimeVersion ?? "unknown")}</span></div>`,
     `<div class="row"><span class="k">User profile</span><span class="v ${account.hasActiveUser ? "good" : "bad"}">${account.hasActiveUser ? "Active" : "Missing"}</span></div>`
   );
