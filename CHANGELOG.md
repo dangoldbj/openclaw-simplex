@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-09-02
+
+### Changed
+
+- Raised the minimum supported OpenClaw version to `2026.8.2` (floor `>=2026.8.2-0`) and aligned every compatibility field with it. `2026.8.2` is the published `latest`.
+- Zod is now a direct dependency again, pinned to exactly `4.4.3`. OpenClaw `2026.8` removed the `openclaw/plugin-sdk/zod` subpath and went back to depending on zod externally, which inverts the rule introduced in 1.8.0. The pin must match the host's zod exactly: a floating range resolves to a second physical copy, and schemas built with it are rejected by `buildChannelConfigSchema` with a variance error that never names the real cause.
+- Migrated to the plugin SDK's current entrypoints: `normalizePollInput` from `media-runtime`, `resolvePollMaxSelections` from `channel-actions`, `resolveReactionLevel` from `status-helpers`, `OpenClawConfig` from `channel-core`, and the streaming preview chunk read rebuilt on `getChannelStreamingConfigObject` from `channel-streaming-config`. The `poll-runtime`, `channel-route`, `text-runtime`, `config-types`, and `channel-streaming` subpaths this plugin previously used are either untyped or absent in `2026.8.x`.
+- Access-group gating for channel commands is always on. OpenClaw `2026.8` removed `commands.useAccessGroups` from `CommandsConfig`, so the setting is no longer operator-disableable.
+- Dropped `messaging.parseExplicitTarget` from the channel adapter. OpenClaw `2026.8` removed the field, and the host paths that consumed it are gone; SimpleX target parsing continues through `messaging.targetResolver` and `messaging.resolveOutboundSessionRoute`, which this plugin already implemented.
+- SimpleX CLI commands now print a human-readable summary when stdout is a terminal and continue to print raw JSON when redirected or piped, so existing automation is unaffected. Pass `--json` to force JSON in a terminal.
+- Removed the `qrcode` runtime dependency. It had been declared but never imported since QR rendering moved to the SDK's `renderQrTerminal`.
+- Adopted the plugin-local `SimplexSetupInput` type for `cliPath`, `httpUrl`, and `url` setup fields, ahead of the `plugin-sdk-channel-setup-input-fields` compatibility removal (#30).
+
+### Added
+
+- A **SimpleX tab in Control UI**, served by the plugin over a gateway-authenticated route. It shows each configured account's WebSocket endpoint, connection state, runtime version, active user profile, transport security warnings, the current address link, and a scannable QR code. Previously the invite and QR surfaces were terminal-only, because OpenClaw's generic external channel card cannot host plugin-defined buttons.
+- `openclaw doctor` now probes each configured SimpleX runtime and reports unreachable endpoints, missing user profiles, capability mismatches, and unsafe remote transports alongside the existing static config checks. The probe is bounded, runs per account in parallel, and never fails the surrounding run. Set `OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE=1` to skip it.
+
+### Fixed
+
+- `openclaw simplex runtime doctor` now exits non-zero when the runtime is unhealthy. It previously reported problems and still exited `0`, so it could not gate a script or CI step.
+- Inbound attachments are now attached as canonical media facts instead of the deprecated `MediaPath`/`MediaPaths`/`MediaType`/`MediaUrl` context projection, which OpenClaw removes after 2026-10-01. The legacy keys were being set after the turn context had already been finalized, so they were never folded into the canonical `media` field and would have stopped reaching the agent when the compatibility shim was dropped. Attachments now also carry best-effort duration and dimension metadata.
+
 ## [1.8.0] - 2026-07-19
 
 ### Changed
@@ -16,6 +39,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed long replies being silently dropped instead of split. `textChunkLimit` alone does nothing: the outbound dispatcher only splits when a `chunker` is also set, so messages beyond the SimpleX text limit were discarded. Outbound config now sets `chunker: chunkTextForOutbound` with `chunkerMode: "markdown"` alongside the limit (#17). *(Shipped in 1.8.0; changelog entry added retroactively in 1.9.0.)*
 - Fixed SimpleX channel config schema construction against OpenClaw `2026.7.x`, which inlines zod's types into its own bundled declarations. A plugin-owned zod no longer shares declaration identity with the host, so `buildCatchallMultiAccountChannelSchema` and `buildChannelConfigSchema` rejected the account schema and collapsed the inferred config type, breaking account-scoped policy fields in the runtime doctor and account resolution.
 - Fixed protocol id parsing so unsafe integers beyond `Number.MAX_SAFE_INTEGER` are rejected instead of being silently rounded to a different id.
 - Fixed inbound events being marked as seen before dispatch, which permanently dropped a message if the process stopped between the two. Dedupe is now recorded after the inbound turn is durably registered, so an interrupted turn replays instead of disappearing.
