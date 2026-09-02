@@ -3,6 +3,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { executeSimplexAction } from "../actions/execute.js";
 import { jsonResult } from "../actions/result.js";
 import { resolveDefaultSimplexAccountId } from "../config/accounts.js";
+import { readTrimmedString } from "../params.js";
 import {
   createSimplexInvite,
   listSimplexInvites,
@@ -22,9 +23,11 @@ function resolveToolAccountId(
   rawAccountId: unknown,
   defaultAccountId?: string | null
 ): string {
-  const explicit = typeof rawAccountId === "string" ? rawAccountId.trim() : "";
-  const fallback = defaultAccountId?.trim();
-  return explicit || fallback || resolveDefaultSimplexAccountId(api.config);
+  return (
+    readTrimmedString(rawAccountId) ||
+    readTrimmedString(defaultAccountId) ||
+    resolveDefaultSimplexAccountId(api.config)
+  );
 }
 
 const InviteToolSchema = Type.Object({
@@ -90,15 +93,13 @@ async function runInviteListTool(params: {
 }
 
 function buildApprovalDescription(toolName: string, params: Record<string, unknown>): string {
-  const accountId = typeof params.accountId === "string" ? params.accountId.trim() : "";
-  const group =
-    (typeof params.groupId === "string" ? params.groupId.trim() : "") ||
-    (typeof params.chatRef === "string" ? params.chatRef.trim() : "") ||
-    (typeof params.to === "string" ? params.to.trim() : "");
-  const participant =
-    (typeof params.participant === "string" ? params.participant.trim() : "") ||
-    (typeof params.memberId === "string" ? params.memberId.trim() : "") ||
-    (typeof params.contactId === "string" ? params.contactId.trim() : "");
+  /** First non-empty value among several accepted aliases for the same field. */
+  const firstOf = (...keys: string[]): string =>
+    keys.map((key) => readTrimmedString(params[key])).find(Boolean) ?? "";
+
+  const accountId = readTrimmedString(params.accountId);
+  const group = firstOf("groupId", "chatRef", "to");
+  const participant = firstOf("participant", "memberId", "contactId");
 
   if (toolName === "simplex_invite_revoke") {
     return `Revoke the current SimpleX address/invite for account ${accountId || "the active/default account"}.`;

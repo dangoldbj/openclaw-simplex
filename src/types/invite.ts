@@ -1,11 +1,9 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import type { SimplexAccountScope } from "./config.js";
 import type { SimplexLogger } from "./simplex.js";
 
 export type SimplexInviteMode = "connect" | "address";
 
-export type SimplexInviteServiceOptions = {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
+export type SimplexInviteServiceOptions = SimplexAccountScope & {
   logger?: SimplexLogger;
 };
 

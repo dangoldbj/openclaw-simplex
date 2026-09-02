@@ -1,8 +1,8 @@
 import path from "node:path";
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveChannelMediaMaxBytes } from "openclaw/plugin-sdk/media-runtime";
 import { resolveMediaBufferPath } from "openclaw/plugin-sdk/media-store";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import type { SimplexAccountScope } from "../../types/config.js";
 import type { SimplexComposedMessage, SimplexMsgContent } from "../../types/simplex.js";
 import { getSimplexRuntime } from "../runtime.js";
 import {
@@ -16,10 +16,7 @@ import {
 
 const DEFAULT_MAX_BYTES = 5 * 1024 * 1024;
 
-export function resolveSimplexMediaMaxBytes(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): number {
+export function resolveSimplexMediaMaxBytes(params: SimplexAccountScope): number {
   return (
     resolveChannelMediaMaxBytes({
       cfg: params.cfg,
@@ -143,15 +140,15 @@ function buildMediaMsgContent(params: {
   };
 }
 
-export async function buildComposedMessages(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  text?: string;
-  mediaUrls?: string[];
-  mediaUrl?: string;
-  audioAsVoice?: boolean;
-  quotedItemId?: number;
-}): Promise<SimplexComposedMessage[]> {
+export async function buildComposedMessages(
+  params: SimplexAccountScope & {
+    text?: string;
+    mediaUrls?: string[];
+    mediaUrl?: string;
+    audioAsVoice?: boolean;
+    quotedItemId?: number;
+  }
+): Promise<SimplexComposedMessage[]> {
   const text = params.text ?? "";
   const mediaList = params.mediaUrls?.length
     ? params.mediaUrls

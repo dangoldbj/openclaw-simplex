@@ -1,7 +1,11 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { SIMPLEX_CHANNEL_ID } from "../constants.js";
-import type { ResolvedSimplexAccount, SimplexConnectionConfig } from "../types/config.js";
+import type {
+  ResolvedSimplexAccount,
+  SimplexAccountScope,
+  SimplexConnectionConfig,
+} from "../types/config.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
 
 const DEFAULT_WS_HOST = "127.0.0.1";
@@ -52,10 +56,7 @@ export function resolveDefaultSimplexAccountId(cfg: OpenClawConfig): string {
   return ids[0] ?? DEFAULT_ACCOUNT_ID;
 }
 
-export function hasMeaningfulSimplexConfig(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): boolean {
+export function hasMeaningfulSimplexConfig(params: SimplexAccountScope): boolean {
   const accountId = normalizeAccountId(params.accountId);
   const raw = resolveRawSimplexAccountConfig(params.cfg, accountId);
   return hasMeaningfulConnectionConfig(raw.connection);
@@ -100,10 +101,7 @@ function resolveWsUrl(connection: SimplexConnectionConfig): string {
   return `ws://${host}:${port}`;
 }
 
-export function resolveSimplexAccount(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): ResolvedSimplexAccount {
+export function resolveSimplexAccount(params: SimplexAccountScope): ResolvedSimplexAccount {
   const accountId = normalizeAccountId(params.accountId);
   const merged = mergeSimplexAccountConfig(params.cfg, accountId);
   const hasMeaningfulConfig = hasMeaningfulSimplexConfig({ cfg: params.cfg, accountId });

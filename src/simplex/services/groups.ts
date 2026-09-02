@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import type { SimplexAccountScope } from "../../types/config.js";
 import type { SimplexGroupMemberRole, SimplexGroupProfile } from "../../types/simplex.js";
 import { resolveRuntimeAccount, withActiveSimplexUser } from "../runtime/account.js";
 
@@ -43,13 +43,13 @@ function linkToString(link: unknown): string | null {
       : null;
 }
 
-export async function createSimplexGroup(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  displayName: string;
-  fullName?: string;
-  description?: string;
-}): Promise<{ accountId: string; group: unknown }> {
+export async function createSimplexGroup(
+  params: SimplexAccountScope & {
+    displayName: string;
+    fullName?: string;
+    description?: string;
+  }
+): Promise<{ accountId: string; group: unknown }> {
   const displayName = params.displayName.trim();
   if (!displayName) {
     throw new Error("displayName is required");
@@ -67,12 +67,12 @@ export async function createSimplexGroup(params: {
   return { accountId: account.accountId, group };
 }
 
-export async function createSimplexGroupLink(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  groupId: unknown;
-  role?: unknown;
-}): Promise<{ accountId: string; groupId: number; role: SimplexGroupMemberRole; link: string }> {
+export async function createSimplexGroupLink(
+  params: SimplexAccountScope & {
+    groupId: unknown;
+    role?: unknown;
+  }
+): Promise<{ accountId: string; groupId: number; role: SimplexGroupMemberRole; link: string }> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
   const groupId = readGroupId(params.groupId);
   const role = readRole(params.role, "member");
@@ -83,11 +83,11 @@ export async function createSimplexGroupLink(params: {
   return { accountId: account.accountId, groupId, role, link: result.link ?? "" };
 }
 
-export async function listSimplexGroupLink(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  groupId: unknown;
-}): Promise<{ accountId: string; groupId: number; link: string | null; linkInfo: unknown }> {
+export async function listSimplexGroupLink(
+  params: SimplexAccountScope & {
+    groupId: unknown;
+  }
+): Promise<{ accountId: string; groupId: number; link: string | null; linkInfo: unknown }> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
   const groupId = readGroupId(params.groupId);
   const result = await withActiveSimplexUser({
@@ -102,11 +102,11 @@ export async function listSimplexGroupLink(params: {
   };
 }
 
-export async function revokeSimplexGroupLink(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  groupId: unknown;
-}): Promise<{ accountId: string; groupId: number; revoked: boolean }> {
+export async function revokeSimplexGroupLink(
+  params: SimplexAccountScope & {
+    groupId: unknown;
+  }
+): Promise<{ accountId: string; groupId: number; revoked: boolean }> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
   const groupId = readGroupId(params.groupId);
   await withActiveSimplexUser({

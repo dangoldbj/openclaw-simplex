@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import type { SimplexAccountScope } from "../../types/config.js";
 import { resolveRuntimeAccount } from "../runtime/account.js";
 import { describeSimplexWsEndpointSecurity } from "../runtime/security.js";
 import { getActiveSimplexClient } from "../runtime/transport.js";
@@ -41,10 +41,9 @@ export type SimplexRuntimeStatusResult = {
   };
 };
 
-export async function getSimplexRuntimeStatus(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): Promise<SimplexRuntimeStatusResult> {
+export async function getSimplexRuntimeStatus(
+  params: SimplexAccountScope
+): Promise<SimplexRuntimeStatusResult> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
   const activeClient = getActiveSimplexClient(account.accountId);
   const connection = activeClient?.getConnectionState();
@@ -89,10 +88,9 @@ export async function getSimplexRuntimeStatus(params: {
   };
 }
 
-export async function doctorSimplexRuntime(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): Promise<SimplexRuntimeStatusResult & { ok: boolean; issues: string[] }> {
+export async function doctorSimplexRuntime(
+  params: SimplexAccountScope
+): Promise<SimplexRuntimeStatusResult & { ok: boolean; issues: string[] }> {
   const status = await getSimplexRuntimeStatus(params);
   const issues: string[] = [];
   if (!status.configured) {

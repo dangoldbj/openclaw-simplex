@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import type { SimplexAccountScope } from "../../types/config.js";
 import { resolveRuntimeAccount, withActiveSimplexUser } from "../runtime/account.js";
 import {
   deleteStoredSimplexContactRequest,
@@ -6,10 +6,9 @@ import {
   type StoredSimplexContactRequest,
 } from "../state/contact-requests.js";
 
-export async function listSimplexContactRequests(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): Promise<{ accountId: string; requests: StoredSimplexContactRequest[] }> {
+export async function listSimplexContactRequests(
+  params: SimplexAccountScope
+): Promise<{ accountId: string; requests: StoredSimplexContactRequest[] }> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
   return {
     accountId: account.accountId,
@@ -17,11 +16,11 @@ export async function listSimplexContactRequests(params: {
   };
 }
 
-export async function acceptSimplexContactRequest(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  contactRequestId: number;
-}): Promise<{
+export async function acceptSimplexContactRequest(
+  params: SimplexAccountScope & {
+    contactRequestId: number;
+  }
+): Promise<{
   accountId: string;
   contactRequestId: number;
   accepted: boolean;
@@ -44,11 +43,11 @@ export async function acceptSimplexContactRequest(params: {
   };
 }
 
-export async function rejectSimplexContactRequest(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  contactRequestId: number;
-}): Promise<{ accountId: string; contactRequestId: number; rejected: boolean }> {
+export async function rejectSimplexContactRequest(
+  params: SimplexAccountScope & {
+    contactRequestId: number;
+  }
+): Promise<{ accountId: string; contactRequestId: number; rejected: boolean }> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
   await withActiveSimplexUser({
     account,

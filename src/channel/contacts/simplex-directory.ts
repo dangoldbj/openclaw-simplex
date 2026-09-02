@@ -1,4 +1,3 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { ChannelDirectoryEntry } from "openclaw/plugin-sdk/directory-runtime";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveSimplexAccount } from "../../config/accounts.js";
@@ -13,11 +12,9 @@ import {
   resolveSimplexDirectoryTimeoutMs,
   type SimplexActiveUserInfo,
 } from "../../simplex/services/directory-probes.js";
-import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { ResolvedSimplexAccount, SimplexAccountScope } from "../../types/config.js";
 
-type SimplexDirectoryParams = {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
+type SimplexDirectoryParams = SimplexAccountScope & {
   runtime: RuntimeEnv;
 };
 
@@ -333,13 +330,13 @@ export async function resolveSimplexSelf(
   };
 }
 
-export async function listSimplexDirectoryPeers(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  query?: string | null;
-  limit?: number | null;
-  runtime: RuntimeEnv;
-}): Promise<ChannelDirectoryEntry[]> {
+export async function listSimplexDirectoryPeers(
+  params: SimplexAccountScope & {
+    query?: string | null;
+    limit?: number | null;
+    runtime: RuntimeEnv;
+  }
+): Promise<ChannelDirectoryEntry[]> {
   const account = resolveSimplexAccount({ cfg: params.cfg, accountId: params.accountId });
   if (!account.configured) {
     return [];
@@ -356,13 +353,13 @@ export async function listSimplexDirectoryPeers(params: {
   });
 }
 
-export async function listSimplexDirectoryGroups(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  query?: string | null;
-  limit?: number | null;
-  runtime: RuntimeEnv;
-}): Promise<ChannelDirectoryEntry[]> {
+export async function listSimplexDirectoryGroups(
+  params: SimplexAccountScope & {
+    query?: string | null;
+    limit?: number | null;
+    runtime: RuntimeEnv;
+  }
+): Promise<ChannelDirectoryEntry[]> {
   const account = resolveSimplexAccount({ cfg: params.cfg, accountId: params.accountId });
   if (!account.configured) {
     return [];
@@ -379,13 +376,13 @@ export async function listSimplexDirectoryGroups(params: {
   });
 }
 
-export async function listSimplexGroupMembers(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  groupId: string;
-  limit?: number | null;
-  runtime: RuntimeEnv;
-}): Promise<ChannelDirectoryEntry[]> {
+export async function listSimplexGroupMembers(
+  params: SimplexAccountScope & {
+    groupId: string;
+    limit?: number | null;
+    runtime: RuntimeEnv;
+  }
+): Promise<ChannelDirectoryEntry[]> {
   const account = resolveSimplexAccount({ cfg: params.cfg, accountId: params.accountId });
   if (!account.configured) {
     return [];
@@ -398,13 +395,13 @@ export async function listSimplexGroupMembers(params: {
   });
 }
 
-export async function resolveSimplexTargets(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-  inputs: string[];
-  kind: "user" | "group";
-  runtime: RuntimeEnv;
-}): Promise<SimplexResolveResult[]> {
+export async function resolveSimplexTargets(
+  params: SimplexAccountScope & {
+    inputs: string[];
+    kind: "user" | "group";
+    runtime: RuntimeEnv;
+  }
+): Promise<SimplexResolveResult[]> {
   const account = resolveSimplexAccount({ cfg: params.cfg, accountId: params.accountId });
   if (!account.configured) {
     return params.inputs.map((input) => ({

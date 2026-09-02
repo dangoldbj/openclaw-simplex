@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { copyFile, mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import { expandHome } from "../../fs-paths.js";
+import type { SimplexAccountScope } from "../../types/config.js";
 
 /**
  * Shared outbound directory support (external mode, containerized runtime).
@@ -81,10 +81,7 @@ function registerStagedFile(sentPath: string, onDiskPath: string): void {
  * or undefined when the feature is disabled. Account config overrides channel.
  * `~` is expanded (this is an OpenClaw-local path).
  */
-export function resolveSimplexOutboundDir(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): string | undefined {
+export function resolveSimplexOutboundDir(params: SimplexAccountScope): string | undefined {
   const channel = params.cfg.channels?.[SIMPLEX_CHANNEL_ID];
   const account = params.accountId ? channel?.accounts?.[params.accountId] : undefined;
   const configured =
@@ -97,10 +94,7 @@ export function resolveSimplexOutboundDir(params: {
  * or undefined. Not `~`-expanded — it's a path on the runtime's filesystem, not
  * OpenClaw's. Only meaningful alongside `outboundFolder`.
  */
-export function resolveSimplexOutboundClientDir(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): string | undefined {
+export function resolveSimplexOutboundClientDir(params: SimplexAccountScope): string | undefined {
   const channel = params.cfg.channels?.[SIMPLEX_CHANNEL_ID];
   const account = params.accountId ? channel?.accounts?.[params.accountId] : undefined;
   return (

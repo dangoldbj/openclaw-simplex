@@ -2,7 +2,7 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveDefaultSimplexAccountId } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID, stripSimplexProviderPrefix } from "../../constants.js";
 import { describeSimplexWsEndpointSecurity } from "../../simplex/runtime/security.js";
-import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { ResolvedSimplexAccount, SimplexAccountScope } from "../../types/config.js";
 import type { SimplexAllowlistEntry } from "../../types/security.js";
 
 type SimplexAuditFinding = {
@@ -53,10 +53,7 @@ export function parseSimplexAllowlistEntry(raw: string | number): SimplexAllowli
   return { kind: "sender", value: normalizeSimplexId(entry) };
 }
 
-export function resolveSimplexAllowFrom(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): string[] {
+export function resolveSimplexAllowFrom(params: SimplexAccountScope): string[] {
   const accountId = params.accountId ?? resolveDefaultSimplexAccountId(params.cfg);
   const accountAllow = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.accounts?.[accountId]?.allowFrom;
   const baseAllow = params.cfg.channels?.[SIMPLEX_CHANNEL_ID]?.allowFrom;

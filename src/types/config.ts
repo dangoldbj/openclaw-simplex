@@ -1,4 +1,17 @@
+import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { SimplexAccountConfig } from "../config/config-schema.js";
+
+/**
+ * Identifies which SimpleX account an operation targets.
+ *
+ * Almost every service, gateway method, and action takes this pair, and an
+ * omitted `accountId` means "the default account" everywhere. Naming it keeps
+ * that convention in one place instead of restating the shape at each boundary.
+ */
+export type SimplexAccountScope = {
+  cfg: OpenClawConfig;
+  accountId?: string | null;
+};
 
 export type SimplexConnectionConfig = {
   mode?: "external";

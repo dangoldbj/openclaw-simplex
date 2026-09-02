@@ -2,16 +2,14 @@ import { createActionGate } from "openclaw/plugin-sdk/channel-actions";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveReactionLevel } from "openclaw/plugin-sdk/status-helpers";
 import { listEnabledSimplexAccounts, resolveSimplexAccount } from "../config/accounts.js";
+import type { SimplexAccountScope } from "../types/config.js";
 
 function areSimplexPollsEnabled(params: { cfg: OpenClawConfig; accountId?: string | null }) {
   const account = resolveSimplexAccount(params);
   return createActionGate(account.config.actions)("polls");
 }
 
-function areSimplexAgentReactionsEnabled(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}) {
+function areSimplexAgentReactionsEnabled(params: SimplexAccountScope) {
   const account = resolveSimplexAccount(params);
   if (!createActionGate(account.config.actions)("reactions")) {
     return false;
@@ -19,10 +17,7 @@ function areSimplexAgentReactionsEnabled(params: {
   return resolveSimplexReactionLevel(params).agentReactionsEnabled;
 }
 
-export function resolveSimplexReactionLevel(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}) {
+export function resolveSimplexReactionLevel(params: SimplexAccountScope) {
   const account = resolveSimplexAccount(params);
   return resolveReactionLevel({
     value: account.config.reactionLevel,
@@ -31,20 +26,16 @@ export function resolveSimplexReactionLevel(params: {
   });
 }
 
-export function resolveSimplexAgentReactionGuidance(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}) {
+export function resolveSimplexAgentReactionGuidance(params: SimplexAccountScope) {
   if (!areSimplexAgentReactionsEnabled(params)) {
     return undefined;
   }
   return resolveSimplexReactionLevel(params).agentReactionGuidance;
 }
 
-export function describeSimplexMessageActions(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}): Array<
+export function describeSimplexMessageActions(
+  params: SimplexAccountScope
+): Array<
   | "poll"
   | "react"
   | "send"
@@ -103,10 +94,7 @@ export function describeSimplexMessageActions(params: {
   return actions;
 }
 
-export function assertSimplexReactActionAllowed(params: {
-  cfg: OpenClawConfig;
-  accountId?: string | null;
-}) {
+export function assertSimplexReactActionAllowed(params: SimplexAccountScope) {
   const account = resolveSimplexAccount(params);
   if (!createActionGate(account.config.actions)("reactions")) {
     throw new Error("SimpleX reactions are disabled via actions.reactions.");

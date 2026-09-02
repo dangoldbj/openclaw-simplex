@@ -1,7 +1,11 @@
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { describeError } from "../errors.js";
-import { readRequiredPositiveInteger, readRequiredStringParam } from "../params.js";
+import {
+  readOptionalString,
+  readRequiredPositiveInteger,
+  readRequiredStringParam,
+} from "../params.js";
 import {
   connectSimplexLink,
   planSimplexConnectionLink,
@@ -55,8 +59,7 @@ async function renderQrDataUrl(value: string): Promise<string> {
 }
 
 function readAccountId(params: Record<string, unknown> | undefined): string | null {
-  const rawAccountId = typeof params?.accountId === "string" ? params.accountId.trim() : "";
-  return rawAccountId || null;
+  return readOptionalString(params?.accountId) ?? null;
 }
 
 function unavailable(prefix: string, err: unknown): GatewayError {
