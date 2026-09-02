@@ -174,15 +174,6 @@ export function formatSimplexTargetDisplay(params: {
   return value;
 }
 
-export function assertSimplexOutboundAccountReady(account: ResolvedSimplexAccount): void {
-  if (!account.enabled) {
-    throw new Error(`SimpleX account "${account.accountId}" is disabled`);
-  }
-  if (!account.configured) {
-    throw new Error(`SimpleX account "${account.accountId}" is not configured`);
-  }
-}
-
 /**
  * Per-group `requireMention` lookup: an exact group entry wins over the `"*"`
  * fallback, and `undefined` means neither was configured.

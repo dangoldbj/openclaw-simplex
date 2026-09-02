@@ -1,5 +1,9 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { resolveDefaultSimplexAccountId, resolveSimplexAccount } from "../../config/accounts.js";
+import {
+  assertSimplexAccountReady,
+  resolveDefaultSimplexAccountId,
+  resolveSimplexAccount,
+} from "../../config/accounts.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexLogger } from "../../types/simplex.js";
 import type { SimplexClient } from "./client.js";
@@ -13,12 +17,7 @@ export function resolveRuntimeAccount(
   const explicit = rawAccountId?.trim();
   const accountId = explicit || resolveDefaultSimplexAccountId(cfg);
   const account = resolveSimplexAccount({ cfg, accountId });
-  if (!account.enabled) {
-    throw new Error(`SimpleX account "${accountId}" is disabled`);
-  }
-  if (!account.configured) {
-    throw new Error(`SimpleX account "${accountId}" is not configured`);
-  }
+  assertSimplexAccountReady(account);
   return account;
 }
 
@@ -43,8 +42,4 @@ export async function withActiveSimplexUser<T>(params: {
       return await params.run(userId, client);
     },
   });
-}
-
-export function readSimplexRuntimeVersion(): string | null {
-  return null;
 }

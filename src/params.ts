@@ -39,10 +39,20 @@ export function readRequiredStringParam(
   return value;
 }
 
+/** A protocol id written as a string must be plain digits, nothing else. */
+const DIGITS_ONLY = /^\d+$/;
+
 export function readRequiredPositiveInteger(
   params: Record<string, unknown> | undefined,
   key: string
 ): number {
+  const raw = params?.[key];
+  // The SDK reader accepts anything `Number()` accepts, so `"1e3"` would arrive
+  // as 1000 — a different id than the caller wrote. Protocol ids must never come
+  // from permissive numeric coercion, so string input is checked before parsing.
+  if (typeof raw === "string" && !DIGITS_ONLY.test(raw.trim())) {
+    throw new Error(`${key} must be a positive integer`);
+  }
   const value = readPositiveIntegerParam(params ?? {}, key);
   if (value === undefined) {
     throw new Error(`${key} must be a positive integer`);

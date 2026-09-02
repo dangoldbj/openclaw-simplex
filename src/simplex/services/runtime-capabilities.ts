@@ -1,6 +1,5 @@
 import { describeError } from "../../errors.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
-import { readSimplexRuntimeVersion } from "../runtime/account.js";
 import type { SimplexClient } from "../runtime/client.js";
 import { withSimplexClient } from "../runtime/transport.js";
 import {
@@ -201,8 +200,7 @@ async function optionalCommandProbe(params: {
 }
 
 async function probeRuntimeVersion(
-  client: ProbeCommandRunner,
-  fallbackRuntimeVersion: string | null
+  client: ProbeCommandRunner
 ): Promise<{ runtimeVersion: string | null; probe: SimplexValueCapabilityProbe }> {
   const command = "/version";
   try {
@@ -214,10 +212,10 @@ async function probeRuntimeVersion(
       "chatVersion",
     ]);
     return {
-      runtimeVersion: version ?? fallbackRuntimeVersion,
+      runtimeVersion: version ?? null,
       probe: valueProbe(version ? "supported" : "unknown", {
         command,
-        runtimeVersion: version ?? fallbackRuntimeVersion,
+        runtimeVersion: version ?? null,
         value: version,
         detail: version
           ? undefined
@@ -227,11 +225,11 @@ async function probeRuntimeVersion(
   } catch (err) {
     const message = describeError(err);
     return {
-      runtimeVersion: fallbackRuntimeVersion,
+      runtimeVersion: null,
       probe: valueProbe(isUnsupportedRuntimeError(message) ? "unsupported" : "error", {
         command,
-        runtimeVersion: fallbackRuntimeVersion,
-        value: fallbackRuntimeVersion,
+        runtimeVersion: null,
+        value: null,
         error: message,
       }),
     };
@@ -241,7 +239,7 @@ async function probeRuntimeVersion(
 async function collectWithClient(
   params: SimplexRuntimeCapabilityProbeOptions & { client: SimplexCapabilityClient }
 ): Promise<SimplexRuntimeCapabilityProbeData> {
-  const versionResult = await probeRuntimeVersion(params.client, readSimplexRuntimeVersion());
+  const versionResult = await probeRuntimeVersion(params.client);
   const runtimeVersion = versionResult.runtimeVersion;
   const directoryTimeoutMs = resolveSimplexDirectoryTimeoutMs(params.account);
   let activeUser: unknown = null;

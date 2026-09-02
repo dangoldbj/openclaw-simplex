@@ -3,13 +3,10 @@ import { createAttachedChannelResultAdapter } from "openclaw/plugin-sdk/channel-
 import { renderMessagePresentationFallbackText } from "openclaw/plugin-sdk/interactive-runtime";
 import { normalizePollInput } from "openclaw/plugin-sdk/media-runtime";
 import { chunkTextForOutbound } from "openclaw/plugin-sdk/text-chunking";
-import { resolveSimplexAccount } from "../../config/accounts.js";
+import { assertSimplexAccountReady, resolveSimplexAccount } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID, SIMPLEX_TEXT_CHUNK_LIMIT } from "../../constants.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
-import {
-  assertSimplexOutboundAccountReady,
-  parseSimplexExplicitTarget,
-} from "../shared/simplex-common.js";
+import { parseSimplexExplicitTarget } from "../shared/simplex-common.js";
 import { buildAndSendSimplexMessages } from "./simplex-send.js";
 
 export function renderSimplexPollText(params: {
@@ -88,7 +85,7 @@ export function buildSimplexOutbound(): NonNullable<
     }),
     sendPayload: async ({ cfg, to, payload, accountId, replyToId }) => {
       const account = resolveSimplexAccount({ cfg, accountId });
-      assertSimplexOutboundAccountReady(account);
+      assertSimplexAccountReady(account);
       const chatRef = normalizeOutboundChatRef(to);
       const result = await buildAndSendSimplexMessages({
         cfg,
@@ -114,7 +111,7 @@ export function buildSimplexOutbound(): NonNullable<
       channel: SIMPLEX_CHANNEL_ID,
       sendText: async ({ cfg, to, text, accountId, replyToId }) => {
         const account = resolveSimplexAccount({ cfg, accountId });
-        assertSimplexOutboundAccountReady(account);
+        assertSimplexAccountReady(account);
         const chatRef = normalizeOutboundChatRef(to);
         const result = await buildAndSendSimplexMessages({
           cfg,
@@ -134,7 +131,7 @@ export function buildSimplexOutbound(): NonNullable<
           return { messageId: "empty", chatId: to };
         }
         const account = resolveSimplexAccount({ cfg, accountId });
-        assertSimplexOutboundAccountReady(account);
+        assertSimplexAccountReady(account);
         const chatRef = normalizeOutboundChatRef(to);
         const result = await buildAndSendSimplexMessages({
           cfg,
@@ -156,7 +153,7 @@ export function buildSimplexOutbound(): NonNullable<
       },
       sendPoll: async ({ cfg, to, poll, accountId }) => {
         const account = resolveSimplexAccount({ cfg, accountId });
-        assertSimplexOutboundAccountReady(account);
+        assertSimplexAccountReady(account);
         const chatRef = normalizeOutboundChatRef(to);
         const normalized = normalizePollInput(poll);
         const text = renderSimplexPollText(normalized);

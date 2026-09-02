@@ -129,3 +129,19 @@ export function listEnabledSimplexAccounts(cfg: OpenClawConfig): ResolvedSimplex
     .map((accountId) => resolveSimplexAccount({ cfg, accountId }))
     .filter((account) => account.enabled);
 }
+
+/**
+ * Rejects an account that cannot serve traffic.
+ *
+ * Lives here rather than in the channel layer so the runtime layer can share it
+ * without depending upwards: the outbound path and `resolveRuntimeAccount` were
+ * carrying byte-identical checks and error strings.
+ */
+export function assertSimplexAccountReady(account: ResolvedSimplexAccount): void {
+  if (!account.enabled) {
+    throw new Error(`SimpleX account "${account.accountId}" is disabled`);
+  }
+  if (!account.configured) {
+    throw new Error(`SimpleX account "${account.accountId}" is not configured`);
+  }
+}
