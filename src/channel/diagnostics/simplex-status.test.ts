@@ -1,32 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { SimplexRuntimeCapabilityReport } from "../../simplex/services/runtime-capabilities.js";
-import type { ResolvedSimplexAccount } from "../../types/config.js";
+import { testSimplexAccount } from "../../test-support/simplex-account.js";
 import { simplexPlugin } from "../plugin.js";
 import { buildSimplexStatus } from "./simplex-status.js";
-
-function account(overrides: Partial<ResolvedSimplexAccount> = {}): ResolvedSimplexAccount {
-  return {
-    accountId: "default",
-    enabled: true,
-    configured: true,
-    mode: "external",
-    wsUrl: "ws://127.0.0.1:5225",
-    wsHost: "127.0.0.1",
-    wsPort: 5225,
-    config: {
-      connection: {
-        wsHost: "127.0.0.1",
-        wsPort: 5225,
-      },
-    },
-    ...overrides,
-  };
-}
 
 describe("simplex status adapter", () => {
   it("falls back to resolved account configuration for channel summaries", async () => {
     const summary = await buildSimplexStatus().buildChannelSummary?.({
-      account: account(),
+      account: testSimplexAccount(),
       cfg: { channels: {} },
       defaultAccountId: "default",
       snapshot: {
@@ -52,7 +33,7 @@ describe("simplex status adapter", () => {
 
   it("reports unsafe remote plaintext WebSocket warnings", async () => {
     const summary = await buildSimplexStatus().buildChannelSummary?.({
-      account: account({
+      account: testSimplexAccount({
         wsUrl: "ws://example.com:5225",
         wsHost: "example.com",
         config: {
@@ -94,7 +75,7 @@ describe("simplex status adapter", () => {
     };
 
     const snapshot = await buildSimplexStatus().buildAccountSnapshot?.({
-      account: account(),
+      account: testSimplexAccount(),
       cfg: { channels: {} },
       probe: capabilities,
     });

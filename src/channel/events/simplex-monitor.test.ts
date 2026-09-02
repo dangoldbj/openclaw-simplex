@@ -2,6 +2,7 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { describe, expect, it, vi } from "vitest";
 import type { SimplexConnectionState } from "../../simplex/runtime/ws-client.js";
+import { testSimplexAccount } from "../../test-support/simplex-account.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 
 const clientMock = vi.hoisted(() => ({
@@ -55,22 +56,13 @@ vi.mock("../../simplex/runtime/client.js", () => ({
 import { startSimplexMonitor } from "./simplex-monitor.js";
 
 function account(): ResolvedSimplexAccount {
-  return {
-    accountId: "default",
-    enabled: true,
-    configured: true,
-    mode: "external",
-    wsUrl: "ws://127.0.0.1:5225",
-    wsHost: "127.0.0.1",
-    wsPort: 5225,
+  return testSimplexAccount({
     config: {
       allowFrom: [],
       groupAllowFrom: [],
-      connection: {
-        wsUrl: "ws://127.0.0.1:5225",
-      },
+      connection: { wsUrl: "ws://127.0.0.1:5225" },
     },
-  };
+  });
 }
 
 describe("simplex monitor connection lifecycle", () => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { ResolvedSimplexAccount } from "../../types/config.js";
+import { testSimplexAccount } from "../../test-support/simplex-account.js";
 import { clearSimplexDirectoryProbeCache } from "./directory-probes.js";
 import {
   collectSimplexCapabilityIssues,
@@ -7,25 +7,6 @@ import {
   probeSimplexRuntimeCapabilities,
   type SimplexCapabilityClient,
 } from "./runtime-capabilities.js";
-
-function account(overrides: Partial<ResolvedSimplexAccount> = {}): ResolvedSimplexAccount {
-  return {
-    accountId: "default",
-    enabled: true,
-    configured: true,
-    mode: "external",
-    wsUrl: "ws://127.0.0.1:5225",
-    wsHost: "127.0.0.1",
-    wsPort: 5225,
-    config: {
-      connection: {
-        wsHost: "127.0.0.1",
-        wsPort: 5225,
-      },
-    },
-    ...overrides,
-  };
-}
 
 function client(overrides: Partial<SimplexCapabilityClient> = {}): SimplexCapabilityClient {
   return {
@@ -92,7 +73,7 @@ describe("simplex runtime capability probes", () => {
 
   it("reports missing active user ids without probing contact or group counts", async () => {
     const result = await probeSimplexRuntimeCapabilities({
-      account: account(),
+      account: testSimplexAccount(),
       client: client({
         getActiveUser: async () => ({}),
       }),
@@ -114,7 +95,7 @@ describe("simplex runtime capability probes", () => {
 
   it("treats empty SimpleX list responses as supported empty counts", async () => {
     const result = await probeSimplexRuntimeCapabilities({
-      account: account(),
+      account: testSimplexAccount(),
       client: client({
         listGroups: async () => {
           throw new Error("Failed reading: empty");
@@ -132,7 +113,7 @@ describe("simplex runtime capability probes", () => {
 
   it("warns when live replies are enabled but runtime probe says unsupported", async () => {
     const result = await probeSimplexRuntimeCapabilities({
-      account: account({
+      account: testSimplexAccount({
         config: {
           connection: { wsHost: "127.0.0.1", wsPort: 5225 },
           streaming: { nativeTransport: true },
@@ -149,7 +130,7 @@ describe("simplex runtime capability probes", () => {
     });
 
     const issues = collectSimplexCapabilityIssues({
-      account: account({
+      account: testSimplexAccount({
         config: {
           connection: { wsHost: "127.0.0.1", wsPort: 5225 },
           streaming: { nativeTransport: true },

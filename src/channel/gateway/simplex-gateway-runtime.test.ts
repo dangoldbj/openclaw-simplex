@@ -1,6 +1,7 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { describe, expect, it, vi } from "vitest";
+import { testSimplexAccount } from "../../test-support/simplex-account.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 
 const monitorMock = vi.hoisted(() => ({
@@ -23,22 +24,7 @@ vi.mock("../events/simplex-monitor.js", () => ({
 import { buildSimplexGatewayRuntime } from "./simplex-gateway-runtime.js";
 
 function account(): ResolvedSimplexAccount {
-  return {
-    accountId: "default",
-    name: "main",
-    enabled: true,
-    configured: true,
-    mode: "external",
-    wsUrl: "ws://127.0.0.1:5225",
-    wsHost: "127.0.0.1",
-    wsPort: 5225,
-    config: {
-      connection: {
-        wsHost: "127.0.0.1",
-        wsPort: 5225,
-      },
-    },
-  };
+  return testSimplexAccount({ name: "main" });
 }
 
 describe("simplex gateway runtime", () => {

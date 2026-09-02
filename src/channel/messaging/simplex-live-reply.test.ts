@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { testSimplexAccount } from "../../test-support/simplex-account.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import {
   createSimplexLiveReplyController,
@@ -15,19 +16,9 @@ vi.mock("../../simplex/runtime/transport.js", () => ({
 }));
 
 function account(streaming: ResolvedSimplexAccount["config"]["streaming"]): ResolvedSimplexAccount {
-  return {
-    accountId: "default",
-    enabled: true,
-    configured: true,
-    mode: "external",
-    wsUrl: "ws://127.0.0.1:5225",
-    wsHost: "127.0.0.1",
-    wsPort: 5225,
-    config: {
-      connection: { wsUrl: "ws://127.0.0.1:5225" },
-      streaming,
-    },
-  };
+  return testSimplexAccount({
+    config: { connection: { wsUrl: "ws://127.0.0.1:5225" }, streaming },
+  });
 }
 
 describe("simplex live reply controller", () => {

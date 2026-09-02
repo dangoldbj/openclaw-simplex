@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ResolvedSimplexAccount } from "../../types/config.js";
+import { testSimplexAccount } from "../../test-support/simplex-account.js";
 import {
   clearSimplexDirectoryProbeCache,
   isSimplexEmptyRuntimeListError,
@@ -7,25 +7,6 @@ import {
   readSimplexActiveUserInfoFromClient,
   resolveSimplexDirectoryTimeoutMs,
 } from "./directory-probes.js";
-
-function account(overrides: Partial<ResolvedSimplexAccount> = {}): ResolvedSimplexAccount {
-  return {
-    accountId: "default",
-    enabled: true,
-    configured: true,
-    mode: "external",
-    wsUrl: "ws://127.0.0.1:5225",
-    wsHost: "127.0.0.1",
-    wsPort: 5225,
-    config: {
-      connection: {
-        wsHost: "127.0.0.1",
-        wsPort: 5225,
-      },
-    },
-    ...overrides,
-  };
-}
 
 describe("simplex directory probe helpers", () => {
   beforeEach(() => {
@@ -35,15 +16,17 @@ describe("simplex directory probe helpers", () => {
   it("resolves directory timeout from directory, command, then default settings", () => {
     expect(
       resolveSimplexDirectoryTimeoutMs(
-        account({ config: { connection: { directoryTimeoutMs: 1_000, commandTimeoutMs: 2_000 } } })
+        testSimplexAccount({
+          config: { connection: { directoryTimeoutMs: 1_000, commandTimeoutMs: 2_000 } },
+        })
       )
     ).toBe(1_000);
     expect(
       resolveSimplexDirectoryTimeoutMs(
-        account({ config: { connection: { commandTimeoutMs: 2_000 } } })
+        testSimplexAccount({ config: { connection: { commandTimeoutMs: 2_000 } } })
       )
     ).toBe(2_000);
-    expect(resolveSimplexDirectoryTimeoutMs(account())).toBe(5_000);
+    expect(resolveSimplexDirectoryTimeoutMs(testSimplexAccount())).toBe(5_000);
   });
 
   it("reads active user ids and names from SimpleX user payloads", () => {
@@ -78,7 +61,7 @@ describe("simplex directory probe helpers", () => {
       userId: 9,
       profile: { displayName: "Cached User" },
     }));
-    const cfg = account();
+    const cfg = testSimplexAccount();
 
     await expect(
       readSimplexActiveUserInfoFromClient({ account: cfg, client: { getActiveUser } })
