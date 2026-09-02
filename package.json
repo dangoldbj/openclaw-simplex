@@ -43,7 +43,8 @@
     "manifest:sync": "pnpm run build && node scripts/write-plugin-manifest.mjs && biome format --write openclaw.plugin.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "prepublishOnly": "pnpm run check && pnpm run test && pnpm run typecheck && pnpm run build"
+    "prepublishOnly": "pnpm run check && pnpm run test && pnpm run typecheck && pnpm run build",
+    "test:coverage": "vitest run --coverage"
   },
   "engines": {
     "node": ">=22"
@@ -62,6 +63,7 @@
     "@types/node": "^25.6.0",
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "openclaw": "2026.8.2",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
