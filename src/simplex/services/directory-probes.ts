@@ -1,3 +1,4 @@
+import { describeError } from "../../errors.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexClient } from "../runtime/client.js";
 import { parseSimplexNumericId } from "../runtime/commands.js";
@@ -34,12 +35,8 @@ export function resolveSimplexDirectoryTimeoutMs(account: ResolvedSimplexAccount
   );
 }
 
-export function simplexErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
-
 export function isSimplexEmptyRuntimeListError(err: unknown): boolean {
-  return simplexErrorMessage(err).trim().toLowerCase() === "failed reading: empty";
+  return describeError(err).trim().toLowerCase() === "failed reading: empty";
 }
 
 export function readSimplexStringId(value: unknown): string | undefined {

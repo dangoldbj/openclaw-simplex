@@ -4,6 +4,7 @@ import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID, SIMPLEX_PLUGIN_ID } from "../../constants.js";
+import { describeError } from "../../errors.js";
 import { listSimplexInvites } from "../../simplex/services/invites.js";
 import { getSimplexRuntimeStatus } from "../../simplex/services/runtime-status.js";
 
@@ -38,10 +39,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 async function collectPanelAccount(params: {

@@ -2,6 +2,7 @@ import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contrac
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import { describeError } from "../../errors.js";
 import { formatSimplexChatRef } from "../../simplex/runtime/api.js";
 import { SimplexClient } from "../../simplex/runtime/client.js";
 import { recordSimplexContactRequest } from "../../simplex/state/contact-requests.js";
@@ -81,7 +82,7 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
           statusSink?.({
             connected: false,
             running: true,
-            lastError: err instanceof Error ? err.message : String(err),
+            lastError: describeError(err),
             healthState: "error",
           });
         }

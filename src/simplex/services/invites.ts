@@ -1,3 +1,4 @@
+import { describeError } from "../../errors.js";
 import type {
   SimplexInviteCreateResult,
   SimplexInviteListResult,
@@ -50,7 +51,7 @@ export async function listSimplexInvites(
           link: null,
           response: {
             type: "addressLookupFailed",
-            error: err instanceof Error ? err.message : String(err),
+            error: describeError(err),
           },
         })),
         client.listContacts(userId),

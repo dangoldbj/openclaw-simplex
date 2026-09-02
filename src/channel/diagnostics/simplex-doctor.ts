@@ -6,6 +6,7 @@ import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "../../config/config-schema.js";
 import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import { describeError } from "../../errors.js";
 import { doctorSimplexRuntime } from "../../simplex/services/runtime-status.js";
 import { resolveSimplexFilesFolder } from "../events/simplex-inbound-files.js";
 
@@ -59,7 +60,7 @@ async function collectRuntimeWarnings(params: {
         );
         return probe.issues.map((issue) => `- ${issue}${scope}`);
       } catch (error) {
-        const reason = error instanceof Error ? error.message : String(error);
+        const reason = describeError(error);
         return [
           `- SimpleX runtime at ${account.wsUrl}${scope} is unavailable: ${reason}. Start the simplex-chat runtime, or set ${SKIP_PROBE_ENV}=1 to skip this probe.`,
         ];

@@ -1,5 +1,6 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { createAccountStatusSink, waitUntilAbort } from "openclaw/plugin-sdk/channel-outbound";
+import { describeError } from "../../errors.js";
 import {
   getActiveSimplexClient,
   registerActiveSimplexClient,
@@ -42,7 +43,7 @@ export function buildSimplexGatewayRuntime(): NonNullable<
             running: false,
             connected: false,
             lastStopAt: Date.now(),
-            lastError: err instanceof Error ? err.message : String(err),
+            lastError: describeError(err),
             healthState: "error",
           });
         }

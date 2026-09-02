@@ -1,5 +1,6 @@
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { describeError } from "../errors.js";
 import { readRequiredPositiveInteger, readRequiredStringParam } from "../params.js";
 import {
   connectSimplexLink,
@@ -59,7 +60,7 @@ function readAccountId(params: Record<string, unknown> | undefined): string | nu
 }
 
 function unavailable(prefix: string, err: unknown): GatewayError {
-  return createError(UNAVAILABLE, `${prefix}: ${err instanceof Error ? err.message : String(err)}`);
+  return createError(UNAVAILABLE, `${prefix}: ${describeError(err)}`);
 }
 
 export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {

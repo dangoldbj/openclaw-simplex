@@ -3,6 +3,7 @@ import type { ChannelDirectoryEntry } from "openclaw/plugin-sdk/directory-runtim
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveSimplexAccount } from "../../config/accounts.js";
 import { stripSimplexProviderPrefix } from "../../constants.js";
+import { describeError } from "../../errors.js";
 import { parseSimplexNumericId } from "../../simplex/runtime/api.js";
 import { withSimplexClient } from "../../simplex/runtime/transport.js";
 import {
@@ -11,7 +12,6 @@ import {
   readSimplexStringId,
   resolveSimplexDirectoryTimeoutMs,
   type SimplexActiveUserInfo,
-  simplexErrorMessage,
 } from "../../simplex/services/directory-probes.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 
@@ -205,7 +205,7 @@ async function fetchActiveUserInfo(
         await readSimplexActiveUserInfoFromClient({ account, client, timeoutMs }),
     });
   } catch (err) {
-    runtime.error?.(`simplex: failed to read active user: ${simplexErrorMessage(err)}`);
+    runtime.error?.(`simplex: failed to read active user: ${describeError(err)}`);
     return null;
   }
 }

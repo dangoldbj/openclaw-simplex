@@ -1,4 +1,5 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import { describeError } from "../../errors.js";
 import type { SimplexDeleteMode } from "../../types/simplex.js";
 import { resolveRuntimeAccount } from "../runtime/account.js";
 import { parseSimplexNumericId } from "../runtime/api.js";
@@ -13,7 +14,7 @@ type RuntimeOperationResult = {
 };
 
 function unsupportedResult(accountId: string, err: unknown): RuntimeOperationResult {
-  const message = err instanceof Error ? err.message : String(err);
+  const message = describeError(err);
   return {
     accountId,
     ok: false,

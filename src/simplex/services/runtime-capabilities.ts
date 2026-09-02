@@ -1,3 +1,4 @@
+import { describeError } from "../../errors.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import { readSimplexRuntimeVersion } from "../runtime/account.js";
 import type { SimplexClient } from "../runtime/client.js";
@@ -8,7 +9,6 @@ import {
   readSimplexActiveUserInfoFromClient,
   resolveSimplexDirectoryTimeoutMs,
   type SimplexActiveUserInfo,
-  simplexErrorMessage,
 } from "./directory-probes.js";
 
 export type SimplexCapabilityState = "supported" | "unsupported" | "unknown" | "error";
@@ -151,7 +151,7 @@ export async function probeSimplexCommandSupport(params: {
       runtimeVersion,
     });
   } catch (err) {
-    const message = simplexErrorMessage(err);
+    const message = describeError(err);
     if (isUnsupportedRuntimeError(message)) {
       return probe("unsupported", {
         command: params.command,
@@ -225,7 +225,7 @@ async function probeRuntimeVersion(
       }),
     };
   } catch (err) {
-    const message = simplexErrorMessage(err);
+    const message = describeError(err);
     return {
       runtimeVersion: fallbackRuntimeVersion,
       probe: valueProbe(isUnsupportedRuntimeError(message) ? "unsupported" : "error", {
@@ -256,12 +256,12 @@ async function collectWithClient(
     activeUser = activeUserInfo?.raw ?? null;
   } catch (err) {
     activeUserProbe = valueProbe(
-      isUnsupportedRuntimeError(simplexErrorMessage(err)) ? "unsupported" : "error",
+      isUnsupportedRuntimeError(describeError(err)) ? "unsupported" : "error",
       {
         command: "/user",
         runtimeVersion,
         value: null,
-        error: simplexErrorMessage(err),
+        error: describeError(err),
       }
     );
   }
@@ -287,7 +287,7 @@ async function collectWithClient(
       .catch(
         (err): ListProbeResult<"users"> => ({
           users: [],
-          error: simplexErrorMessage(err),
+          error: describeError(err),
         })
       ),
     userId === null
@@ -301,7 +301,7 @@ async function collectWithClient(
           .catch(
             (err): ListProbeResult<"contacts"> => ({
               contacts: [],
-              error: isSimplexEmptyRuntimeListError(err) ? null : simplexErrorMessage(err),
+              error: isSimplexEmptyRuntimeListError(err) ? null : describeError(err),
             })
           ),
     userId === null
@@ -315,7 +315,7 @@ async function collectWithClient(
           .catch(
             (err): ListProbeResult<"groups"> => ({
               groups: [],
-              error: isSimplexEmptyRuntimeListError(err) ? null : simplexErrorMessage(err),
+              error: isSimplexEmptyRuntimeListError(err) ? null : describeError(err),
             })
           ),
   ]);
