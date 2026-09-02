@@ -122,10 +122,12 @@ This path gets you from zero to the first invited contact talking to your OpenCl
 
     Expected result: the command prints a SimpleX invite link, and <code>--qr</code> renders a scannable QR code in the terminal.
 
-    In Control UI, you can also open <code>Control -&gt; Channels -&gt; SimpleX</code> to inspect the channel config and runtime state.
+    In Control UI, the plugin adds its own <code>SimpleX</code> tab under <code>Control</code>. It shows each account's runtime status, the current address link, and a scannable QR code you can point the SimpleX app at — no terminal needed.
+
+    You can still open <code>Control -&gt; Channels -&gt; SimpleX</code> to inspect the channel config and runtime state.
 
     <Note>
-      OpenClaw's channel-card UI does not currently support plugin-defined invite actions for external channel plugins. The SimpleX card is config-only for now.
+      OpenClaw's generic channel *card* still does not support plugin-defined invite buttons for external channel plugins, so the SimpleX card itself stays config-only. The SimpleX tab is where the invite and QR surfaces live.
     </Note>
   </Step>
 </Steps>

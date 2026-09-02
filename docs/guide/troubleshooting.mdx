@@ -178,6 +178,7 @@ openclaw simplex requests list
 
 ## Where to inspect errors
 
+- In Control UI, open the <code>SimpleX</code> tab under <code>Control</code>. Each configured account shows its WebSocket endpoint, connection state, runtime version, whether a user profile is active, and any transport security warnings. An unreachable runtime renders as an offline card rather than an error.
 - In Control UI, open <code>Control -&gt; Channels -&gt; SimpleX</code> and inspect the channel status and connection state.
 - Use <code>openclaw plugins info openclaw-simplex</code> to verify plugin enable/allow state.
 - Check the terminal or service logs for the <code>simplex-chat</code> process itself, especially if the WebSocket runtime exits or cannot bind the expected port.
