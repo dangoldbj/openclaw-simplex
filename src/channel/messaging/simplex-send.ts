@@ -1,6 +1,6 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { MessageReceipt } from "openclaw/plugin-sdk/channel-outbound";
-import { resolveChannelStreamingPreviewChunk } from "openclaw/plugin-sdk/channel-streaming";
+import { getChannelStreamingConfigObject } from "openclaw/plugin-sdk/channel-streaming-config";
 import { SIMPLEX_TEXT_CHUNK_LIMIT } from "../../constants.js";
 import { parseSimplexNumericId, resolveSimplexChatItemId } from "../../simplex/runtime/api.js";
 import { withSimplexClient } from "../../simplex/runtime/transport.js";
@@ -140,10 +140,11 @@ export function resolveSimplexLiveStreamingConfig(
   const wordBoundary = streaming?.wordBoundary ?? true;
 
   // `account.config` is the merged channel+account view, so it is the single
-  // source of truth here. The SDK reader is used for the *shape* (it accepts
-  // both `streaming.preview.chunk` and `draftChunk`), which is the part that
-  // tracks host config conventions.
-  const chunk = resolveChannelStreamingPreviewChunk(account.config);
+  // source of truth here. The canonical `streaming.preview.chunk` wins over the
+  // plugin's flat `draftChunk`; this is the precedence the SDK's
+  // `resolveChannelStreamingPreviewChunk` applied before 2026.8 dropped it.
+  const chunk =
+    getChannelStreamingConfigObject(account.config)?.preview?.chunk ?? account.config.draftChunk;
   if (chunk) {
     const maxChars = Math.min(
       Math.max(1, Math.floor(chunk.maxChars ?? DEFAULT_DRAFT_STREAM_MAX)),

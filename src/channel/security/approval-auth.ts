@@ -13,14 +13,18 @@ function normalizeSimplexApproverId(value: string | number): string | undefined 
   return normalized;
 }
 
-export const simplexApprovalAuth = createResolvedApproverActionAuthAdapter({
-  channelLabel: "SimpleX",
-  resolveApprovers: ({ cfg, accountId }) => {
-    const account = resolveSimplexAccount({ cfg, accountId });
-    return resolveApprovalApprovers({
-      allowFrom: account.config.allowFrom,
-      normalizeApprover: normalizeSimplexApproverId,
-    });
-  },
-  normalizeSenderId: (value) => normalizeSimplexApproverId(value),
-});
+// Annotated rather than inferred: the inferred shape names `ChannelApprovalKind`
+// from an internal SDK chunk, which is not portable. This mirrors how the SDK
+// itself types the adapter.
+export const simplexApprovalAuth: ReturnType<typeof createResolvedApproverActionAuthAdapter> =
+  createResolvedApproverActionAuthAdapter({
+    channelLabel: "SimpleX",
+    resolveApprovers: ({ cfg, accountId }) => {
+      const account = resolveSimplexAccount({ cfg, accountId });
+      return resolveApprovalApprovers({
+        allowFrom: account.config.allowFrom,
+        normalizeApprover: normalizeSimplexApproverId,
+      });
+    },
+    normalizeSenderId: (value) => normalizeSimplexApproverId(value),
+  });

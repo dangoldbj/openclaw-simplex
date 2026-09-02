@@ -100,6 +100,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
 import { simplexPlugin } from "./src/channel/plugin.js";
+import { parseSimplexExplicitTarget } from "./src/channel/shared/simplex-common.js";
 
 const simplexConfiguredChannel = {
   channels: {
@@ -262,11 +263,13 @@ function setupRegistration(
     registerDetachedTaskRuntime: () => {},
     registerMemoryCapability: () => {},
     registerMemoryPromptSupplement: () => {},
+    registerMemoryPromptPreparation: () => {},
     registerMemoryCorpusSupplement: () => {},
-    registerMemoryFlushPlan: () => {},
-    registerMemoryRuntime: () => {},
-    registerMemoryEmbeddingProvider: () => {},
-    registerMemoryPromptSection: () => {},
+    registerWidgetPresenter: () => {},
+    registerMcpServerConnectionResolver: () => {},
+    registerBoardWidgetContentKind: () => {},
+    registerSessionCatalog: () => {},
+    registerWorkerProvider: () => {},
     registerCommand: () => {},
     on: (hookName, handler) => {
       hooks.push({ events: hookName, handler });
@@ -391,25 +394,26 @@ describe("plugin entry registration modes", () => {
 
 describe("simplex channel SDK metadata", () => {
   it("parses, infers, and formats SimpleX explicit targets", () => {
-    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "simplex:@alice" })).toEqual({
+    // OpenClaw 2026.8 removed `messaging.parseExplicitTarget` from the channel
+    // adapter, so the SimpleX target grammar is asserted directly against the
+    // function that owns it and that `resolveOutboundSessionRoute` calls.
+    expect(parseSimplexExplicitTarget("simplex:@alice")).toEqual({
       to: "@alice",
       chatType: "direct",
     });
-    expect(
-      simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "openclaw-simplex:#ops" })
-    ).toEqual({
+    expect(parseSimplexExplicitTarget("openclaw-simplex:#ops")).toEqual({
       to: "#ops",
       chatType: "group",
     });
-    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "group:ops" })).toEqual({
+    expect(parseSimplexExplicitTarget("group:ops")).toEqual({
       to: "#ops",
       chatType: "group",
     });
-    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "contact:alice" })).toEqual({
+    expect(parseSimplexExplicitTarget("contact:alice")).toEqual({
       to: "@alice",
       chatType: "direct",
     });
-    expect(simplexPlugin.messaging?.parseExplicitTarget?.({ raw: "alice" })).toBeNull();
+    expect(parseSimplexExplicitTarget("alice")).toBeNull();
     expect(simplexPlugin.messaging?.inferTargetChatType?.({ to: "#ops" })).toBe("group");
     expect(simplexPlugin.messaging?.inferTargetChatType?.({ to: "@alice" })).toBe("direct");
     expect(
@@ -563,13 +567,16 @@ describe("simplex channel config and allowlist adapters", () => {
       changed: true,
       pathLabel: "channels.openclaw-simplex.accounts.ops.allowFrom",
     });
+    // OpenClaw 2026.8's allowlist adapter leaves an empty array behind instead of
+    // deleting the key. This is cosmetic for SimpleX: `isSimplexAllowlisted`
+    // treats a zero-length list and an absent one identically (both deny).
     expect(
       (
         parsedConfig.channels as {
           "openclaw-simplex": { accounts: { ops: { allowFrom?: string[] } } };
         }
       )["openclaw-simplex"].accounts.ops.allowFrom
-    ).toBeUndefined();
+    ).toEqual([]);
   });
 });
 

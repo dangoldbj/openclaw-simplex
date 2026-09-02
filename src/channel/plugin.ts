@@ -137,7 +137,6 @@ export const simplexPlugin: SimplexPlugin = {
   messaging: {
     targetPrefixes: ["simplex"],
     normalizeTarget: (raw) => stripSimplexPrefix(raw),
-    parseExplicitTarget: ({ raw }) => parseSimplexExplicitTarget(raw),
     resolveSessionConversation: ({ kind, rawId }) => {
       const target =
         kind === "group" || kind === "channel"

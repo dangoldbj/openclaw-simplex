@@ -128,10 +128,11 @@ export async function resolveSimplexInboundAccess(params: {
     groupId: String(context.chatId),
     allowGroupId: isGroup,
   });
-  const useAccessGroups = cfg.commands?.useAccessGroups !== false;
+  // OpenClaw 2026.8 removed `commands.useAccessGroups` from `CommandsConfig`:
+  // access-group gating is no longer operator-disableable, so it is always on.
   const commandAuthorized = shouldComputeAuth
     ? core.channel.commands.resolveCommandAuthorizedFromAuthorizers({
-        useAccessGroups,
+        useAccessGroups: true,
         authorizers: [
           {
             configured: allowlistForCommands.length > 0,

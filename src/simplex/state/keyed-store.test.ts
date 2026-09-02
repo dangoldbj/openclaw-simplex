@@ -51,6 +51,14 @@ describe("simplex keyed store fallback", () => {
             "openChannelIngressQueue is only available for bundled plugins in this release"
           );
         },
+        openChannelIngressDrain() {
+          throw new Error(
+            "openChannelIngressDrain is only available for bundled plugins in this release"
+          );
+        },
+        openBlobStore() {
+          throw new Error("openBlobStore is only available for bundled plugins in this release");
+        },
       },
     };
     const store = openSimplexKeyedStore<string>({

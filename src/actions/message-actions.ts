@@ -1,7 +1,10 @@
-import { readStringArrayParam } from "openclaw/plugin-sdk/channel-actions";
+import {
+  readStringArrayParam,
+  resolvePollMaxSelections,
+} from "openclaw/plugin-sdk/channel-actions";
 import type { ChannelMessageActionName } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { normalizePollInput, resolvePollMaxSelections } from "openclaw/plugin-sdk/poll-runtime";
+import { normalizePollInput } from "openclaw/plugin-sdk/media-runtime";
 import { buildComposedMessages } from "../channel/media/simplex-media.js";
 import { renderSimplexPollText } from "../channel/messaging/simplex-outbound.js";
 import { resolveSimplexChatItemId } from "../simplex/runtime/api.js";

@@ -175,7 +175,7 @@ describe("resolveSimplexInboundAccess", () => {
   it("rejects unauthorized group control commands", async () => {
     const result = await resolveSimplexInboundAccess({
       account: account({ groupPolicy: "open" }),
-      cfg: { commands: { useAccessGroups: true } },
+      cfg: {},
       runtime,
       core: runtimeCore({
         shouldComputeAuth: true,

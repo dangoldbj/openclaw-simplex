@@ -11,7 +11,7 @@ import {
   MentionPatternsPolicySchema,
   ToolPolicySchema,
 } from "openclaw/plugin-sdk/channel-config-schema";
-import { z } from "openclaw/plugin-sdk/zod";
+import { z } from "zod";
 import { simplexChannelConfigUiHints } from "./config-ui-hints.js";
 
 const SimplexAllowFromListSchema = AllowFromListSchema.pipe(z.array(z.string()).optional());

@@ -80,17 +80,18 @@ describe("simplex config schema manifest", () => {
     expect(channelManifest?.description).toBe(packageJson.openclaw?.channel?.blurb);
   });
 
-  it("advertises the 2026.7.1 compatibility and channel selection metadata", () => {
-    // The `-0` prerelease floor is deliberate: npm's `latest` tag is 2026.7.1-2,
-    // which sorts below 2026.7.1 and would fail a plain `>=2026.7.1` gate.
-    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.7.1-0");
+  it("advertises the 2026.8.2 compatibility and channel selection metadata", () => {
+    // The `-0` prerelease floor is deliberate: npm's `latest` tag has shipped as a
+    // prerelease-shaped version (e.g. 2026.7.1-2), which sorts below the plain
+    // release and would fail a bare `>=` gate.
+    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.8.2-0");
     expect(packageJson.openclaw?.compat).toEqual({
-      pluginApi: ">=2026.7.1-0",
-      minGatewayVersion: "2026.7.1-0",
+      pluginApi: ">=2026.8.2-0",
+      minGatewayVersion: "2026.8.2-0",
     });
     expect(packageJson.openclaw?.build).toEqual({
-      openclawVersion: "2026.7.1",
-      pluginSdkVersion: "2026.7.1",
+      openclawVersion: "2026.8.2",
+      pluginSdkVersion: "2026.8.2",
     });
     expect(packageJson.openclaw?.channel).toMatchObject({
       detailLabel: "SimpleX Chat",

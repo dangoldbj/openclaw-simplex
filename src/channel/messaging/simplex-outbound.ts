@@ -1,7 +1,7 @@
 import type { ChannelPlugin } from "openclaw/plugin-sdk/channel-core";
 import { createAttachedChannelResultAdapter } from "openclaw/plugin-sdk/channel-send-result";
 import { renderMessagePresentationFallbackText } from "openclaw/plugin-sdk/interactive-runtime";
-import { normalizePollInput } from "openclaw/plugin-sdk/poll-runtime";
+import { normalizePollInput } from "openclaw/plugin-sdk/media-runtime";
 import { chunkTextForOutbound } from "openclaw/plugin-sdk/text-chunking";
 import { resolveSimplexAccount } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID, SIMPLEX_TEXT_CHUNK_LIMIT } from "../../constants.js";
