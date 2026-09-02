@@ -1,5 +1,5 @@
+import { stripSimplexProviderPrefix } from "../../constants.js";
 import type { SimplexChatContext, SimplexChatItem } from "../../types/events.js";
-import { stripSimplexPrefix } from "../shared/simplex-common.js";
 
 const INBOUND_DIRS = new Set(["directRcv", "groupRcv"]);
 
@@ -8,7 +8,7 @@ export function normalizeSimplexSenderId(value?: string | null): string | undefi
   if (!trimmed) {
     return undefined;
   }
-  trimmed = stripSimplexPrefix(trimmed);
+  trimmed = stripSimplexProviderPrefix(trimmed);
   if (!trimmed) {
     return undefined;
   }

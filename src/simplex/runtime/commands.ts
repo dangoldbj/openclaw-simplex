@@ -6,6 +6,7 @@ import type {
   SimplexGroupProfile,
   SimplexReaction,
 } from "../../types/simplex.js";
+import { normalizeSimplexChatRef } from "../chat-ref.js";
 
 export type SimplexInviteMode = "connect" | "address";
 
@@ -94,41 +95,6 @@ function normalizeGroupRef(value: number | string): string {
     return `#${raw.slice("group:".length).trim()}`;
   }
   return `#${raw}`;
-}
-
-function normalizeSimplexChatRef(raw: string): string {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return trimmed;
-  }
-
-  const withoutPrefix = stripSimplexProviderPrefix(trimmed);
-  if (!withoutPrefix) {
-    return withoutPrefix;
-  }
-  if (withoutPrefix.startsWith("#") || withoutPrefix.toLowerCase().startsWith("group:")) {
-    return normalizeGroupRef(withoutPrefix);
-  }
-  if (withoutPrefix.startsWith("!") || withoutPrefix.toLowerCase().startsWith("channel:")) {
-    const value = withoutPrefix.startsWith("!")
-      ? withoutPrefix.slice(1).trim()
-      : withoutPrefix.slice(withoutPrefix.indexOf(":") + 1).trim();
-    return `!${value}`;
-  }
-  if (withoutPrefix.startsWith("@")) {
-    return normalizeContactRef(withoutPrefix);
-  }
-
-  const lowered = withoutPrefix.toLowerCase();
-  if (
-    lowered.startsWith("contact:") ||
-    lowered.startsWith("user:") ||
-    lowered.startsWith("member:")
-  ) {
-    return normalizeContactRef(withoutPrefix);
-  }
-
-  return normalizeContactRef(withoutPrefix);
 }
 
 function normalizeChatRefToken(value: string): string {

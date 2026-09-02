@@ -1,6 +1,6 @@
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
-import { readRequiredPositiveInteger } from "../params.js";
+import { readRequiredPositiveInteger, readRequiredStringParam } from "../params.js";
 import {
   connectSimplexLink,
   planSimplexConnectionLink,
@@ -56,14 +56,6 @@ async function renderQrDataUrl(value: string): Promise<string> {
 function readAccountId(params: Record<string, unknown> | undefined): string | null {
   const rawAccountId = typeof params?.accountId === "string" ? params.accountId.trim() : "";
   return rawAccountId || null;
-}
-
-function readRequiredString(params: Record<string, unknown> | undefined, key: string): string {
-  const value = typeof params?.[key] === "string" ? params[key].trim() : "";
-  if (!value) {
-    throw new Error(`${key} is required`);
-  }
-  return value;
 }
 
 function unavailable(prefix: string, err: unknown): GatewayError {
@@ -304,7 +296,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
           await createSimplexGroup({
             cfg: api.config,
             accountId: readAccountId(params),
-            displayName: readRequiredString(params, "displayName"),
+            displayName: readRequiredStringParam(params, "displayName"),
             fullName: typeof params?.fullName === "string" ? params.fullName : undefined,
             description: typeof params?.description === "string" ? params.description : undefined,
           })
@@ -463,7 +455,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
           await planSimplexConnectionLink({
             cfg: api.config,
             accountId: readAccountId(params),
-            link: readRequiredString(params, "link"),
+            link: readRequiredStringParam(params, "link"),
           })
         );
       } catch (err) {
@@ -482,7 +474,7 @@ export function registerSimplexGatewayMethods(api: OpenClawPluginApi): void {
           await connectSimplexLink({
             cfg: api.config,
             accountId: readAccountId(params),
-            link: readRequiredString(params, "link"),
+            link: readRequiredStringParam(params, "link"),
           })
         );
       } catch (err) {

@@ -6,6 +6,11 @@ import {
 } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { resolveSimplexAccount } from "../../config/accounts.js";
 import { stripSimplexProviderPrefix } from "../../constants.js";
+import {
+  normalizeSimplexContactRef,
+  readMarkedSimplexRef,
+  SIMPLEX_REF_SIGILS,
+} from "../../simplex/chat-ref.js";
 import type { SimplexExplicitTarget, SimplexTargetKind } from "../../types/channel.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 
@@ -31,43 +36,30 @@ export function resolveSimplexHealthState(params: {
   return "idle";
 }
 
-export function stripSimplexPrefix(value: string): string {
-  return stripSimplexProviderPrefix(value);
-}
+export { normalizeSimplexContactRef };
 
 export function stripLeadingAt(value: string): string {
   const trimmed = value.trim();
   return trimmed.startsWith("@") ? trimmed.slice(1).trim() : trimmed;
 }
 
+/**
+ * Splits a raw target into its spelled-out kind and remaining value.
+ *
+ * Only the word prefixes (`group:`, `contact:`, ...) resolve a kind here; a bare
+ * sigil is left on `value` because `parseSimplexExplicitTarget` distinguishes
+ * those cases itself. The prefix table lives in `simplex/chat-ref`.
+ */
 function readPrefixedSimplexTarget(raw: string): {
   value: string;
   kind: SimplexTargetKind;
   hadProviderPrefix: boolean;
 } {
-  const strippedProvider = stripSimplexPrefix(raw);
+  const strippedProvider = stripSimplexProviderPrefix(raw);
   const hadProviderPrefix = strippedProvider !== raw.trim();
-  const lower = strippedProvider.toLowerCase();
-  if (lower.startsWith("group:")) {
-    return {
-      value: strippedProvider.slice("group:".length).trim(),
-      kind: "group",
-      hadProviderPrefix,
-    };
-  }
-  if (lower.startsWith("channel:")) {
-    return {
-      value: strippedProvider.slice("channel:".length).trim(),
-      kind: "channel",
-      hadProviderPrefix,
-    };
-  }
-  if (lower.startsWith("contact:") || lower.startsWith("user:") || lower.startsWith("member:")) {
-    return {
-      value: strippedProvider.slice(strippedProvider.indexOf(":") + 1).trim(),
-      kind: "direct",
-      hadProviderPrefix,
-    };
+  const marked = readMarkedSimplexRef(strippedProvider);
+  if (marked && !SIMPLEX_REF_SIGILS.includes(strippedProvider.slice(0, 1))) {
+    return { value: marked.id, kind: marked.kind, hadProviderPrefix };
   }
   return { value: strippedProvider, kind: null, hadProviderPrefix };
 }
@@ -149,7 +141,7 @@ export function looksLikeSimplexExplicitTarget(raw: string): boolean {
   if (parseSimplexExplicitTarget(trimmed)) {
     return true;
   }
-  const strippedProvider = stripSimplexPrefix(trimmed);
+  const strippedProvider = stripSimplexProviderPrefix(trimmed);
   return strippedProvider !== trimmed && strippedProvider.trim().length > 0;
 }
 
@@ -180,25 +172,6 @@ export function formatSimplexTargetDisplay(params: {
     return value.startsWith("@") ? value : `@${value}`;
   }
   return value;
-}
-
-export function normalizeSimplexContactRef(value: string): string {
-  const trimmed = stripSimplexPrefix(value);
-  if (!trimmed) {
-    return trimmed;
-  }
-  if (trimmed.startsWith("@")) {
-    return trimmed;
-  }
-  const lowered = trimmed.toLowerCase();
-  if (
-    lowered.startsWith("contact:") ||
-    lowered.startsWith("user:") ||
-    lowered.startsWith("member:")
-  ) {
-    return `@${trimmed.slice(trimmed.indexOf(":") + 1).trim()}`;
-  }
-  return `@${trimmed}`;
 }
 
 export function assertSimplexOutboundAccountReady(account: ResolvedSimplexAccount): void {

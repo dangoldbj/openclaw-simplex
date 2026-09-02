@@ -117,7 +117,7 @@ function printResult<T>(value: T, formatter?: (value: T) => string): void {
   emit(value, outputOpts, formatter);
 }
 
-function readRequiredString(value: string | undefined, label: string): string {
+function requireOptionValue(value: string | undefined, label: string): string {
   const trimmed = value?.trim();
   if (!trimmed) {
     throw new Error(`${label} is required`);
@@ -305,7 +305,7 @@ async function runGroupCreateCli(
     await createSimplexGroup({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
-      displayName: readRequiredString(opts.displayName, "displayName"),
+      displayName: requireOptionValue(opts.displayName, "displayName"),
       fullName: opts.fullName,
       description: opts.description,
     })
@@ -409,7 +409,7 @@ async function runConnectPlanCli(api: OpenClawPluginApi, opts: ConnectCliOptions
     await planSimplexConnectionLink({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
-      link: readRequiredString(opts.link, "link"),
+      link: requireOptionValue(opts.link, "link"),
     })
   );
 }
@@ -419,7 +419,7 @@ async function runConnectCli(api: OpenClawPluginApi, opts: ConnectCliOptions): P
     await connectSimplexLink({
       cfg: api.config,
       accountId: readOptionalAccountId(opts.accountId),
-      link: readRequiredString(opts.link, "link"),
+      link: requireOptionValue(opts.link, "link"),
     })
   );
 }

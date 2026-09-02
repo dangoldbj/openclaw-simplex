@@ -33,4 +33,28 @@ describe("simplex approval auth", () => {
       reason: "❌ You are not authorized to approve exec requests on SimpleX.",
     });
   });
+
+  function authorize(allowFrom: string[], senderId: string) {
+    return simplexApprovalAuth.authorizeActorAction({
+      cfg: { channels: { "openclaw-simplex": { allowFrom } } } as OpenClawConfig,
+      senderId,
+      action: "approve",
+      approvalKind: "exec",
+    });
+  }
+
+  // Regression: contact normalization used to prefix everything with "@", so a
+  // group id reached the approver guard as "@#ops" and slipped past the check
+  // that was meant to reject it.
+  it("never treats a group or channel reference as an approver", () => {
+    expect(authorize(["@alice"], "#ops")).toMatchObject({ authorized: false });
+    expect(authorize(["@alice"], "!news")).toMatchObject({ authorized: false });
+    expect(authorize(["@alice"], "group:ops")).toMatchObject({ authorized: false });
+  });
+
+  it("does not let a group entry in allowFrom become an approver identity", () => {
+    // The group entry is discarded, leaving "@alice" as the only approver.
+    expect(authorize(["#ops", "@alice"], "#ops")).toMatchObject({ authorized: false });
+    expect(authorize(["#ops", "@alice"], "@alice")).toMatchObject({ authorized: true });
+  });
 });

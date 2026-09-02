@@ -1,5 +1,7 @@
-import { stripSimplexPrefix } from "../channel/shared/simplex-common.js";
+import { normalizeSimplexChatRef, normalizeSimplexGroupRef } from "../simplex/chat-ref.js";
 import type { DeleteMode, SimplexActionParams } from "../types/actions.js";
+
+export { normalizeSimplexChatRef, normalizeSimplexGroupRef };
 
 export function readStringParam(
   params: SimplexActionParams,
@@ -55,44 +57,6 @@ export function readNumberParam(
     throw new Error(`${key} must be an integer`);
   }
   return value;
-}
-
-export function normalizeSimplexChatRef(raw: string, chatType?: string | null): string {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return trimmed;
-  }
-  const withoutPrefix = stripSimplexPrefix(trimmed);
-  if (!withoutPrefix) {
-    return withoutPrefix;
-  }
-  if (withoutPrefix.startsWith("@") || withoutPrefix.startsWith("#")) {
-    return withoutPrefix;
-  }
-  const lowered = withoutPrefix.toLowerCase();
-  if (lowered.startsWith("group:")) {
-    const id = withoutPrefix.slice("group:".length).trim();
-    return id ? `#${id}` : withoutPrefix;
-  }
-  if (
-    lowered.startsWith("contact:") ||
-    lowered.startsWith("user:") ||
-    lowered.startsWith("member:")
-  ) {
-    const id = withoutPrefix.slice(withoutPrefix.indexOf(":") + 1).trim();
-    return id ? `@${id}` : withoutPrefix;
-  }
-  if (chatType === "group") {
-    return `#${withoutPrefix}`;
-  }
-  if (chatType === "direct") {
-    return `@${withoutPrefix}`;
-  }
-  return `@${withoutPrefix}`;
-}
-
-export function normalizeSimplexGroupRef(raw: string): string {
-  return normalizeSimplexChatRef(raw, "group");
 }
 
 export function readChatRef(params: SimplexActionParams): string {

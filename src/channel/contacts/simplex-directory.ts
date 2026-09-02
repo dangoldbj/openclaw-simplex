@@ -2,6 +2,7 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { ChannelDirectoryEntry } from "openclaw/plugin-sdk/directory-runtime";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveSimplexAccount } from "../../config/accounts.js";
+import { stripSimplexProviderPrefix } from "../../constants.js";
 import { parseSimplexNumericId } from "../../simplex/runtime/api.js";
 import { withSimplexClient } from "../../simplex/runtime/transport.js";
 import {
@@ -13,7 +14,6 @@ import {
   simplexErrorMessage,
 } from "../../simplex/services/directory-probes.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
-import { stripSimplexPrefix } from "../shared/simplex-common.js";
 
 type SimplexDirectoryParams = {
   cfg: OpenClawConfig;
@@ -144,7 +144,7 @@ function normalizeSimplexInputId(input: string): { id: string; explicit: boolean
   if (!trimmed) {
     return { id: "", explicit: false };
   }
-  const withoutPrefix = stripSimplexPrefix(trimmed);
+  const withoutPrefix = stripSimplexProviderPrefix(trimmed);
   const lowered = withoutPrefix.toLowerCase();
   if (lowered.startsWith("#")) {
     return { id: withoutPrefix.slice(1).trim(), explicit: true };
@@ -174,7 +174,7 @@ function normalizeSimplexDirectoryQuery(query?: string | null): string | undefin
   if (explicit && id) {
     return id;
   }
-  return stripSimplexPrefix(raw);
+  return stripSimplexProviderPrefix(raw);
 }
 
 function readDirectoryIdCandidate(query?: string | null): string | null {
@@ -182,7 +182,7 @@ function readDirectoryIdCandidate(query?: string | null): string | null {
   if (!raw) {
     return null;
   }
-  const stripped = stripSimplexPrefix(raw);
+  const stripped = stripSimplexProviderPrefix(raw);
   const normalized = normalizeSimplexInputId(raw);
   if (normalized.explicit && normalized.id) {
     return normalized.id;

@@ -1,10 +1,9 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { resolveDefaultSimplexAccountId } from "../../config/accounts.js";
-import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
+import { SIMPLEX_CHANNEL_ID, stripSimplexProviderPrefix } from "../../constants.js";
 import { describeSimplexWsEndpointSecurity } from "../../simplex/runtime/security.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
 import type { SimplexAllowlistEntry } from "../../types/security.js";
-import { stripSimplexPrefix } from "../shared/simplex-common.js";
 
 type SimplexAuditFinding = {
   checkId: string;
@@ -26,7 +25,7 @@ export function parseSimplexAllowlistEntry(raw: string | number): SimplexAllowli
   if (entry === "*") {
     return { kind: "any", value: "*" };
   }
-  entry = stripSimplexPrefix(entry);
+  entry = stripSimplexProviderPrefix(entry);
   if (!entry) {
     return null;
   }
@@ -67,7 +66,7 @@ export function resolveSimplexAllowFrom(params: {
 
 export function formatSimplexAllowFrom(allowFrom: Array<string | number>): string[] {
   return normalizeSimplexAllowFrom(allowFrom)
-    .map((entry) => stripSimplexPrefix(entry))
+    .map((entry) => stripSimplexProviderPrefix(entry))
     .map((entry) => entry.trim())
     .filter(Boolean)
     .map((entry) => entry.toLowerCase());

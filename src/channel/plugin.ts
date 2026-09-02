@@ -16,7 +16,7 @@ import {
   SIMPLEX_ACCOUNT_CONFIG_CLEAR_FIELDS,
   SimplexChannelConfigSchema,
 } from "../config/config-schema.js";
-import { SIMPLEX_CHANNEL_ID } from "../constants.js";
+import { SIMPLEX_CHANNEL_ID, stripSimplexProviderPrefix } from "../constants.js";
 import type { SimplexRuntimeCapabilityReport } from "../simplex/services/runtime-capabilities.js";
 import type { ResolvedSimplexAccount } from "../types/config.js";
 import {
@@ -48,7 +48,6 @@ import {
   resolveSimplexGroupToolPolicy,
   resolveSimplexRouteTarget,
   stripLeadingAt,
-  stripSimplexPrefix,
 } from "./shared/simplex-common.js";
 
 const resolveSimplexDmSecurityPolicy = createScopedDmSecurityResolver<ResolvedSimplexAccount>({
@@ -57,7 +56,7 @@ const resolveSimplexDmSecurityPolicy = createScopedDmSecurityResolver<ResolvedSi
   resolveAllowFrom: (account) => account.config.allowFrom,
   resolveFallbackAccountId: (account) => account.accountId,
   approveChannelId: SIMPLEX_CHANNEL_ID,
-  normalizeEntry: (raw) => stripLeadingAt(stripSimplexPrefix(raw)),
+  normalizeEntry: (raw) => stripLeadingAt(stripSimplexProviderPrefix(raw)),
 });
 
 function resolveSimplexConfigAccount(cfg: OpenClawConfig, accountId?: string | null) {
@@ -136,7 +135,7 @@ export const simplexPlugin: SimplexPlugin = {
   }),
   messaging: {
     targetPrefixes: ["simplex"],
-    normalizeTarget: (raw) => stripSimplexPrefix(raw),
+    normalizeTarget: (raw) => stripSimplexProviderPrefix(raw),
     resolveSessionConversation: ({ kind, rawId }) => {
       const target =
         kind === "group" || kind === "channel"
