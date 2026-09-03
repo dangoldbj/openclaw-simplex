@@ -37,7 +37,11 @@ const CONNECTION_CONFIG_KEYS = new Set([
   "connectTimeoutMs",
 ]);
 
-const LEGACY_RUNTIME_KEYS = new Set([
+/**
+ * Pre-1.0 managed-runtime fields. None of them collide with a current root
+ * config key, so their presence is unambiguous evidence of a stale config.
+ */
+export const LEGACY_SIMPLEX_RUNTIME_KEYS = new Set([
   "authToken",
   "cliPath",
   "command",
@@ -183,7 +187,7 @@ function sanitizeSimplexAccountConfig(
   };
 
   for (const key of Object.keys(account)) {
-    if (LEGACY_RUNTIME_KEYS.has(key)) {
+    if (LEGACY_SIMPLEX_RUNTIME_KEYS.has(key)) {
       const fieldValue = account[key];
       if (key === "wsUrl" || key === "url" || key === "httpUrl") {
         connection.wsUrl ??= fieldValue;
@@ -311,6 +315,24 @@ export function migrateConfigObject(rawConfig: Record<string, unknown>): {
   }
 
   return { nextConfig, result };
+}
+
+/**
+ * Setup-time form of the config migration, applied by the host on config load.
+ * An operator upgrading from the pre-1.0 `simplex` ids no longer has to know
+ * that `openclaw simplex migrate` exists.
+ *
+ * Config only, because a setup migration is a pure function over the config
+ * object. The credential-file renames in `migrateStateFiles` stay on the CLI.
+ */
+export function migrateSimplexConfig(
+  config: OpenClawConfig
+): { config: OpenClawConfig; changes: string[] } | null {
+  const { nextConfig, result } = migrateConfigObject(config as unknown as Record<string, unknown>);
+  if (result.changed.length === 0) {
+    return null;
+  }
+  return { config: nextConfig as unknown as OpenClawConfig, changes: result.changed };
 }
 
 export async function migrateStateFiles(

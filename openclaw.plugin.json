@@ -18,6 +18,13 @@
       "simplex_group_leave"
     ]
   },
+  "configContracts": {
+    "compatibilityMigrationPaths": [
+      "channels.simplex",
+      "plugins.entries.simplex",
+      "plugins.installs.simplex"
+    ]
+  },
   "name": "SimpleX",
   "description": "SimpleX channel plugin for OpenClaw using an external WebSocket runtime",
   "configSchema": {

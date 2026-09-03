@@ -346,7 +346,7 @@ describe("plugin entry registration modes", () => {
   });
 
   it("exports the setup entry plugin surface", () => {
-    expect(setupEntry).toEqual({ plugin: expect.any(Object) });
+    expect(setupEntry).toEqual({ plugin: expect.any(Object), register: expect.any(Function) });
     expect(setupEntry.plugin).toBeTruthy();
   });
 
