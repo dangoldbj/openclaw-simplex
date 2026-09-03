@@ -11,7 +11,7 @@ import {
 } from "../../simplex/state/contact-requests.js";
 import { hasSimplexEventBeenSeen, markSimplexEventSeen } from "../../simplex/state/event-dedupe.js";
 import { setSimplexRuntime } from "../runtime.js";
-import { simplexLifecycle } from "./simplex-lifecycle.js";
+import { buildSimplexRuntimeLifecycle, simplexLifecycle } from "./simplex-lifecycle.js";
 
 const STAGED_TTL_MS = 5 * 60_000;
 const UUID = "0f9c1b6e-2a3d-4c5f-8b7a-1d2e3f4a5b6c";
@@ -158,5 +158,49 @@ describe("simplex lifecycle account removal", () => {
 
     expect(runtime.log).not.toHaveBeenCalled();
     expect(runtime.error).not.toHaveBeenCalled();
+  });
+});
+
+describe("simplex runtime lifecycle cleanup", () => {
+  afterEach(async () => {
+    await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+  });
+
+  it("reclaims aged staged media on host teardown", async () => {
+    const dir = await outboundDir();
+    await writeAged(dir, `${UUID}-old.png`, STAGED_TTL_MS * 2);
+    const info = vi.fn();
+
+    const lifecycle = buildSimplexRuntimeLifecycle({
+      config: cfgWithOutbound(dir),
+      logger: { info, error: vi.fn() },
+    });
+    await lifecycle.cleanup();
+
+    expect(await readdir(dir)).toEqual([]);
+  });
+
+  it("leaves media that is still within its upload window", async () => {
+    const dir = await outboundDir();
+    await writeAged(dir, `${UUID}-inflight.png`, 1_000);
+
+    const lifecycle = buildSimplexRuntimeLifecycle({
+      config: cfgWithOutbound(dir),
+      logger: { info: vi.fn(), error: vi.fn() },
+    });
+    await lifecycle.cleanup();
+
+    // The runtime reads staged files asynchronously after the send returns, so
+    // teardown must not truncate an upload in flight.
+    expect(await readdir(dir)).toEqual([`${UUID}-inflight.png`]);
+  });
+
+  it("describes itself for the host registry", () => {
+    const lifecycle = buildSimplexRuntimeLifecycle({
+      config: cfgWithOutbound("/tmp/unused"),
+    });
+
+    expect(lifecycle.id).toBe("simplex-runtime");
+    expect(lifecycle.description).toBeTruthy();
   });
 });

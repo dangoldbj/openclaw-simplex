@@ -8,6 +8,7 @@ import { describeError } from "../../errors.js";
 import { listSimplexContactRequests } from "../../simplex/services/contact-requests.js";
 import { listSimplexInvites } from "../../simplex/services/invites.js";
 import { getSimplexRuntimeStatus } from "../../simplex/services/runtime-status.js";
+import { listStoredSimplexPairingRequests } from "../../simplex/state/pairing-requests.js";
 
 export const SIMPLEX_PANEL_PATH = `/plugins/${SIMPLEX_PLUGIN_ID}/panel`;
 
@@ -24,6 +25,12 @@ type PanelContactRequest = {
   receivedAt?: string;
 };
 
+type PanelPairingRequest = {
+  senderId: string;
+  code: string;
+  displayName?: string;
+};
+
 type PanelAccount = {
   accountId: string;
   name?: string;
@@ -38,6 +45,7 @@ type PanelAccount = {
   addressQrDataUrl?: string | null;
   requests: PanelContactRequest[];
   requestsError?: string;
+  pairing: PanelPairingRequest[];
   warnings: string[];
 };
 
@@ -74,6 +82,16 @@ async function collectPanelAccount(params: {
   // Contact requests are read from the plugin's own store rather than the
   // runtime, so a queue that built up while `simplex-chat` was down stays
   // visible on the offline card instead of disappearing with it.
+  const pairing = listStoredSimplexPairingRequests({ accountId: params.accountId })
+    .then((stored) =>
+      stored.map((request) => ({
+        senderId: request.senderId,
+        code: request.code,
+        displayName: request.displayName,
+      }))
+    )
+    .catch(() => [] as PanelPairingRequest[]);
+
   const requests = collectPanelContactRequests({
     cfg: params.cfg,
     accountId: params.accountId,
@@ -125,10 +143,17 @@ async function collectPanelAccount(params: {
       addressLink,
       addressQrDataUrl,
       ...(await requests),
+      pairing: await pairing,
       warnings: status.security.transportWarnings,
     };
   } catch (error) {
-    return { ...base, reachable: false, error: describeError(error), ...(await requests) };
+    return {
+      ...base,
+      reachable: false,
+      error: describeError(error),
+      ...(await requests),
+      pairing: await pairing,
+    };
   }
 }
 
@@ -181,6 +206,32 @@ function renderRequestsSection(account: PanelAccount): string {
   </div>`;
 }
 
+/**
+ * Pairing approvals are a different queue from SimpleX contact requests: the
+ * contact already reached the agent, and OpenClaw is holding the message until
+ * an operator approves the sender.
+ */
+function renderPairingSection(account: PanelAccount): string {
+  if (account.pairing.length === 0) {
+    return "";
+  }
+
+  const items = account.pairing
+    .map((request) => {
+      const who = escapeHtml(request.displayName ?? request.senderId);
+      return `<li class="req">
+        <div class="req-head"><strong>${who}</strong><span class="mono">${escapeHtml(request.senderId)}</span></div>
+        ${renderCommand(`openclaw pairing approve ${SIMPLEX_CHANNEL_ID} ${request.code}`)}
+      </li>`;
+    })
+    .join("");
+
+  return `<div class="requests">
+    <div class="section-head"><span class="k">Pairing approvals</span><span class="count">${account.pairing.length} waiting</span></div>
+    <ul class="req-list">${items}</ul>
+  </div>`;
+}
+
 function renderAddressSection(account: PanelAccount): string {
   const title = escapeHtml(account.name ?? account.accountId);
   const accountFlag = `--account-id ${account.accountId}`;
@@ -222,7 +273,7 @@ function renderAccountCard(account: PanelAccount): string {
     );
     return `<section class="card"><h2>${title}</h2>${rows.join("")}
       <p class="hint">Start the <code>simplex-chat</code> runtime, then reload this tab.</p>
-      ${renderRequestsSection(account)}
+      ${renderRequestsSection(account)}${renderPairingSection(account)}
     </section>`;
   }
 
@@ -247,7 +298,7 @@ function renderAccountCard(account: PanelAccount): string {
     );
   }
 
-  return `<section class="card"><h2>${title}</h2>${rows.join("")}${renderRequestsSection(account)}${renderAddressSection(account)}</section>`;
+  return `<section class="card"><h2>${title}</h2>${rows.join("")}${renderRequestsSection(account)}${renderPairingSection(account)}${renderAddressSection(account)}</section>`;
 }
 
 export async function renderSimplexPanelHtml(cfg: OpenClawConfig): Promise<string> {

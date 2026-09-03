@@ -12,18 +12,32 @@ type ConfigMigration = (config: OpenClawConfig) =>
   | null
   | undefined;
 
-function registeredMigration(): ConfigMigration {
+type AutoEnableProbe = (ctx: {
+  config: OpenClawConfig;
+  env: NodeJS.ProcessEnv;
+}) => string | string[] | null | undefined;
+
+function registered(): { migration: ConfigMigration; probe: AutoEnableProbe } {
   const migrations: ConfigMigration[] = [];
+  const probes: AutoEnableProbe[] = [];
   setupEntry.register({
     registerConfigMigration: (migrate: ConfigMigration) => {
       migrations.push(migrate);
     },
+    registerAutoEnableProbe: (probe: AutoEnableProbe) => {
+      probes.push(probe);
+    },
   } as unknown as OpenClawPluginApi);
   const migration = migrations[0];
-  if (!migration) {
-    throw new Error("setup entry registered no config migration");
+  const probe = probes[0];
+  if (!migration || !probe) {
+    throw new Error("setup entry did not register both surfaces");
   }
-  return migration;
+  return { migration, probe };
+}
+
+function registeredMigration(): ConfigMigration {
+  return registered().migration;
 }
 
 describe("simplex setup entry", () => {
@@ -47,6 +61,19 @@ describe("simplex setup entry", () => {
       connection: { wsUrl: "ws://127.0.0.1:5225" },
     });
     expect(result?.changes.length).toBeGreaterThan(0);
+  });
+
+  it("stays silent about auto-enable once an account is configured", () => {
+    const { probe } = registered();
+
+    expect(
+      probe({
+        config: {
+          channels: { [SIMPLEX_CHANNEL_ID]: { connection: { wsUrl: "ws://127.0.0.1:5225" } } },
+        } as unknown as OpenClawConfig,
+        env: {},
+      })
+    ).toBeNull();
   });
 
   it("returns null for a current config so the host records no change", () => {

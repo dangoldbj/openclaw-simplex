@@ -21,6 +21,7 @@ import {
   SIMPLEX_GATEWAY_METHOD_DESCRIPTORS,
   SIMPLEX_GATEWAY_METHOD_NAMES,
 } from "../gateway/method-descriptors.js";
+import { normalizeSimplexChatRef } from "../simplex/chat-ref.js";
 import type { SimplexRuntimeCapabilityReport } from "../simplex/services/runtime-capabilities.js";
 import type { ResolvedSimplexAccount } from "../types/config.js";
 import {
@@ -240,5 +241,16 @@ export const simplexPlugin: SimplexPlugin = {
   status: buildSimplexStatus(),
   doctor: simplexDoctor,
   lifecycle: simplexLifecycle,
+  // SimpleX has no child threads, so a binding always lives in the conversation
+  // it was started from; `resolveConversationRef` normalizes the id the same way
+  // every other SimpleX surface does.
+  conversationBindings: {
+    supportsCurrentConversationBinding: true,
+    defaultTopLevelPlacement: "current",
+    resolveConversationRef: ({ conversationId }) => {
+      const normalized = normalizeSimplexChatRef(conversationId);
+      return normalized ? { conversationId: normalized } : null;
+    },
+  },
   gateway: buildSimplexGatewayRuntime(),
 };
