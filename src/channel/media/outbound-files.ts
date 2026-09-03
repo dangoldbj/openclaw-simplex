@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { copyFile, mkdir, unlink, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import { expandHome } from "../../fs-paths.js";
@@ -132,6 +132,54 @@ export function isSimplexReadablePath(filePath: string, outboundDir: string): bo
 function stagedFileName(fileName?: string): string {
   const base = fileName ? path.basename(fileName) : "";
   return base ? `${randomUUID()}-${base}` : randomUUID();
+}
+
+const STAGED_FILE_NAME = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(-|$)/i;
+
+/**
+ * Deletes staged files left behind by a previous process.
+ *
+ * The per-file reaper is an in-memory timer, so a crash or a restart between
+ * staging and reclamation strands the file forever. `outboundFolder` is a shared
+ * volume the operator also owns, so only files matching the staged UUID naming
+ * and older than the TTL are removed — anything else in that directory is left
+ * alone.
+ */
+export async function reapStrandedOutboundFiles(params: {
+  outboundDir: string;
+  now?: number;
+}): Promise<number> {
+  const cutoff = (params.now ?? Date.now()) - STAGED_FILE_TTL_MS;
+  let removed = 0;
+  let entries: string[];
+  try {
+    entries = await readdir(params.outboundDir, { encoding: "utf8" });
+  } catch {
+    return 0;
+  }
+
+  for (const entry of entries) {
+    if (!STAGED_FILE_NAME.test(entry)) {
+      continue;
+    }
+    const onDisk = path.join(params.outboundDir, entry);
+    // A file this process staged is still tracked and still has a live timer,
+    // so leaving it to that timer avoids deleting media mid-upload.
+    if ([...STAGED_FILES.values()].some((staged) => staged.onDisk === onDisk)) {
+      continue;
+    }
+    try {
+      const info = await stat(onDisk);
+      if (!info.isFile() || info.mtimeMs > cutoff) {
+        continue;
+      }
+      await unlink(onDisk);
+      removed += 1;
+    } catch {
+      // Best-effort: another process may have removed it first.
+    }
+  }
+  return removed;
 }
 
 /** Write a media buffer into the shared outbound dir; returns the path to send. */

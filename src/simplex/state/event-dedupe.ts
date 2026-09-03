@@ -46,3 +46,23 @@ export async function markSimplexEventSeen(params: SimplexEventKey | null): Prom
   }
   await seenStore().register(seenKey(params), true, { ttlMs: SEEN_EVENT_TTL_MS });
 }
+
+/**
+ * Drops every dedupe marker owned by an account.
+ *
+ * Matched on the key prefix because the stored value is only `true`; the key is
+ * built as `accountId:chatId:messageId`, so an account id containing a colon
+ * would over-match. Config account ids are plain identifiers, and over-matching
+ * here only replays messages rather than losing them.
+ */
+export async function clearSimplexEventDedupeForAccount(accountId: string): Promise<number> {
+  const store = seenStore();
+  const prefix = `${accountId}:`;
+  let removed = 0;
+  for (const entry of await store.entries()) {
+    if (entry.key.startsWith(prefix) && (await store.delete(entry.key))) {
+      removed += 1;
+    }
+  }
+  return removed;
+}

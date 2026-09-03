@@ -35,6 +35,7 @@ import { simplexDoctor } from "./diagnostics/simplex-doctor.js";
 import { buildSimplexStatus } from "./diagnostics/simplex-status.js";
 import { buildSimplexGatewayRuntime } from "./gateway/simplex-gateway-runtime.js";
 import { buildSimplexHeartbeat } from "./gateway/simplex-heartbeat.js";
+import { simplexLifecycle } from "./lifecycle/simplex-lifecycle.js";
 import { buildSimplexOutbound } from "./messaging/simplex-outbound.js";
 import { simplexApprovalAuth } from "./security/approval-auth.js";
 import { simplexCommandPolicy } from "./security/command-policy.js";
@@ -238,5 +239,6 @@ export const simplexPlugin: SimplexPlugin = {
   heartbeat: buildSimplexHeartbeat(),
   status: buildSimplexStatus(),
   doctor: simplexDoctor,
+  lifecycle: simplexLifecycle,
   gateway: buildSimplexGatewayRuntime(),
 };

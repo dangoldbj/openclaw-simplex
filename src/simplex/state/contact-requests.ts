@@ -75,3 +75,21 @@ export async function deleteStoredSimplexContactRequest(params: {
     requestKey(params.accountId, params.contactRequestId)
   );
 }
+
+export async function clearStoredSimplexContactRequests(params: {
+  accountId: string;
+}): Promise<number> {
+  const stored = await listStoredSimplexContactRequests(params);
+  let removed = 0;
+  for (const request of stored) {
+    if (
+      await deleteStoredSimplexContactRequest({
+        accountId: params.accountId,
+        contactRequestId: request.contactRequestId,
+      })
+    ) {
+      removed += 1;
+    }
+  }
+  return removed;
+}
