@@ -18,6 +18,7 @@ import { resolveSimplexMediaMaxBytes } from "../media/simplex-media.js";
 import { buildAndSendSimplexMessages } from "../messaging/simplex-send.js";
 import { getSimplexRuntime } from "../runtime.js";
 import { connectSimplexWithRetry } from "../transport/simplex-connect.js";
+import { verifySimplexRuntimeIdentity } from "../transport/simplex-identity.js";
 import {
   isInboundSimplexChatItem,
   normalizeSimplexSenderId,
@@ -76,6 +77,20 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
       accountId: account.accountId,
       abortSignal: params.abortSignal,
     })
+      .then(async () => {
+        // Re-checked on every reconnect, not just the first connect: a port is
+        // most likely to change hands exactly when the runtime it belonged to
+        // has just gone away.
+        if (!params.abortSignal.aborted) {
+          await verifySimplexRuntimeIdentity({
+            client,
+            accountId: account.accountId,
+            wsUrl: account.wsUrl,
+            runtime,
+            statusSink,
+          });
+        }
+      })
       .catch((err) => {
         if (!params.abortSignal.aborted) {
           runtime.error?.(`[${account.accountId}] SimpleX reconnect failed: ${String(err)}`);
@@ -135,6 +150,16 @@ export async function startSimplexMonitor(params: SimplexMonitorOpts): Promise<{
     abortSignal: params.abortSignal,
   });
   initialConnectComplete = true;
+
+  if (!params.abortSignal.aborted) {
+    await verifySimplexRuntimeIdentity({
+      client,
+      accountId: account.accountId,
+      wsUrl: account.wsUrl,
+      runtime,
+      statusSink,
+    });
+  }
 
   params.abortSignal.addEventListener(
     "abort",

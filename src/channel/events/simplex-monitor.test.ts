@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   eventHandlers: [] as Array<(event: unknown) => unknown>,
   connectionHandlers: [] as Array<(state: unknown) => unknown>,
   sendMessages: vi.fn(async () => [{ chatItem: { meta: { itemId: 1 } } }]),
+  runCommand: vi.fn(async (_command: string): Promise<unknown> => ({ version: "6.5.4" })),
   close: vi.fn(async () => undefined),
   connectSimplexWithRetry: vi.fn(async (): Promise<void> => undefined),
   recordSimplexContactRequest: vi.fn(async () => undefined),
@@ -55,6 +56,7 @@ vi.mock("../../simplex/runtime/client.js", () => ({
       return () => undefined;
     }
     sendMessages = mocks.sendMessages;
+    runCommand = mocks.runCommand;
     close = mocks.close;
   },
 }));
@@ -169,6 +171,7 @@ describe("simplex monitor event handling", () => {
     mocks.hasPendingFile.mockReturnValue(true);
     mocks.requestFileDownload.mockResolvedValue(true);
     mocks.isFileAutoAcceptEnabled.mockReturnValue(false);
+    mocks.runCommand.mockResolvedValue({ version: "6.5.4" });
   });
 
   describe("connection state", () => {
@@ -257,6 +260,59 @@ describe("simplex monitor event handling", () => {
     await flush();
 
     expect(mocks.close).toHaveBeenCalled();
+  });
+
+  describe("runtime identity", () => {
+    it("confirms the endpoint speaks SimpleX after connecting", async () => {
+      const { runtime, statusSink } = await startMonitor();
+
+      expect(mocks.runCommand).toHaveBeenCalledWith("/version");
+      expect(runtime.error).not.toHaveBeenCalled();
+      expect(statusSink).not.toHaveBeenCalledWith(
+        expect.objectContaining({ healthState: "error" })
+      );
+    });
+
+    it("marks the account unhealthy when the endpoint does not answer as SimpleX", async () => {
+      mocks.runCommand.mockRejectedValue(new Error("no response"));
+      const { runtime, statusSink } = await startMonitor();
+
+      expect(runtime.error).toHaveBeenCalledWith(
+        expect.stringContaining("did not respond as a simplex-chat runtime")
+      );
+      expect(statusSink).toHaveBeenCalledWith(expect.objectContaining({ healthState: "error" }));
+    });
+
+    it("keeps the monitor running so a slow runtime can recover", async () => {
+      mocks.runCommand.mockRejectedValue(new Error("no response"));
+
+      const { emit } = await startMonitor();
+
+      // Still listening: an unverified endpoint is reported, not torn down.
+      await emit({ type: "newChatItems", chatItems: [directItem()] });
+      expect(mocks.dispatchInbound).toHaveBeenCalledTimes(1);
+    });
+
+    it("re-checks identity after a reconnect", async () => {
+      const { setConnectionState } = await startMonitor();
+      mocks.runCommand.mockClear();
+
+      setConnectionState({ connected: false, at: 1, expected: false });
+      await flush();
+
+      expect(mocks.runCommand).toHaveBeenCalledWith("/version");
+    });
+
+    it("skips the check when the monitor is already aborted", async () => {
+      const { controller, setConnectionState } = await startMonitor();
+      mocks.runCommand.mockClear();
+      controller.abort();
+
+      setConnectionState({ connected: false, at: 1, expected: false });
+      await flush();
+
+      expect(mocks.runCommand).not.toHaveBeenCalled();
+    });
   });
 
   it("stores an incoming contact request without dispatching a turn", async () => {
