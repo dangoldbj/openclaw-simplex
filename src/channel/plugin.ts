@@ -43,7 +43,7 @@ import {
   collectSimplexSecurityAuditFindings,
   formatSimplexAllowFrom,
 } from "./security/simplex-security.js";
-import { simplexSetupAdapter } from "./setup.js";
+import { simplexSetupContract } from "./setup.js";
 import {
   formatSimplexTargetDisplay,
   inferSimplexTargetChatType,
@@ -104,7 +104,7 @@ export const simplexPlugin: SimplexPlugin = {
     groupManagement: true,
   },
   reload: { configPrefixes: ["channels.openclaw-simplex"] },
-  setup: simplexSetupAdapter,
+  setupContract: simplexSetupContract,
   configSchema: SimplexChannelConfigSchema,
   config: {
     ...createHybridChannelConfigAdapter<ResolvedSimplexAccount>({

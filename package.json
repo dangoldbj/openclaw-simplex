@@ -105,7 +105,51 @@
         "setup": true,
         "docs": true
       },
-      "quickstartAllowFrom": true
+      "quickstartAllowFrom": true,
+      "setup": {
+        "fields": [
+          {
+            "key": "wsUrl",
+            "kind": "string",
+            "cli": {
+              "flags": "--ws-url <url>",
+              "description": "SimpleX runtime WebSocket URL (ws:// or wss://)"
+            }
+          },
+          {
+            "key": "wsHost",
+            "kind": "string",
+            "cli": {
+              "flags": "--ws-host <host>",
+              "description": "SimpleX runtime host (default 127.0.0.1)"
+            }
+          },
+          {
+            "key": "wsPort",
+            "kind": "integer",
+            "cli": {
+              "flags": "--ws-port <port>",
+              "description": "SimpleX runtime WebSocket port (default 5225)"
+            }
+          },
+          {
+            "key": "outboundFolder",
+            "kind": "string",
+            "cli": {
+              "flags": "--outbound-folder <path>",
+              "description": "Directory shared with the runtime for staging outbound media"
+            }
+          },
+          {
+            "key": "allowUnsafeRemoteWs",
+            "kind": "boolean",
+            "cli": {
+              "flags": "--allow-unsafe-remote-ws",
+              "description": "Allow plaintext ws:// to a non-loopback runtime (private network or TLS proxy only)"
+            }
+          }
+        ]
+      }
     },
     "install": {
       "npmSpec": "@dangoldbj/openclaw-simplex",

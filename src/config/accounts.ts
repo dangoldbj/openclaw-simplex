@@ -1,15 +1,16 @@
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { SIMPLEX_CHANNEL_ID } from "../constants.js";
+import {
+  DEFAULT_SIMPLEX_WS_HOST,
+  DEFAULT_SIMPLEX_WS_PORT,
+  SIMPLEX_CHANNEL_ID,
+} from "../constants.js";
 import type {
   ResolvedSimplexAccount,
   SimplexAccountScope,
   SimplexConnectionConfig,
 } from "../types/config.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "./config-schema.js";
-
-const DEFAULT_WS_HOST = "127.0.0.1";
-const DEFAULT_WS_PORT = 5225;
 
 function hasMeaningfulConnectionConfig(connection: SimplexConnectionConfig | undefined): boolean {
   if (!connection) {
@@ -85,11 +86,11 @@ function mergeSimplexAccountConfig(cfg: OpenClawConfig, accountId: string): Simp
 }
 
 function resolveWsHost(connection: SimplexConnectionConfig): string {
-  return connection.wsHost?.trim() || DEFAULT_WS_HOST;
+  return connection.wsHost?.trim() || DEFAULT_SIMPLEX_WS_HOST;
 }
 
 function resolveWsPort(connection: SimplexConnectionConfig): number {
-  return connection.wsPort ?? DEFAULT_WS_PORT;
+  return connection.wsPort ?? DEFAULT_SIMPLEX_WS_PORT;
 }
 
 function resolveWsUrl(connection: SimplexConnectionConfig): string {
