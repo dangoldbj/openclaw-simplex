@@ -1,5 +1,7 @@
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/channel-core";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { registerSimplexPairingHooks } from "./src/channel/contacts/simplex-pairing.js";
+import { buildSimplexRuntimeLifecycle } from "./src/channel/lifecycle/simplex-lifecycle.js";
 import { simplexPlugin } from "./src/channel/plugin.js";
 import { setSimplexRuntime } from "./src/channel/runtime.js";
 import { registerSimplexControlUi } from "./src/channel/ui/simplex-panel.js";
@@ -20,6 +22,8 @@ const pluginEntry: ReturnType<typeof defineChannelPluginEntry> = defineChannelPl
     registerSimplexTools(api);
     registerSimplexToolHooks(api);
     registerSimplexControlUi(api);
+    registerSimplexPairingHooks(api);
+    api.registerRuntimeLifecycle(buildSimplexRuntimeLifecycle(api));
   },
 });
 

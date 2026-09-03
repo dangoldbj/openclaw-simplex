@@ -3,6 +3,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import type { PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
 import { beforeEach, describe, expect, it } from "vitest";
 import { recordSimplexContactRequest } from "../../simplex/state/contact-requests.js";
+import { recordSimplexPairingRequest } from "../../simplex/state/pairing-requests.js";
 import { setSimplexRuntime } from "../runtime.js";
 import {
   registerSimplexControlUi,
@@ -112,6 +113,47 @@ describe("simplex control ui panel", () => {
 
     expect(html).toContain("Nobody is waiting");
     expect(html).not.toContain("pending</span>");
+  });
+
+  it("lists pairing approvals with the command that grants them", async () => {
+    await recordSimplexPairingRequest({
+      accountId: "waiting",
+      senderId: "42",
+      code: "abc123",
+      displayName: "alice",
+    });
+
+    const html = await renderSimplexPanelHtml({
+      channels: { "openclaw-simplex": { accounts: { waiting: unreachable } } },
+    } as OpenClawConfig);
+
+    expect(html).toContain("Pairing approvals");
+    expect(html).toContain("1 waiting");
+    expect(html).toContain("openclaw pairing approve openclaw-simplex abc123");
+  });
+
+  it("hides the pairing section when nobody is waiting on approval", async () => {
+    const html = await renderSimplexPanelHtml({
+      channels: { "openclaw-simplex": { accounts: { nopairing: unreachable } } },
+    } as OpenClawConfig);
+
+    expect(html).not.toContain("Pairing approvals");
+  });
+
+  it("escapes a pairing display name", async () => {
+    await recordSimplexPairingRequest({
+      accountId: "hostile-pairing",
+      senderId: "9",
+      code: "c9",
+      displayName: "<img src=x onerror=alert(1)>",
+    });
+
+    const html = await renderSimplexPanelHtml({
+      channels: { "openclaw-simplex": { accounts: { "hostile-pairing": unreachable } } },
+    } as OpenClawConfig);
+
+    expect(html).not.toContain("<img src=x");
+    expect(html).toContain("&lt;img src=x");
   });
 
   it("reports a failed request lookup instead of an empty queue", async () => {

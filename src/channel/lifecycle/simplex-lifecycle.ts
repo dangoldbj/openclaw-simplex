@@ -1,8 +1,10 @@
 import type { ChannelPlugin, OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { listSimplexAccountIds } from "../../config/accounts.js";
 import { describeError } from "../../errors.js";
+import { closeAllActiveSimplexClients } from "../../simplex/runtime/transport.js";
 import { clearStoredSimplexContactRequests } from "../../simplex/state/contact-requests.js";
 import { clearSimplexEventDedupeForAccount } from "../../simplex/state/event-dedupe.js";
+import { clearStoredSimplexPairingRequests } from "../../simplex/state/pairing-requests.js";
 import { reapStrandedOutboundFiles, resolveSimplexOutboundDir } from "../media/outbound-files.js";
 
 /** Not exported by name from any plugin-sdk subpath, so taken from the contract. */
@@ -48,13 +50,14 @@ export const simplexLifecycle: SimplexLifecycleAdapter = {
    */
   onAccountRemoved: async ({ accountId, runtime }) => {
     try {
-      const [requests, dedupe] = await Promise.all([
+      const [requests, pairing, dedupe] = await Promise.all([
         clearStoredSimplexContactRequests({ accountId }),
+        clearStoredSimplexPairingRequests({ accountId }),
         clearSimplexEventDedupeForAccount(accountId),
       ]);
-      if (requests > 0 || dedupe > 0) {
+      if (requests > 0 || pairing > 0 || dedupe > 0) {
         runtime.log?.(
-          `[${accountId}] SimpleX cleared ${requests} contact request(s) and ${dedupe} dedupe marker(s)`
+          `[${accountId}] SimpleX cleared ${requests} contact request(s), ${pairing} pairing request(s) and ${dedupe} dedupe marker(s)`
         );
       }
     } catch (error) {
@@ -64,3 +67,34 @@ export const simplexLifecycle: SimplexLifecycleAdapter = {
     }
   },
 };
+
+/**
+ * Host-level teardown (`disable`, `reset`, `delete`, `restart`).
+ *
+ * Staged files this process still tracks are deliberately left alone: the
+ * runtime reads them asynchronously after the send returns, so deleting on the
+ * way out could truncate an upload in flight. Those are reclaimed by the next
+ * `runStartupMaintenance` instead.
+ */
+export function buildSimplexRuntimeLifecycle(api: {
+  config: OpenClawConfig;
+  logger?: { info?: (message: string) => void; error?: (message: string) => void };
+}): { id: string; description: string; cleanup: () => Promise<void> } {
+  return {
+    id: "simplex-runtime",
+    description: "Close SimpleX runtime clients and reclaim aged staged media",
+    cleanup: async () => {
+      try {
+        const closed = await closeAllActiveSimplexClients();
+        if (closed > 0) {
+          api.logger?.info?.(`simplex: closed ${closed} runtime client(s)`);
+        }
+        for (const outboundDir of collectOutboundDirs(api.config)) {
+          await reapStrandedOutboundFiles({ outboundDir });
+        }
+      } catch (error) {
+        api.logger?.error?.(`simplex: runtime cleanup failed: ${describeError(error)}`);
+      }
+    },
+  };
+}
