@@ -101,6 +101,7 @@ import plugin from "./index.js";
 import setupEntry from "./setup-entry.js";
 import { simplexPlugin } from "./src/channel/plugin.js";
 import { parseSimplexExplicitTarget } from "./src/channel/shared/simplex-common.js";
+import { SIMPLEX_GATEWAY_METHOD_DESCRIPTORS } from "./src/gateway/method-descriptors.js";
 
 const simplexConfiguredChannel = {
   channels: {
@@ -343,6 +344,22 @@ describe("plugin entry registration modes", () => {
     );
     expect(setupOnly.methods.size).toBe(0);
     expect(setupRuntime.methods.size).toBe(0);
+  });
+
+  it("declares a described descriptor for exactly the methods it registers", () => {
+    const full = setupRegistration(simplexConfiguredChannel, "full");
+    const declared = SIMPLEX_GATEWAY_METHOD_DESCRIPTORS.map((descriptor) => descriptor.name);
+
+    expect([...full.methods.keys()].toSorted()).toEqual([...declared].toSorted());
+    expect(simplexPlugin.gatewayMethods).toEqual(declared);
+    expect(full.methodScopes).toEqual(
+      new Map(
+        SIMPLEX_GATEWAY_METHOD_DESCRIPTORS.map((descriptor) => [descriptor.name, descriptor.scope])
+      )
+    );
+    for (const descriptor of SIMPLEX_GATEWAY_METHOD_DESCRIPTORS) {
+      expect(descriptor.description?.trim()).toBeTruthy();
+    }
   });
 
   it("exports the setup entry plugin surface", () => {

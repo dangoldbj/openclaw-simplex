@@ -17,6 +17,10 @@ import {
   SimplexChannelConfigSchema,
 } from "../config/config-schema.js";
 import { SIMPLEX_CHANNEL_ID, stripSimplexProviderPrefix } from "../constants.js";
+import {
+  SIMPLEX_GATEWAY_METHOD_DESCRIPTORS,
+  SIMPLEX_GATEWAY_METHOD_NAMES,
+} from "../gateway/method-descriptors.js";
 import type { SimplexRuntimeCapabilityReport } from "../simplex/services/runtime-capabilities.js";
 import type { ResolvedSimplexAccount } from "../types/config.js";
 import {
@@ -228,30 +232,8 @@ export const simplexPlugin: SimplexPlugin = {
     resolveRequireMention: resolveSimplexGroupRequireMention,
     resolveToolPolicy: resolveSimplexGroupToolPolicy,
   },
-  gatewayMethods: [
-    "simplex.invite.create",
-    "simplex.invite.list",
-    "simplex.invite.revoke",
-    "simplex.runtime.status",
-    "simplex.runtime.doctor",
-    "simplex.runtime.users",
-    "simplex.runtime.activeUser",
-    "simplex.verification.show",
-    "simplex.verification.check",
-    "simplex.requests.list",
-    "simplex.requests.accept",
-    "simplex.requests.reject",
-    "simplex.groups.create",
-    "simplex.groups.link.create",
-    "simplex.groups.link.list",
-    "simplex.groups.link.revoke",
-    "simplex.groups.member.block",
-    "simplex.groups.member.deleteMessages",
-    "simplex.files.receive",
-    "simplex.files.cancel",
-    "simplex.connect.plan",
-    "simplex.connect",
-  ],
+  gatewayMethods: SIMPLEX_GATEWAY_METHOD_NAMES,
+  gatewayMethodDescriptors: SIMPLEX_GATEWAY_METHOD_DESCRIPTORS,
   outbound: buildSimplexOutbound(),
   heartbeat: buildSimplexHeartbeat(),
   status: buildSimplexStatus(),
