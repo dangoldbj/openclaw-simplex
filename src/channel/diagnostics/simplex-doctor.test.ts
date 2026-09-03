@@ -61,6 +61,70 @@ describe("simplex doctor", () => {
   });
 });
 
+describe("simplex doctor legacy config repair", () => {
+  it("declares a rule for the renamed channel and every pre-1.0 runtime field", () => {
+    const paths = (simplexDoctor.legacyConfigRules ?? []).map((rule) => rule.path.join("."));
+
+    expect(paths).toContain("channels.simplex");
+    expect(paths).toContain("channels.openclaw-simplex.managed");
+    expect(paths).toContain("channels.openclaw-simplex.wsUrl");
+    expect(paths).toContain("channels.openclaw-simplex.cliPath");
+  });
+
+  it("never claims a current root config key is legacy", () => {
+    const legacyKeys = new Set(
+      (simplexDoctor.legacyConfigRules ?? [])
+        .filter((rule) => rule.path[1] === "openclaw-simplex" && rule.path.length === 3)
+        .map((rule) => rule.path[2])
+    );
+
+    for (const current of ["connection", "accounts", "allowFrom", "name", "streaming", "enabled"]) {
+      expect(legacyKeys).not.toContain(current);
+    }
+  });
+
+  it("moves a legacy channel and its runtime fields onto the current shape", async () => {
+    const mutation = await simplexDoctor.repairConfig?.({
+      cfg: {
+        channels: { simplex: { wsUrl: "ws://127.0.0.1:5225", managed: true, dmPolicy: "pairing" } },
+      } as unknown as OpenClawConfig,
+      doctorFixCommand: "openclaw doctor --fix",
+    });
+
+    const channels = mutation?.config.channels as Record<string, Record<string, unknown>>;
+    expect(channels.simplex).toBeUndefined();
+    expect(channels["openclaw-simplex"]).toMatchObject({
+      dmPolicy: "pairing",
+      connection: { wsUrl: "ws://127.0.0.1:5225", mode: "external" },
+    });
+    expect(channels["openclaw-simplex"]?.managed).toBeUndefined();
+    expect(mutation?.changes.join("\n")).toContain("channels.simplex -> channels.openclaw-simplex");
+  });
+
+  it("tells the operator that credential files still need the CLI", async () => {
+    const mutation = await simplexDoctor.repairConfig?.({
+      cfg: { channels: { simplex: { wsUrl: "ws://127.0.0.1:5225" } } } as unknown as OpenClawConfig,
+      doctorFixCommand: "openclaw doctor --fix",
+    });
+
+    expect(mutation?.warnings?.join("\n")).toContain("openclaw simplex migrate");
+  });
+
+  it("reports no changes for a config that is already current", async () => {
+    const cfg = {
+      channels: { "openclaw-simplex": { connection: { wsUrl: "ws://127.0.0.1:5225" } } },
+    } as unknown as OpenClawConfig;
+
+    const mutation = await simplexDoctor.repairConfig?.({
+      cfg,
+      doctorFixCommand: "openclaw doctor --fix",
+    });
+
+    expect(mutation?.changes).toEqual([]);
+    expect(mutation?.config).toBe(cfg);
+  });
+});
+
 describe("simplex doctor files-folder check", () => {
   let dir: string | undefined;
   afterEach(async () => {

@@ -3,6 +3,7 @@ import { access, stat } from "node:fs/promises";
 import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
+import { LEGACY_SIMPLEX_RUNTIME_KEYS, migrateSimplexConfig } from "../../cli/migration.js";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "../../config/config-schema.js";
 import { LEGACY_SIMPLEX_CHANNEL_ID, SIMPLEX_CHANNEL_ID } from "../../constants.js";
@@ -145,10 +146,43 @@ function collectAccountWarnings(
   return warnings;
 }
 
+/**
+ * Reported by `openclaw doctor` and repaired by its fix command. The rules only
+ * load while `channels.openclaw-simplex` is configured, which is why the same
+ * migration is also registered as a setup-time config migration: a config that
+ * still uses only the legacy ids never resolves to this plugin at all.
+ */
+const legacyConfigRules = [
+  {
+    path: ["channels", LEGACY_SIMPLEX_CHANNEL_ID],
+    message: `channels.${LEGACY_SIMPLEX_CHANNEL_ID} was renamed to channels.${SIMPLEX_CHANNEL_ID} in 1.0.0.`,
+  },
+  ...[...LEGACY_SIMPLEX_RUNTIME_KEYS].toSorted().map((key) => ({
+    path: ["channels", SIMPLEX_CHANNEL_ID, key],
+    message: `channels.${SIMPLEX_CHANNEL_ID}.${key} is a pre-1.0 managed-runtime field. The external runtime is configured under connection.*.`,
+  })),
+];
+
 export const simplexDoctor: ChannelDoctorAdapter = {
   groupModel: "sender",
   dmAllowFromMode: "topOrNested",
   warnOnEmptyGroupSenderAllowlist: true,
+  legacyConfigRules,
+  repairConfig: ({ cfg }) => {
+    const migrated = migrateSimplexConfig(cfg);
+    if (!migrated) {
+      return { config: cfg, changes: [] };
+    }
+    return {
+      ...migrated,
+      // Credential files are renamed by `migrateStateFiles`, which needs async
+      // fs and so stays on the CLI. Repairing config alone would otherwise
+      // leave pairing and allowlist state orphaned under its old name.
+      warnings: [
+        `- SimpleX credential files may still use legacy names. Run openclaw simplex migrate to rename them.`,
+      ],
+    };
+  },
   collectPreviewWarnings: async ({ cfg, doctorFixCommand, env }) => {
     const warnings: string[] = [];
     const legacy = cfg.channels?.[LEGACY_SIMPLEX_CHANNEL_ID];
