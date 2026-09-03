@@ -45,7 +45,7 @@ simplex-chat -p 5225
 Then verify the configured channel endpoint:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225
 ```
 
 What to verify:
@@ -139,7 +139,7 @@ openclaw plugins info openclaw-simplex
 Write the channel endpoint config explicitly:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225
 ```
 
 Show runtime status:
@@ -181,6 +181,10 @@ useful in CI or when auditing config offline:
 OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE=1 openclaw doctor
 ```
 
+`openclaw doctor` also reports pre-1.0 config left over from the `simplex` era —
+a `channels.simplex` section, or managed-runtime fields such as `managed`,
+`cliPath`, or a top-level `wsUrl` — and repairs them under its fix command.
+
 List pending SimpleX contact requests:
 
 ```bash
@@ -189,7 +193,7 @@ openclaw simplex requests list
 
 ## Where to inspect errors
 
-- In Control UI, open the <code>SimpleX</code> tab under <code>Control</code>. Each configured account shows its WebSocket endpoint, connection state, runtime version, whether a user profile is active, and any transport security warnings. An unreachable runtime renders as an offline card rather than an error.
+- In Control UI, open the <code>SimpleX</code> tab under <code>Control</code>. Each configured account shows its WebSocket endpoint, connection state, runtime version, whether a user profile is active, and any transport security warnings. An unreachable runtime renders as an offline card rather than an error. The tab also lists pending contact requests and pairing approvals, each with the command that acts on it — a queue that is otherwise only visible from the CLI. Pending contact requests stay listed even while the runtime is down, because they are read from the plugin's own store rather than the runtime.
 - In Control UI, open <code>Control -&gt; Channels -&gt; SimpleX</code> and inspect the channel status and connection state.
 - Use <code>openclaw plugins info openclaw-simplex</code> to verify plugin enable/allow state.
 - Check the terminal or service logs for the <code>simplex-chat</code> process itself, especially if the WebSocket runtime exits or cannot bind the expected port.

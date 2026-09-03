@@ -42,6 +42,12 @@ The migration helper updates config keys and stored pairing/allowlist state so e
     ```
 
     This rewrites the old <code>simplex</code> config keys, normalizes legacy runtime fields for the external WebSocket runtime, and renames the related pairing/allowlist state files in the OpenClaw state directory.
+
+    <Info>
+      The **config** half of this now happens on its own. The plugin registers the same migration with OpenClaw, so legacy `simplex` plugin and channel ids are rewritten when the config is loaded, and `openclaw doctor` reports any leftover pre-1.0 runtime fields and repairs them under its fix command.
+
+      Running `openclaw simplex migrate` is still worth doing once, because it is the only step that also renames the pairing and allowlist **state files**. A setup-time migration is a pure function over the config, so it cannot touch the filesystem.
+    </Info>
   </Step>
 
   <Step title="Verify the new ids and pairing flow">
@@ -54,7 +60,7 @@ The migration helper updates config keys and stored pairing/allowlist state so e
     If you need to re-add the channel explicitly, use the new channel id:
 
     ```bash
-    openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+    openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225
     ```
 
     Pairing approval also uses the new channel id:

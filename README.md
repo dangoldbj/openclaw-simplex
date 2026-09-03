@@ -52,8 +52,13 @@ openclaw plugins enable openclaw-simplex
 4. Configure the channel:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225
 ```
+
+Loopback is the default, so `--ws-url` can be omitted when the runtime is on the same host. For a
+container or remote runtime, setup takes the endpoint (`--ws-url`, or `--ws-host`/`--ws-port`), the
+shared staging directory for outgoing media (`--outbound-folder`), and an explicit
+`--allow-unsafe-remote-ws` when the endpoint is plaintext `ws://` to a non-loopback host.
 
 5. Generate an invite link:
 
@@ -123,6 +128,9 @@ The key runtime boundary is explicit: OpenClaw does not own or supervise the `si
 - Shared `message` actions including `upload-file`, reactions, polls, edits, deletes, and group actions
 - Plugin tools and gateway methods for invite/address management, runtime diagnostics, runtime users, verification, contact requests, group links, moderation, file receive/cancel, and link onboarding
 - Runtime status reporting, command handling, heartbeat readiness, and Control UI configuration
+- A plugin-owned **SimpleX tab** in Control UI showing per-account runtime status, the address link and QR, plus who is waiting: pending contact requests and pairing approvals, each with the command that acts on it
+- Endpoint setup from the CLI (`--ws-url`, `--ws-host`/`--ws-port`, `--outbound-folder`, `--allow-unsafe-remote-ws`) instead of hand-edited config
+- `openclaw doctor` integration: live runtime probes, plus detection and repair of pre-1.0 config
 - External WebSocket runtime integration with explicit operator-managed lifecycle
 
 ---
@@ -194,7 +202,7 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 - OpenClaw will not start the SimpleX channel until `channels.openclaw-simplex.connection` is configured
 - Configure `channels.openclaw-simplex.connection.wsUrl` to point to the running SimpleX WebSocket endpoint
 - If `simplex-chat` is not running at that endpoint, OpenClaw marks the channel disconnected and stores the error in channel status
-- The interactive `openclaw channels add` picker may not list this external plugin yet. If it doesn't, add the account non-interactively: `openclaw channels add --channel openclaw-simplex --account default` (this writes a `default` account pointing at `ws://127.0.0.1:5225`)
+- The interactive `openclaw channels add` picker may not list this external plugin yet. If it doesn't, add the account non-interactively: `openclaw channels add --channel openclaw-simplex --account default` (this writes a `default` account pointing at `ws://127.0.0.1:5225`; pass `--ws-url` for any other endpoint)
 - The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
 
 ---
@@ -310,6 +318,10 @@ For automation and integrations, OpenClaw exposes gateway methods:
 
 Older `0.x` installs used the `simplex` plugin and channel ids.
 
+The **config** rename now applies automatically when OpenClaw loads a config that still uses the old
+ids, and `openclaw doctor` reports and repairs leftover pre-1.0 runtime fields. Run the CLI migration
+once anyway — it is the only step that also renames the pairing and allowlist state files.
+
 If you are upgrading from `0.x`, run:
 
 ```bash
@@ -356,7 +368,7 @@ Current note:
 ```bash
 openclaw plugins list
 openclaw plugins info openclaw-simplex
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225
 openclaw simplex migrate --dry-run
 openclaw simplex invite create --qr
 openclaw pairing list

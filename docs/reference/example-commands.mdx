@@ -41,7 +41,22 @@ openclaw config set plugins.allow "$(
 Configure the WebSocket endpoint:
 
 ```bash
-openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225
+```
+
+Point at a containerized or remote runtime, staging outgoing media on a shared volume:
+
+```bash
+openclaw channels add --channel openclaw-simplex \
+  --ws-url wss://simplex.internal:5225 \
+  --outbound-folder /shared/simplex-out
+```
+
+Change only the port on a local runtime, and name a second account:
+
+```bash
+openclaw channels add --channel openclaw-simplex --ws-port 5300
+openclaw channels add --channel openclaw-simplex --name support --ws-port 5301
 ```
 
 Verify that OpenClaw sees and trusts the plugin:

@@ -60,6 +60,19 @@ Plugin-side settings:
 - <code>messageTtlSeconds</code> and <code>filePolicy</code>
 - <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>
 
+The endpoint settings can be written by `openclaw channels add` instead of by hand, which is the
+quickest way to stand up a non-default deployment:
+
+```bash
+openclaw channels add --channel openclaw-simplex \
+  --ws-url wss://simplex.internal:5225 \
+  --outbound-folder /shared/simplex-out
+```
+
+`--ws-host` / `--ws-port` are the split form of `--ws-url`, and `--allow-unsafe-remote-ws` is required
+before a plaintext `ws://` endpoint on a non-loopback host will be accepted — at setup and again on
+connect. Everything else in the list above is still edited in config.
+
 Runtime-side startup flags:
 
 - relay and proxy selection: <code>--server</code>, <code>--xftp-server</code>, <code>--socks-proxy</code>, <code>--host-mode</code>, <code>--smp-proxy</code>

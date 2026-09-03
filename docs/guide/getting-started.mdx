@@ -76,7 +76,7 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     Point OpenClaw at the local SimpleX WebSocket endpoint:
 
     ```bash
-    openclaw channels add --channel openclaw-simplex --url ws://127.0.0.1:5225
+    openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225
     ```
 
     That command writes channel config equivalent to:
@@ -96,9 +96,22 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     }
     ```
 
+    Loopback is the default, so `--ws-url` can be omitted when `simplex-chat` runs on the same host with `-p 5225`. For anything else, setup takes the endpoint directly:
+
+    | Flag | Use it for |
+    | --- | --- |
+    | `--ws-url <url>` | A runtime at any `ws://` or `wss://` endpoint |
+    | `--ws-host <host>` / `--ws-port <port>` | The same thing, split, when you only need to change one |
+    | `--outbound-folder <path>` | A runtime with its own filesystem (container/remote), so outbound media can be staged where it can read it |
+    | `--allow-unsafe-remote-ws` | Plaintext `ws://` to a non-loopback host, which is refused without it |
+
     <Info>
       OpenClaw will not start the channel until <code>channels.openclaw-simplex.connection</code> exists. If <code>simplex-chat</code> is not running at that endpoint, OpenClaw will mark the channel disconnected and record the connection error in channel status.
     </Info>
+
+    <Warning>
+      A plaintext `ws://` endpoint on anything but loopback is rejected at setup and again on connect. Prefer `wss://` or a private sidecar network; pass `--allow-unsafe-remote-ws` only when the endpoint is already protected by a private network, firewall, or authenticated TLS proxy.
+    </Warning>
   </Step>
 
   <Step title="Generate the first invite and verify">
@@ -122,7 +135,11 @@ This path gets you from zero to the first invited contact talking to your OpenCl
 
     Expected result: the command prints a SimpleX invite link, and <code>--qr</code> renders a scannable QR code in the terminal.
 
-    In Control UI, the plugin adds its own <code>SimpleX</code> tab under <code>Control</code>. It shows each account's runtime status, the current address link, and a scannable QR code you can point the SimpleX app at — no terminal needed.
+    In Control UI, the plugin adds its own <code>SimpleX</code> tab under <code>Control</code>. It shows each account's runtime status, the current address link, and a scannable QR code you can point the SimpleX app at. It also lists anyone waiting on you: pending SimpleX contact requests, and pairing approvals OpenClaw is holding — each with a copy-ready command.
+
+    <Note>
+      The tab is read-only. OpenClaw authenticates plugin tabs for reads only, so accepting a request or approving a pairing is done from the command it shows you, not from a button in the page.
+    </Note>
 
     You can still open <code>Control -&gt; Channels -&gt; SimpleX</code> to inspect the channel config and runtime state.
 
