@@ -35,6 +35,22 @@ export function unregisterActiveSimplexClient(
   }
 }
 
+/**
+ * Closes every registered client. The monitor closes its own client on abort,
+ * but a plugin `disable` or `reset` tears the plugin down without aborting the
+ * gateway account, which would otherwise leave the WebSocket open.
+ */
+export async function closeAllActiveSimplexClients(): Promise<number> {
+  const clients = new Set([
+    ...activeSimplexClients.values(),
+    ...activeSimplexClientsByKey.values(),
+  ]);
+  activeSimplexClients.clear();
+  activeSimplexClientsByKey.clear();
+  await Promise.all([...clients].map((client) => client.close().catch(() => undefined)));
+  return clients.size;
+}
+
 export function getActiveSimplexClient(accountId: string): SimplexClient | undefined {
   return activeSimplexClients.get(accountId);
 }
