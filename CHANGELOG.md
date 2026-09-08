@@ -8,11 +8,12 @@ Requires OpenClaw `2026.9.3` or newer.
 
 ### Breaking
 
-- **Raised the minimum supported OpenClaw version to `2026.9.3`** (floor `>=2026.9.3-0`). Earlier releases do not load on `2026.9.x` at all: `openclaw/plugin-sdk/text-runtime` and `openclaw/plugin-sdk/channel-streaming` were removed from the SDK's `exports`, so the plugin failed with `ERR_PACKAGE_PATH_NOT_EXPORTED` before it could register anything (#32). Upgrading is the fix.
+- **Raised the minimum supported OpenClaw version to `2026.9.3`** (floor `>=2026.9.3`). Earlier releases do not load on `2026.9.x` at all: `openclaw/plugin-sdk/text-runtime` and `openclaw/plugin-sdk/channel-streaming` were removed from the SDK's `exports`, so the plugin failed with `ERR_PACKAGE_PATH_NOT_EXPORTED` before it could register anything (#32). Upgrading is the fix.
 - **`openclaw channels add --url` was replaced by `--ws-url`.** The channel now owns its setup contract, so the host's legacy generic flags are no longer registered for it and `--url` fails as an unknown option. It never actually worked: the old adapter validated the value and then discarded it, silently falling back to the hardcoded loopback endpoint.
 - **`openclaw channels add --name <id>` now creates an account named `<id>`.** It previously created `default` and ignored the name, because `normalizeAccountId(undefined)` returns a truthy `"default"`, which made the name branch unreachable.
 - **Access-group gating for channel commands is always on.** OpenClaw `2026.8` removed `commands.useAccessGroups` from `CommandsConfig`, so the setting is no longer operator-disableable.
 - **Dropped `messaging.parseExplicitTarget`.** OpenClaw `2026.8` removed the field and the host paths that consumed it; SimpleX target parsing continues through `messaging.targetResolver` and `messaging.resolveOutboundSessionRoute`, which this plugin already implemented.
+- **Version floors no longer carry the `-0` prerelease suffix on OpenClaw-parsed fields.** OpenClaw reads `x.y.z-<number>` as a *correction release* sorting **above** `x.y.z`, so a `>=2026.9.3-0` floor rejected hosts running exactly `2026.9.3`. `install.minHostVersion` and `compat.*` are now plain floors; `peerDependencies` keeps `-0`, because npm resolves it with standard semver where the suffix is what admits a prerelease-shaped `latest`.
 - **Removed the `qrcode` runtime dependency.** It had been declared but never imported; QR rendering comes from the SDK.
 
 ### Added

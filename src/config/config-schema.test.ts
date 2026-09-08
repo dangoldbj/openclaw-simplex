@@ -84,10 +84,10 @@ describe("simplex config schema manifest", () => {
     // The `-0` prerelease floor is deliberate: npm's `latest` tag has shipped as a
     // prerelease-shaped version (e.g. 2026.7.1-2), which sorts below the plain
     // release and would fail a bare `>=` gate.
-    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.9.3-0");
+    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.9.3");
     expect(packageJson.openclaw?.compat).toEqual({
-      pluginApi: ">=2026.9.3-0",
-      minGatewayVersion: "2026.9.3-0",
+      pluginApi: ">=2026.9.3",
+      minGatewayVersion: "2026.9.3",
     });
     expect(packageJson.openclaw?.build).toEqual({
       openclawVersion: "2026.9.3",

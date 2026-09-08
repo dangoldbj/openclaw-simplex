@@ -74,8 +74,8 @@
       "./dist/index.js"
     ],
     "compat": {
-      "pluginApi": ">=2026.9.3-0",
-      "minGatewayVersion": "2026.9.3-0"
+      "pluginApi": ">=2026.9.3",
+      "minGatewayVersion": "2026.9.3"
     },
     "build": {
       "openclawVersion": "2026.9.3",
@@ -154,7 +154,7 @@
     "install": {
       "npmSpec": "@dangoldbj/openclaw-simplex",
       "defaultChoice": "npm",
-      "minHostVersion": ">=2026.9.3-0"
+      "minHostVersion": ">=2026.9.3"
     }
   }
 }
