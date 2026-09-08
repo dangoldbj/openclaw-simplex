@@ -2,28 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.9.0] - 2026-09-02
+## [2.0.0] - 2026-09-08
 
-### Changed
+Requires OpenClaw `2026.9.3` or newer.
 
-- Raised the minimum supported OpenClaw version to `2026.8.2` (floor `>=2026.8.2-0`) and aligned every compatibility field with it. `2026.8.2` is the published `latest`.
-- Zod is now a direct dependency again, pinned to exactly `4.4.3`. OpenClaw `2026.8` removed the `openclaw/plugin-sdk/zod` subpath and went back to depending on zod externally, which inverts the rule introduced in 1.8.0. The pin must match the host's zod exactly: a floating range resolves to a second physical copy, and schemas built with it are rejected by `buildChannelConfigSchema` with a variance error that never names the real cause.
-- Migrated to the plugin SDK's current entrypoints: `normalizePollInput` from `media-runtime`, `resolvePollMaxSelections` from `channel-actions`, `resolveReactionLevel` from `status-helpers`, `OpenClawConfig` from `channel-core`, and the streaming preview chunk read rebuilt on `getChannelStreamingConfigObject` from `channel-streaming-config`. The `poll-runtime`, `channel-route`, `text-runtime`, `config-types`, and `channel-streaming` subpaths this plugin previously used are either untyped or absent in `2026.8.x`.
-- Access-group gating for channel commands is always on. OpenClaw `2026.8` removed `commands.useAccessGroups` from `CommandsConfig`, so the setting is no longer operator-disableable.
-- Dropped `messaging.parseExplicitTarget` from the channel adapter. OpenClaw `2026.8` removed the field, and the host paths that consumed it are gone; SimpleX target parsing continues through `messaging.targetResolver` and `messaging.resolveOutboundSessionRoute`, which this plugin already implemented.
-- SimpleX CLI commands now print a human-readable summary when stdout is a terminal and continue to print raw JSON when redirected or piped, so existing automation is unaffected. Pass `--json` to force JSON in a terminal.
-- Removed the `qrcode` runtime dependency. It had been declared but never imported since QR rendering moved to the SDK's `renderQrTerminal`.
-- Adopted the plugin-local `SimplexSetupInput` type for `cliPath`, `httpUrl`, and `url` setup fields, ahead of the `plugin-sdk-channel-setup-input-fields` compatibility removal (#30).
+### Breaking
+
+- **Raised the minimum supported OpenClaw version to `2026.9.3`** (floor `>=2026.9.3-0`). Earlier releases do not load on `2026.9.x` at all: `openclaw/plugin-sdk/text-runtime` and `openclaw/plugin-sdk/channel-streaming` were removed from the SDK's `exports`, so the plugin failed with `ERR_PACKAGE_PATH_NOT_EXPORTED` before it could register anything (#32). Upgrading is the fix.
+- **`openclaw channels add --url` was replaced by `--ws-url`.** The channel now owns its setup contract, so the host's legacy generic flags are no longer registered for it and `--url` fails as an unknown option. It never actually worked: the old adapter validated the value and then discarded it, silently falling back to the hardcoded loopback endpoint.
+- **`openclaw channels add --name <id>` now creates an account named `<id>`.** It previously created `default` and ignored the name, because `normalizeAccountId(undefined)` returns a truthy `"default"`, which made the name branch unreachable.
+- **Access-group gating for channel commands is always on.** OpenClaw `2026.8` removed `commands.useAccessGroups` from `CommandsConfig`, so the setting is no longer operator-disableable.
+- **Dropped `messaging.parseExplicitTarget`.** OpenClaw `2026.8` removed the field and the host paths that consumed it; SimpleX target parsing continues through `messaging.targetResolver` and `messaging.resolveOutboundSessionRoute`, which this plugin already implemented.
+- **Removed the `qrcode` runtime dependency.** It had been declared but never imported; QR rendering comes from the SDK.
 
 ### Added
 
-- A **SimpleX tab in Control UI**, served by the plugin over a gateway-authenticated route. It shows each configured account's WebSocket endpoint, connection state, runtime version, active user profile, transport security warnings, the current address link, and a scannable QR code. Previously the invite and QR surfaces were terminal-only, because OpenClaw's generic external channel card cannot host plugin-defined buttons.
-- `openclaw doctor` now probes each configured SimpleX runtime and reports unreachable endpoints, missing user profiles, capability mismatches, and unsafe remote transports alongside the existing static config checks. The probe is bounded, runs per account in parallel, and never fails the surrounding run. Set `OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE=1` to skip it.
+- **Runtime endpoint setup from the CLI.** `openclaw channels add --channel openclaw-simplex` now accepts `--ws-url`, `--ws-host`, `--ws-port`, `--outbound-folder`, and `--allow-unsafe-remote-ws`. Previously setup wrote a hardcoded `127.0.0.1:5225` and any other deployment had to be configured by hand-editing `openclaw.json`. Setup also runs the same endpoint security check the client runs on connect, so an unsafe endpoint fails immediately with an actionable message instead of writing config that only breaks later.
+- **A SimpleX tab in Control UI**, served by the plugin over a gateway-authenticated route. It shows each account's WebSocket endpoint, connection state, runtime version, active user profile, transport warnings, the current address link and a scannable QR code, plus who is waiting: pending contact requests and pairing approvals, each with the command that acts on it. The tab is read-only because OpenClaw authenticates plugin frames for reads only.
+- **Automatic migration of the pre-1.0 `simplex` ids.** The plugin registers its config migration with OpenClaw, so a config still using the legacy plugin and channel ids is rewritten when it is loaded. `openclaw simplex migrate` is still needed once, because it is the only step that also renames the pairing and allowlist state files.
+- **`openclaw doctor` integration.** It probes each configured runtime (unreachable endpoints, missing user profiles, capability mismatches, unsafe transports) and reports and repairs leftover pre-1.0 configuration. Set `OPENCLAW_SIMPLEX_DOCTOR_SKIP_RUNTIME_PROBE=1` to skip the probe.
+- **A runtime identity check.** After connecting, and again after every reconnect, the plugin confirms the endpoint answers as a `simplex-chat` runtime. The SimpleX WebSocket API is unauthenticated by design, so this catches a stale service, a port taken by something else, or simply the wrong port in config, instead of talking to it silently.
+- **Startup and teardown maintenance.** Outbound media staged before a crash is reclaimed at startup; runtime clients are closed and aged staged media is reclaimed when the plugin is disabled or restarted. Removing an account now clears its contact requests, pairing requests and dedupe markers.
+- **Onboarding detection.** When no SimpleX account is configured and a local runtime state directory exists, OpenClaw's setup surfaces the channel instead of leaving it undiscovered.
+- **Gateway method descriptors** carrying the scope and description of all 22 `simplex.*` methods, and a `conversationBindings` declaration so a SimpleX conversation can be bound to a specific agent.
+- SimpleX CLI commands print a human-readable summary to a terminal and the same JSON as before when redirected or piped. `--json` forces JSON in a terminal.
 
 ### Fixed
 
-- `openclaw simplex runtime doctor` now exits non-zero when the runtime is unhealthy. It previously reported problems and still exited `0`, so it could not gate a script or CI step.
-- Inbound attachments are now attached as canonical media facts instead of the deprecated `MediaPath`/`MediaPaths`/`MediaType`/`MediaUrl` context projection, which OpenClaw removes after 2026-10-01. The legacy keys were being set after the turn context had already been finalized, so they were never folded into the canonical `media` field and would have stopped reaching the agent when the compatibility shim was dropped. Attachments now also carry best-effort duration and dimension metadata.
+- Fixed the plugin failing to load on OpenClaw `2026.9.x` (#32) — see Breaking, above.
+- Fixed `openclaw simplex runtime doctor` crashing when the runtime was unreachable, which is the case it exists to diagnose. It now reports the endpoint, the underlying reason and what to do, and exits non-zero.
+- Fixed SimpleX channel references being mangled on the action path. Every agent tool call targeting a channel had its `!` sigil treated as an unmarked id and rewritten to `@!news`, so channel sends, deletes and reactions were addressed to a contact that does not exist.
+- Fixed group and channel ids being accepted as approval approvers. The contact normalizer prefixed every unmarked value with `@`, so `#ops` reached the approver guard as `@#ops` and passed the check meant to reject it — a conversation id in `allowFrom` could approve its own requests.
+- Fixed protocol ids accepting values that JavaScript numeric coercion silently changes: `"1e3"` was read as group id `1000`.
+- Inbound attachments are attached as canonical media facts instead of the deprecated `MediaPath`/`MediaPaths`/`MediaType`/`MediaUrl` projection, which OpenClaw removes after 2026-10-01. The legacy keys were set after the turn context was finalized, so they never reached the canonical `media` field. Attachments now also carry best-effort duration and dimension metadata.
+- Fixed long replies being silently dropped instead of split. `textChunkLimit` alone does nothing: the outbound dispatcher only splits when a `chunker` is also set, so messages beyond the SimpleX text limit were discarded (#17). *(Shipped in 1.8.0; recorded here because it was never in a changelog.)*
+
+### Changed
+
+- Zod is a direct dependency again, pinned to exactly `4.4.3`. OpenClaw `2026.8` removed the `openclaw/plugin-sdk/zod` subpath and depends on zod externally. The pin must match the host's zod exactly: a floating range resolves to a second physical copy, and schemas built with it are rejected by `buildChannelConfigSchema` with a variance error that never names the real cause.
+- Migrated to the plugin SDK's current entrypoints: `normalizePollInput` from `media-runtime`, `resolvePollMaxSelections` from `channel-actions`, `resolveReactionLevel` from `status-helpers`, `OpenClawConfig` from `channel-core`, and the streaming preview chunk rebuilt on `getChannelStreamingConfigObject` from `channel-streaming-config`.
+- Adopted the plugin-local `SimplexSetupInput` type ahead of the `plugin-sdk-channel-setup-input-fields` compatibility removal (#30), then replaced it entirely with the channel-owned setup contract.
+- Test coverage is measured and gated in CI. The suite is 366 tests across 45 files; statement coverage rose from 58.75% to 69.38% and branch coverage from 53.18% to 65.06%, concentrated on the inbound monitor and the agent-facing action modules.
 
 ## [1.8.0] - 2026-07-19
 

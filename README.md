@@ -139,7 +139,7 @@ The key runtime boundary is explicit: OpenClaw does not own or supervise the `si
 
 Requirements:
 
-- OpenClaw `2026.7.1` or newer
+- OpenClaw `2026.9.3` or newer
 - Node.js `22` or newer in the OpenClaw plugin host
 - an external `simplex-chat` runtime reachable over WebSocket
 
