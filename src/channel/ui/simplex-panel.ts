@@ -3,7 +3,12 @@ import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
-import { SIMPLEX_CHANNEL_ID, SIMPLEX_PLUGIN_ID } from "../../constants.js";
+import {
+  DEFAULT_SIMPLEX_WS_HOST,
+  DEFAULT_SIMPLEX_WS_PORT,
+  SIMPLEX_CHANNEL_ID,
+  SIMPLEX_PLUGIN_ID,
+} from "../../constants.js";
 import { describeError } from "../../errors.js";
 import { listSimplexContactRequests } from "../../simplex/services/contact-requests.js";
 import { listSimplexInvites } from "../../simplex/services/invites.js";
@@ -307,7 +312,9 @@ export async function renderSimplexPanelHtml(cfg: OpenClawConfig): Promise<strin
   const cards =
     accounts.length === 0
       ? `<section class="card"><h2>No SimpleX account configured</h2>
-           <p class="hint">Add a <code>channels.${SIMPLEX_CHANNEL_ID}</code> connection, then reload this tab.</p>
+           <p class="hint">Control UI can delete a channel account but cannot create one, so this is the way back:</p>
+           ${renderCommand(`openclaw channels add --channel ${SIMPLEX_CHANNEL_ID} --ws-url ws://${DEFAULT_SIMPLEX_WS_HOST}:${DEFAULT_SIMPLEX_WS_PORT}`)}
+           <p class="hint">Point <code>--ws-url</code> at wherever <code>simplex-chat</code> listens, then reload this tab.</p>
          </section>`
       : (
           await Promise.all(

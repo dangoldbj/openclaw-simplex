@@ -25,7 +25,11 @@ describe("simplex control ui panel", () => {
     const html = await renderSimplexPanelHtml({ channels: {} } as OpenClawConfig);
 
     expect(html).toContain("No SimpleX account configured");
-    expect(html).toContain("channels.openclaw-simplex");
+    // Control UI can delete a channel account but never create one, so the
+    // empty state has to carry the exact command back.
+    expect(html).toContain(
+      "openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225"
+    );
   });
 
   it("renders an offline card instead of failing when the runtime is down", async () => {
