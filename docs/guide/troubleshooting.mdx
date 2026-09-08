@@ -26,7 +26,7 @@ openclaw plugins info openclaw-simplex
 What to verify:
 
 - the package is installed in the same runtime environment where OpenClaw is running
-- <code>plugins.allow</code> includes <code>openclaw-simplex</code>
+- <code>plugins.allow</code> includes <code>openclaw-simplex</code> — but only if you use an allowlist at all. When <code>plugins.allow</code> is unset, every plugin is allowed and nothing needs adding; setting it to a single entry would disable every other plugin.
 - the plugin is enabled
 - OpenClaw has been restarted after any manual config or install changes
 

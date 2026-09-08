@@ -185,7 +185,12 @@ Enable:
 openclaw plugins enable openclaw-simplex
 ```
 
-Trust the plugin:
+Trust the plugin **only if you already maintain an allowlist**:
+
+> **Only if you already use an allowlist.** `plugins.allow` is *exclusive*: if it is unset, every
+> plugin is allowed, and setting it to a single entry disables every other plugin. Check first with
+> `openclaw config get plugins.allow --json`. If that prints `null`, skip this step — the plugin is
+> enabled without it.
 
 ```bash
 openclaw config set plugins.allow "$(

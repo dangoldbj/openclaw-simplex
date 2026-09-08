@@ -61,7 +61,19 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     openclaw plugins enable openclaw-simplex
     ```
 
-    Trust it explicitly so OpenClaw can load the channel:
+    <Warning>
+      Only do this if you already maintain an allowlist. `plugins.allow` is **exclusive**: when it is
+      unset every plugin is allowed, and setting it to a single entry disables every other plugin —
+      including your model provider. Check first:
+
+      ```bash
+      openclaw config get plugins.allow --json
+      ```
+
+      If that prints `null`, skip this step. The channel loads without it.
+    </Warning>
+
+    If you do maintain an allowlist, append this plugin to it rather than replacing it:
 
     ```bash
     openclaw config set plugins.allow "$(
