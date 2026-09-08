@@ -1,6 +1,6 @@
 {
   "name": "@dangoldbj/openclaw-simplex",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "SimpleX channel plugin for OpenClaw using an external WebSocket runtime",
   "homepage": "https://openclaw-simplex.mintlify.app/",
   "repository": {
@@ -55,7 +55,7 @@
     "zod": "4.4.3"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.8.2-0"
+    "openclaw": ">=2026.9.2-0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
@@ -64,7 +64,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.11",
-    "openclaw": "2026.8.2",
+    "openclaw": "2026.9.2",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
@@ -74,12 +74,12 @@
       "./dist/index.js"
     ],
     "compat": {
-      "pluginApi": ">=2026.8.2-0",
-      "minGatewayVersion": "2026.8.2-0"
+      "pluginApi": ">=2026.9.2-0",
+      "minGatewayVersion": "2026.9.2-0"
     },
     "build": {
-      "openclawVersion": "2026.8.2",
-      "pluginSdkVersion": "2026.8.2"
+      "openclawVersion": "2026.9.2",
+      "pluginSdkVersion": "2026.9.2"
     },
     "channel": {
       "id": "openclaw-simplex",
@@ -154,7 +154,7 @@
     "install": {
       "npmSpec": "@dangoldbj/openclaw-simplex",
       "defaultChoice": "npm",
-      "minHostVersion": ">=2026.8.2-0"
+      "minHostVersion": ">=2026.9.2-0"
     }
   }
 }
