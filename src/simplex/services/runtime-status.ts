@@ -1,10 +1,13 @@
+import { describeError } from "../../errors.js";
 import type { SimplexAccountScope } from "../../types/config.js";
 import { resolveRuntimeAccount } from "../runtime/account.js";
 import { describeSimplexWsEndpointSecurity } from "../runtime/security.js";
 import { getActiveSimplexClient } from "../runtime/transport.js";
 import {
   collectSimplexCapabilityIssues,
+  createUnreachableSimplexClient,
   probeSimplexRuntimeCapabilities,
+  type SimplexCapabilityClient,
   type SimplexRuntimeCapabilityReport,
 } from "./runtime-capabilities.js";
 
@@ -42,7 +45,7 @@ export type SimplexRuntimeStatusResult = {
 };
 
 export async function getSimplexRuntimeStatus(
-  params: SimplexAccountScope
+  params: SimplexAccountScope & { client?: SimplexCapabilityClient }
 ): Promise<SimplexRuntimeStatusResult> {
   const account = resolveRuntimeAccount(params.cfg, params.accountId);
   const activeClient = getActiveSimplexClient(account.accountId);
@@ -52,7 +55,10 @@ export async function getSimplexRuntimeStatus(
   });
   const fileAutoAccept =
     account.config.filePolicy?.autoAccept ?? account.config.connection?.autoAcceptFiles ?? false;
-  const details = await probeSimplexRuntimeCapabilities({ account });
+  const details = await probeSimplexRuntimeCapabilities({
+    account,
+    ...(params.client ? { client: params.client } : {}),
+  });
 
   return {
     accountId: account.accountId,
@@ -91,8 +97,23 @@ export async function getSimplexRuntimeStatus(
 export async function doctorSimplexRuntime(
   params: SimplexAccountScope
 ): Promise<SimplexRuntimeStatusResult & { ok: boolean; issues: string[] }> {
-  const status = await getSimplexRuntimeStatus(params);
   const issues: string[] = [];
+  let status: SimplexRuntimeStatusResult;
+  try {
+    status = await getSimplexRuntimeStatus(params);
+  } catch (error) {
+    // An unreachable runtime is the case this command exists to diagnose, so it
+    // has to be reported rather than thrown. Re-running the probe with a client
+    // that fails every command yields a complete report whose capabilities all
+    // carry the connection error.
+    status = await getSimplexRuntimeStatus({
+      ...params,
+      client: createUnreachableSimplexClient(error),
+    });
+    issues.push(
+      `SimpleX runtime at ${status.wsUrl ?? "the configured endpoint"} is unreachable: ${describeError(error)}. Start the simplex-chat runtime, or correct connection.wsUrl.`
+    );
+  }
   if (!status.configured) {
     issues.push("SimpleX account is not configured.");
   }

@@ -192,7 +192,11 @@ describe("simplex doctor runtime probe", () => {
     } as OpenClawConfig;
 
     const warnings = await previewWarnings(cfg, {});
-    expect(warnings.join("\n")).toContain("ws://127.0.0.1:1");
+    const text = warnings.join("\n");
+    expect(text).toContain("ws://127.0.0.1:1");
+    // The probe now diagnoses rather than throwing, so the endpoint and the
+    // underlying reason both survive into the report.
+    expect(text).toContain("is unreachable");
     expect(warnings.join("\n")).toContain("simplex-chat runtime");
   });
 

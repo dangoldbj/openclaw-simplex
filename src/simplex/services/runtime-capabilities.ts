@@ -451,6 +451,29 @@ async function collectWithClient(
   };
 }
 
+/**
+ * A client whose every command fails with the connection error.
+ *
+ * `collectWithClient` guards each probe individually, so feeding it this yields
+ * a complete report in which every capability is an `error` state carrying the
+ * real reason. That lets the doctor describe an unreachable runtime instead of
+ * throwing on the way to describing it.
+ */
+export function createUnreachableSimplexClient(error: unknown): SimplexCapabilityClient {
+  const reason = error instanceof Error ? error : new Error(describeError(error));
+  const fail = async (): Promise<never> => {
+    throw reason;
+  };
+  return {
+    getActiveUser: fail,
+    getAddress: fail,
+    listContacts: fail,
+    listGroups: fail,
+    listUsers: fail,
+    runCommand: fail,
+  };
+}
+
 export async function probeSimplexRuntimeCapabilities(
   params: SimplexRuntimeCapabilityProbeOptions
 ): Promise<SimplexRuntimeCapabilityProbeData> {
