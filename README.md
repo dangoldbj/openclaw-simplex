@@ -140,7 +140,7 @@ The key runtime boundary is explicit: OpenClaw does not own or supervise the `si
 Requirements:
 
 - OpenClaw `2026.9.3` or newer
-- Node.js `22` or newer in the OpenClaw plugin host
+- Node.js as required by your OpenClaw release. `2026.9.3` needs `>=24.16.0 <25` or `>=26.1.0` — Node 22, 23 and 25 are **not** supported. Check with `npm view openclaw engines.node`
 - an external `simplex-chat` runtime reachable over WebSocket
 
 ### 1. Install SimpleX CLI (`simplex-chat`)
@@ -209,6 +209,8 @@ This appends `openclaw-simplex` to the existing allowlist instead of replacing i
 - If `simplex-chat` is not running at that endpoint, OpenClaw marks the channel disconnected and stores the error in channel status
 - The interactive `openclaw channels add` picker may not list this external plugin yet. If it doesn't, add the account non-interactively: `openclaw channels add --channel openclaw-simplex --account default` (this writes a `default` account pointing at `ws://127.0.0.1:5225`; pass `--ws-url` for any other endpoint)
 - The current Control UI SimpleX card is a config editor; it does not expose custom invite buttons for this plugin
+- The plugin's own **SimpleX tab** is read-only: OpenClaw authenticates plugin tabs for reads only, so the tab shows state plus the command that acts on it rather than buttons
+- Control UI can **delete** a channel account but cannot create one. If you delete the SimpleX account there, recreate it with `openclaw channels add --channel openclaw-simplex --ws-url ws://127.0.0.1:5225`
 
 ---
 
