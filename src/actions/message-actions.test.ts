@@ -229,6 +229,18 @@ describe("simplex message actions", () => {
       await expect(run("edit", { messageId: 7 })).rejects.toThrow(/text required/);
     });
 
+    it("refuses text that needs more than one message", async () => {
+      media.buildComposedMessages.mockResolvedValueOnce([
+        { msgContent: { type: "text", text: "first part" }, mentions: {} },
+        { msgContent: { type: "text", text: "second part" }, mentions: {} },
+      ]);
+
+      await expect(run("edit", { messageId: 7, text: "long" })).rejects.toThrow(
+        /exceeds the SimpleX message size limit/
+      );
+      expect(client.editMessage).not.toHaveBeenCalled();
+    });
+
     it("refuses when the replacement composes to nothing", async () => {
       media.buildComposedMessages.mockResolvedValueOnce([]);
 

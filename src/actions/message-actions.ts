@@ -36,12 +36,14 @@ async function resolveEditMessage(params: {
     accountId: params.account.accountId,
     text: params.text,
   });
-  if (composed.length === 0) {
-    throw new Error("text required");
-  }
-  const first = composed[0];
+  const [first, ...overflow] = composed;
   if (!first) {
     throw new Error("text required");
+  }
+  // An edit replaces one message, so text that needs a second one cannot be
+  // applied without silently losing the rest.
+  if (overflow.length > 0) {
+    throw new Error("edited text exceeds the SimpleX message size limit");
   }
   return first;
 }

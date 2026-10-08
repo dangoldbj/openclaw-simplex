@@ -185,6 +185,7 @@ async function handleSimplexEvent(params: {
   client: SimplexClient;
 }): Promise<void> {
   const { event, account, cfg, runtime, statusSink, client } = params;
+  const logError = (message: string) => runtime.error?.(`[${account.accountId}] ${message}`);
   statusSink?.({ lastEventAt: Date.now() });
   if (event.type === "receivedContactRequest") {
     await recordSimplexContactRequest({
@@ -313,6 +314,8 @@ async function handleSimplexEvent(params: {
           replyToId: currentMessageId,
           send: ({ chatRef, composedMessages, ttl, liveMessage }) =>
             client.sendMessages({ chatRef, composedMessages, ttl, liveMessage }),
+          lookupQuote: (target) => client.getChatItemContent(target),
+          logError,
         });
         statusSink?.({ lastOutboundAt: Date.now() });
       },
@@ -364,6 +367,8 @@ async function handleSimplexEvent(params: {
           replyToId: currentMessageId,
           send: ({ chatRef, composedMessages, ttl, liveMessage }) =>
             client.sendMessages({ chatRef, composedMessages, ttl, liveMessage }),
+          lookupQuote: (target) => client.getChatItemContent(target),
+          logError,
         });
       },
       statusSink,
