@@ -5,6 +5,7 @@ import type {
   SimplexGroupMemberRole,
   SimplexGroupProfile,
   SimplexLogger,
+  SimplexMsgContent,
   SimplexReaction,
   SimplexRuntimeEvent,
 } from "../../types/simplex.js";
@@ -21,6 +22,7 @@ import {
   buildDeleteChatItemCommand,
   buildDeleteGroupLinkCommand,
   buildDeleteGroupMemberMessagesCommand,
+  buildGetChatItemsAroundCommand,
   buildLeaveGroupCommand,
   buildListContactsCommand,
   buildListGroupMembersCommand,
@@ -36,6 +38,7 @@ import {
   buildShowGroupLinkCommand,
   buildUpdateChatItemCommand,
   buildUpdateGroupProfileCommand,
+  findSimplexChatItemMsgContent,
   INVITE_COMMANDS,
 } from "./commands.js";
 import { extractSimplexLink } from "./links.js";
@@ -108,6 +111,14 @@ export class SimplexClient {
   }): Promise<unknown[]> {
     const payload = await this.runCommand(buildSendMessagesCommand(params));
     return readSimplexArrayField(payload, ["chatItems", "items"]);
+  }
+
+  async getChatItemContent(params: {
+    chatRef: string;
+    chatItemId: number;
+  }): Promise<SimplexMsgContent | undefined> {
+    const payload = await this.runCommand(buildGetChatItemsAroundCommand({ ...params, count: 1 }));
+    return findSimplexChatItemMsgContent(payload, params.chatItemId);
   }
 
   async reactToMessage(params: {

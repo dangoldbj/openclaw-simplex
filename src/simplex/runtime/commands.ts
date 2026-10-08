@@ -4,6 +4,7 @@ import type {
   SimplexComposedMessage,
   SimplexDeleteMode,
   SimplexGroupProfile,
+  SimplexMsgContent,
   SimplexReaction,
 } from "../../types/simplex.js";
 import { normalizeSimplexChatRef } from "../chat-ref.js";
@@ -205,6 +206,62 @@ export function resolveSimplexChatItemId(chatItem: unknown): string | undefined 
     return raw.trim();
   }
   return undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+const MSG_CONTENT_TYPES: ReadonlySet<string> = new Set<SimplexMsgContent["type"]>([
+  "text",
+  "link",
+  "image",
+  "video",
+  "voice",
+  "file",
+  "report",
+  "chat",
+  "unknown",
+]);
+
+function isMsgContentType(value: unknown): value is SimplexMsgContent["type"] {
+  return typeof value === "string" && MSG_CONTENT_TYPES.has(value);
+}
+
+/**
+ * Finds one item's message content in an `apiChat` response. The payload is
+ * untrusted, so anything not shaped like message content yields `undefined`.
+ */
+export function findSimplexChatItemMsgContent(
+  payload: unknown,
+  chatItemId: number
+): SimplexMsgContent | undefined {
+  const chat = isRecord(payload) ? payload.chat : undefined;
+  const items = isRecord(chat) && Array.isArray(chat.chatItems) ? chat.chatItems : [];
+  for (const item of items) {
+    if (!isRecord(item) || !isRecord(item.meta) || item.meta.itemId !== chatItemId) {
+      continue;
+    }
+    const msgContent = isRecord(item.content) ? item.content.msgContent : undefined;
+    if (!isRecord(msgContent) || typeof msgContent.text !== "string") {
+      return undefined;
+    }
+    // Content types newer than this plugin still count toward the quote's size.
+    const type = isMsgContentType(msgContent.type) ? msgContent.type : "unknown";
+    return { ...msgContent, type, text: msgContent.text };
+  }
+  return undefined;
+}
+
+export function buildGetChatItemsAroundCommand(params: {
+  chatRef: string;
+  chatItemId: number;
+  count: number;
+}): string {
+  const chatRef = normalizeChatRefToken(params.chatRef);
+  const chatItemId = normalizeChatItemIdToken(params.chatItemId);
+  const count = normalizePositiveIntegerToken(params.count, "item count");
+  return `/_get chat ${chatRef} around=${chatItemId} count=${count}`;
 }
 
 export function buildSendMessagesCommand(params: {

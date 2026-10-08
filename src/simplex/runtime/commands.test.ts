@@ -3,8 +3,10 @@ import {
   buildConnectCommand,
   buildConnectPlanCommand,
   buildDeleteChatItemCommand,
+  buildGetChatItemsAroundCommand,
   buildSendMessagesCommand,
   buildUpdateChatItemCommand,
+  findSimplexChatItemMsgContent,
   parseSimplexNumericId,
 } from "./commands.js";
 
@@ -64,5 +66,53 @@ describe("simplex command helpers", () => {
       "invalid SimpleX connection link"
     );
     expect(() => buildConnectPlanCommand("")).toThrow("invalid SimpleX connection link");
+  });
+
+  it("builds a lookup for the items around one chat item", () => {
+    expect(buildGetChatItemsAroundCommand({ chatRef: "@3", chatItemId: 52, count: 1 })).toBe(
+      "/_get chat @3 around=52 count=1"
+    );
+    expect(() =>
+      buildGetChatItemsAroundCommand({ chatRef: "@3", chatItemId: 52, count: 0 })
+    ).toThrow();
+  });
+
+  it("finds one item's message content in an apiChat response", () => {
+    const image = { type: "image", text: "caption", image: "data:image/jpg;base64,AAAA" };
+    const payload = {
+      type: "apiChat",
+      chat: {
+        chatItems: [
+          {
+            meta: { itemId: 51 },
+            content: { type: "sndMsgContent", msgContent: { type: "text", text: "hi" } },
+          },
+          { meta: { itemId: 52 }, content: { type: "rcvMsgContent", msgContent: image } },
+        ],
+      },
+    };
+
+    expect(findSimplexChatItemMsgContent(payload, 52)).toEqual(image);
+    expect(findSimplexChatItemMsgContent(payload, 53)).toBeUndefined();
+    expect(findSimplexChatItemMsgContent({ chat: "nope" }, 52)).toBeUndefined();
+  });
+
+  it("keeps content types newer than the plugin, so their size still counts", () => {
+    const payload = {
+      chat: {
+        chatItems: [
+          {
+            meta: { itemId: 7 },
+            content: { msgContent: { type: "sticker", text: "", data: "x" } },
+          },
+        ],
+      },
+    };
+
+    expect(findSimplexChatItemMsgContent(payload, 7)).toEqual({
+      type: "unknown",
+      text: "",
+      data: "x",
+    });
   });
 });
