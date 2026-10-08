@@ -123,6 +123,11 @@ const accountScopedUiHints = withAccountScope({
     help: 'Allowed SimpleX senders for direct messages. Use ["*"] only when you intentionally want broad DM reachability.',
     tags: ["security"],
   },
+  replyToMode: {
+    label: "Reply Quoting",
+    help: 'Which replies quote the message they answer: "first" (default) quotes only the first message of a reply, "all" quotes every message, "off" never quotes.',
+    advanced: true,
+  },
   blockStreaming: {
     label: "Block Streaming Replies",
     help: "Send streaming replies in coalesced blocks instead of incremental partial chunks.",

@@ -9,6 +9,7 @@ import {
   toInboundMediaFactsWithMetadata,
 } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
+import { resolveSimplexReplyToMode } from "../../config/accounts.js";
 import { DEFAULT_SIMPLEX_FILES_FOLDER } from "../../constants.js";
 import { expandHome } from "../../fs-paths.js";
 import type { SimplexClient } from "../../simplex/runtime/client.js";
@@ -300,11 +301,13 @@ export async function dispatchInbound(params: {
 }): Promise<void> {
   const { pending, mediaPath, mediaType, mediaUnavailable } = params;
   const core = getSimplexRuntime();
+  // The live draft is the reply's first message, so it is quoted unless
+  // quoting is off; the host's reply-to mode does not see partial drafts.
   const liveReply = createSimplexLiveReplyController({
     cfg: pending.cfg,
     account: pending.account,
     chatRef: pending.chatRef,
-    replyToId: pending.replyToId,
+    replyToId: resolveSimplexReplyToMode(pending.account) === "off" ? undefined : pending.replyToId,
     logError: (message) => pending.runtime.error?.(`[${pending.account.accountId}] ${message}`),
   });
   // Only `Body` carries the notice. `RawBody`/`CommandBody` stay the literal

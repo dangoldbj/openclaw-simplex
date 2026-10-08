@@ -364,7 +364,8 @@ async function handleSimplexEvent(params: {
           mediaUrl: payload.mediaUrl,
           mediaUrls: payload.mediaUrls,
           audioAsVoice: payload.audioAsVoice,
-          replyToId: currentMessageId,
+          // Resolved by the host from the channel's reply-to mode.
+          replyToId: payload.replyToId,
           send: ({ chatRef, composedMessages, ttl, liveMessage }) =>
             client.sendMessages({ chatRef, composedMessages, ttl, liveMessage }),
           lookupQuote: (target) => client.getChatItemContent(target),

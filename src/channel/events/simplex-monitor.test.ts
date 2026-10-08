@@ -11,6 +11,7 @@ type DispatchCall = {
     chatRef?: string;
     eventKey?: unknown;
     ctxPayload?: Record<string, unknown>;
+    sendPayload?: (payload: { text?: string; replyToId?: string }) => Promise<void>;
   };
   mediaPath?: string;
   mediaType?: string;
@@ -420,6 +421,20 @@ describe("simplex monitor event handling", () => {
       const pending = mocks.dispatchInbound.mock.calls[0]?.[0]?.pending;
       expect(pending?.chatRef).toBe("@5");
       expect(pending?.eventKey).toEqual({ accountId: "default", chatId: 5, messageId: 11 });
+    });
+
+    it("quotes a reply only where the host's reply-to mode placed a target", async () => {
+      const { emit } = await startMonitor();
+
+      await emit({ type: "newChatItems", chatItems: [directItem()] });
+      const pending = mocks.dispatchInbound.mock.calls[0]?.[0]?.pending;
+      await pending?.sendPayload?.({ text: "first", replyToId: "11" });
+      await pending?.sendPayload?.({ text: "second" });
+
+      const replyTargets = mocks.buildAndSendSimplexMessages.mock.calls.map(
+        (call: unknown[]) => (call[0] as { replyToId?: unknown }).replyToId
+      );
+      expect(replyTargets).toEqual(["11", undefined]);
     });
 
     it("does not mark an event seen before it has been dispatched", async () => {
