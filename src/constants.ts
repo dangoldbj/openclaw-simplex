@@ -20,8 +20,9 @@ export const SIMPLEX_MAX_ENCODED_MSG_BYTES = 15602;
 
 /**
  * Room left for what wraps `msgContent` on the wire: chat version range, shared
- * message id, the quote's `msgRef`, ttl and live flags. Roughly 300 bytes in
- * practice; a file invitation is accounted for separately.
+ * message id, the quote's `msgRef`, ttl and live flags. Measured against
+ * simplex-chat 6.4.8: 89 bytes, about 207 with a quote. The margin absorbs
+ * fields other versions may add; a file invitation is accounted for separately.
  */
 export const SIMPLEX_MSG_ENVELOPE_RESERVE_BYTES = 512;
 
