@@ -125,7 +125,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `draftChunk.maxChars` | Maximum characters shown in a single live draft update. The final reply is never truncated. |
 | `draftChunk.breakPreference` | Where a live draft update trims back to: `paragraph` \| `newline` \| `sentence`. |
 | `messageTtlSeconds` | Optional SimpleX message time-to-live applied to outbound text, media, poll, action, and reply sends for this account. |
-| `replyToMode` | Which replies quote the message they answer: `first` (default) quotes only the first message of a reply, `all` quotes every message, `off` never quotes. A SimpleX quote carries the quoted message, including a photo's thumbnail, so quoting every message repeats it. |
+| `replyToMode` | Which replies quote the message they answer: `first` (default) quotes only the first message of a reply, `all` quotes every message, `off` never quotes. A SimpleX quote carries the quoted message, including a photo's thumbnail, so quoting every message repeats it. A reply larger than SimpleX's message limit (about 15.6 KB, quote included) is sent as several messages, and the quoted first message is shortened to make room for the quote. |
 | `filePolicy.autoAccept` | Preferred file auto-accept setting. If omitted, the legacy `connection.autoAcceptFiles` setting is used. |
 | `filePolicy.maxSizeMb` | Operator-facing receive-side file size policy for diagnostics. |
 | `experimentalChannels` | Enables capability-gated parsing for SimpleX channel-like targets such as `channel:<id>` and `!<id>`. This does not claim full SimpleX Channels support. |
