@@ -4,6 +4,11 @@ import { resolveMediaBufferPath } from "openclaw/plugin-sdk/media-store";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import type { SimplexAccountScope } from "../../types/config.js";
 import type { SimplexComposedMessage, SimplexMsgContent } from "../../types/simplex.js";
+import {
+  measureSimplexContentOverheadBytes,
+  measureSimplexQuoteBytes,
+  planSimplexTextParts,
+} from "../messaging/simplex-message-fit.js";
 import { getSimplexRuntime } from "../runtime.js";
 import {
   isSimplexReadablePath,
@@ -140,13 +145,28 @@ function buildMediaMsgContent(params: {
   };
 }
 
+export type SimplexOutboundQuote = {
+  itemId: number;
+  /** The quoted item's content, which `simplex-chat` embeds in the reply. */
+  content: SimplexMsgContent;
+};
+
+function textMessage(text: string): SimplexComposedMessage {
+  return { msgContent: { type: "text", text }, mentions: {} };
+}
+
+/**
+ * Composes outbound messages that each fit `simplex-chat`'s encoded size limit.
+ * Text that does not fit is continued in further text messages, and a quote
+ * rides on the first message only.
+ */
 export async function buildComposedMessages(
   params: SimplexAccountScope & {
     text?: string;
     mediaUrls?: string[];
     mediaUrl?: string;
     audioAsVoice?: boolean;
-    quotedItemId?: number;
+    quote?: SimplexOutboundQuote;
   }
 ): Promise<SimplexComposedMessage[]> {
   const text = params.text ?? "";
@@ -155,17 +175,20 @@ export async function buildComposedMessages(
     : params.mediaUrl
       ? [params.mediaUrl]
       : [];
-  const composedMessages: SimplexComposedMessage[] = [];
 
   if (mediaList.length === 0) {
-    if (text) {
-      composedMessages.push({
-        msgContent: { type: "text", text },
-        quotedItemId: params.quotedItemId,
-        mentions: {},
-      });
-    }
-    return composedMessages;
+    const empty = textMessage("").msgContent;
+    const plan = planSimplexTextParts({
+      text,
+      overheadBytes: measureSimplexContentOverheadBytes(empty),
+      quoteBytes: params.quote
+        ? measureSimplexQuoteBytes(params.quote.content, empty.type)
+        : undefined,
+    });
+    return plan.parts.map((part, index) => ({
+      ...textMessage(part),
+      ...(plan.quoted && index === 0 ? { quotedItemId: params.quote?.itemId } : {}),
+    }));
   }
 
   const maxBytes = resolveSimplexMediaMaxBytes({
@@ -181,27 +204,43 @@ export async function buildComposedMessages(
     accountId: params.accountId,
   });
 
-  for (let i = 0; i < mediaList.length; i += 1) {
-    const mediaUrl = mediaList[i];
+  const composedMessages: SimplexComposedMessage[] = [];
+  const continuation: string[] = [];
+  for (const mediaUrl of mediaList) {
     if (!mediaUrl) {
       continue;
     }
     const resolved = await resolveMediaPath({ mediaUrl, maxBytes, outboundDir, outboundClientDir });
-    const caption = i === 0 ? text : "";
     const msgContent = buildMediaMsgContent({
-      text: caption,
+      text: "",
       mediaPath: resolved.path,
       contentType: resolved.contentType,
       fileName: resolved.fileName,
       audioAsVoice: params.audioAsVoice,
     });
+    const first = composedMessages.length === 0;
+    // The caption and quote belong to the first media message; caption text
+    // that does not fit beside them continues as text after the media.
+    const plan = first
+      ? planSimplexTextParts({
+          text,
+          overheadBytes: measureSimplexContentOverheadBytes(msgContent, {
+            fileName: resolved.fileName ?? path.basename(resolved.path),
+          }),
+          quoteBytes: params.quote
+            ? measureSimplexQuoteBytes(params.quote.content, msgContent.type)
+            : undefined,
+        })
+      : { parts: [], quoted: false };
+    const [caption = "", ...rest] = plan.parts;
+    continuation.push(...rest);
     composedMessages.push({
       fileSource: { filePath: resolved.path },
-      msgContent,
-      quotedItemId: params.quotedItemId,
+      msgContent: { ...msgContent, text: caption },
+      ...(plan.quoted ? { quotedItemId: params.quote?.itemId } : {}),
       mentions: {},
     });
   }
 
-  return composedMessages;
+  return [...composedMessages, ...continuation.map(textMessage)];
 }

@@ -2,23 +2,19 @@ import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { MessageReceipt } from "openclaw/plugin-sdk/channel-outbound";
 import { getChannelStreamingConfigObject } from "openclaw/plugin-sdk/channel-streaming-config";
 import { SIMPLEX_TEXT_CHUNK_LIMIT } from "../../constants.js";
+import { describeError } from "../../errors.js";
 import { parseSimplexNumericId, resolveSimplexChatItemId } from "../../simplex/runtime/api.js";
 import { withSimplexClient } from "../../simplex/runtime/transport.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
-import type { SimplexComposedMessage } from "../../types/simplex.js";
-import { buildComposedMessages } from "../media/simplex-media.js";
+import type { SimplexComposedMessage, SimplexMsgContent } from "../../types/simplex.js";
+import { buildComposedMessages, type SimplexOutboundQuote } from "../media/simplex-media.js";
 
 export async function sendSimplexComposedMessages(params: {
   chatRef: string;
   composedMessages: SimplexComposedMessage[];
   ttl?: number;
   liveMessage?: boolean;
-  send: (params: {
-    chatRef: string;
-    composedMessages: SimplexComposedMessage[];
-    ttl?: number;
-    liveMessage?: boolean;
-  }) => Promise<unknown[]>;
+  send: SimplexSendFn;
 }): Promise<{ messageId?: string; receipt?: MessageReceipt }> {
   if (params.composedMessages.length === 0) {
     return {};
@@ -54,6 +50,64 @@ export async function sendSimplexComposedMessages(params: {
   };
 }
 
+type SimplexSendFn = (params: {
+  chatRef: string;
+  composedMessages: SimplexComposedMessage[];
+  ttl?: number;
+  liveMessage?: boolean;
+}) => Promise<unknown[]>;
+
+type SimplexQuoteLookup = (params: {
+  chatRef: string;
+  chatItemId: number;
+}) => Promise<SimplexMsgContent | undefined>;
+
+/**
+ * `simplex-chat` embeds the quoted item's content in the reply, so the quote's
+ * size must be known before the reply can be sized. A quote that cannot be
+ * looked up is dropped: the reply matters more than its reference.
+ */
+async function resolveOutboundQuote(params: {
+  account: ResolvedSimplexAccount;
+  chatRef: string;
+  replyToId?: string | number | null;
+  lookupQuote?: SimplexQuoteLookup;
+  logError?: (message: string) => void;
+}): Promise<SimplexOutboundQuote | undefined> {
+  if (params.replyToId === undefined || params.replyToId === null) {
+    return undefined;
+  }
+  const itemId = parseSimplexNumericId(params.replyToId);
+  if (itemId === null) {
+    return undefined;
+  }
+  const lookup: SimplexQuoteLookup =
+    params.lookupQuote ??
+    ((target) =>
+      withSimplexClient({
+        account: params.account,
+        run: (client) => client.getChatItemContent(target),
+      }));
+  try {
+    const content = await lookup({ chatRef: params.chatRef, chatItemId: itemId });
+    if (content) {
+      return { itemId, content };
+    }
+    params.logError?.(`SimpleX reply sent unquoted: item ${itemId} not found`);
+  } catch (err) {
+    params.logError?.(`SimpleX reply sent unquoted: ${describeError(err)}`);
+  }
+  return undefined;
+}
+
+function sendWithAccountClient(account: ResolvedSimplexAccount): SimplexSendFn {
+  return ({ chatRef, composedMessages, ttl, liveMessage }) =>
+    withSimplexClient({
+      account,
+      run: (client) => client.sendMessages({ chatRef, composedMessages, ttl, liveMessage }),
+    });
+}
+
 export async function buildAndSendSimplexMessages(params: {
   cfg: OpenClawConfig;
   account: ResolvedSimplexAccount;
@@ -65,17 +119,11 @@ export async function buildAndSendSimplexMessages(params: {
   replyToId?: string | number | null;
   ttl?: number;
   liveMessage?: boolean;
-  send?: (params: {
-    chatRef: string;
-    composedMessages: SimplexComposedMessage[];
-    ttl?: number;
-    liveMessage?: boolean;
-  }) => Promise<unknown[]>;
+  send?: SimplexSendFn;
+  lookupQuote?: SimplexQuoteLookup;
+  logError?: (message: string) => void;
 }): Promise<{ messageId?: string; receipt?: MessageReceipt }> {
-  const quotedItemId =
-    params.replyToId === undefined || params.replyToId === null
-      ? undefined
-      : parseSimplexNumericId(params.replyToId);
+  const quote = await resolveOutboundQuote(params);
   const composedMessages = await buildComposedMessages({
     cfg: params.cfg,
     accountId: params.account.accountId,
@@ -83,21 +131,14 @@ export async function buildAndSendSimplexMessages(params: {
     mediaUrl: params.mediaUrl,
     mediaUrls: params.mediaUrls,
     audioAsVoice: params.audioAsVoice,
-    quotedItemId: quotedItemId ?? undefined,
+    quote,
   });
   return await sendSimplexComposedMessages({
     chatRef: params.chatRef,
     composedMessages,
     ttl: params.ttl ?? params.account.config.messageTtlSeconds,
     liveMessage: params.liveMessage,
-    send:
-      params.send ??
-      (({ chatRef, composedMessages: messages, ttl, liveMessage }) =>
-        withSimplexClient({
-          account: params.account,
-          run: (client) =>
-            client.sendMessages({ chatRef, composedMessages: messages, ttl, liveMessage }),
-        })),
+    send: params.send ?? sendWithAccountClient(params.account),
   });
 }
 
@@ -263,14 +304,30 @@ export function createSimplexLiveReplyController(params: {
   let lastSentAt = 0;
   let failed = false;
 
+  // Only the first part goes out live: it is the item later edits update. The
+  // final edit re-plans the whole text and sends whatever no longer fits.
   async function sendInitial(text: string): Promise<boolean> {
-    const sent = await buildAndSendSimplexMessages({
-      cfg: params.cfg,
+    const quote = await resolveOutboundQuote({
       account: params.account,
       chatRef: params.chatRef,
-      text,
       replyToId: params.replyToId,
+      logError: params.logError,
+    });
+    const [first] = await buildComposedMessages({
+      cfg: params.cfg,
+      accountId: params.account.accountId,
+      text,
+      quote,
+    });
+    if (!first) {
+      return false;
+    }
+    const sent = await sendSimplexComposedMessages({
+      chatRef: params.chatRef,
+      composedMessages: [first],
+      ttl: params.account.config.messageTtlSeconds,
       liveMessage: true,
+      send: sendWithAccountClient(params.account),
     });
     messageId = sent.messageId;
     lastSent = text;
@@ -283,12 +340,11 @@ export function createSimplexLiveReplyController(params: {
       return false;
     }
     const existingMessageId = messageId;
-    const composed = await buildComposedMessages({
+    const [updatedMessage, ...overflow] = await buildComposedMessages({
       cfg: params.cfg,
       accountId: params.account.accountId,
       text,
     });
-    const updatedMessage = composed[0];
     if (!updatedMessage) {
       return false;
     }
@@ -302,6 +358,14 @@ export function createSimplexLiveReplyController(params: {
           liveMessage: !final,
         }),
     });
+    if (final && overflow.length > 0) {
+      await sendSimplexComposedMessages({
+        chatRef: params.chatRef,
+        composedMessages: overflow,
+        ttl: params.account.config.messageTtlSeconds,
+        send: sendWithAccountClient(params.account),
+      });
+    }
     lastSent = text;
     lastSentAt = now();
     return true;

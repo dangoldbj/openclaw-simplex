@@ -1,14 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { testSimplexAccount } from "../../test-support/simplex-account.js";
 import type { ResolvedSimplexAccount } from "../../types/config.js";
+import type { SimplexComposedMessage } from "../../types/simplex.js";
 import {
   createSimplexLiveReplyController,
   resolveSimplexLiveStreamingConfig,
 } from "./simplex-send.js";
 
 const simplexClientMock = vi.hoisted(() => ({
-  sendMessages: vi.fn(async () => [{ chatItem: { meta: { itemId: 10 } } }]),
-  editMessage: vi.fn(async () => ({})),
+  sendMessages: vi.fn(async (_params: { composedMessages: SimplexComposedMessage[] }) => [
+    { chatItem: { meta: { itemId: 10 } } },
+  ]),
+  editMessage: vi.fn(async (_params: { updatedMessage: SimplexComposedMessage }) => ({})),
+  getChatItemContent: vi.fn(async () => ({ type: "text" as const, text: "question" })),
 }));
 
 vi.mock("../../simplex/runtime/transport.js", () => ({
@@ -25,6 +29,7 @@ describe("simplex live reply controller", () => {
   afterEach(() => {
     simplexClientMock.sendMessages.mockClear();
     simplexClientMock.editMessage.mockClear();
+    simplexClientMock.getChatItemContent.mockClear();
   });
 
   it("does nothing when native live transport is disabled", async () => {
@@ -96,6 +101,26 @@ describe("simplex live reply controller", () => {
       },
       liveMessage: false,
     });
+  });
+
+  it("sends final text that outgrows one message as continuation messages", async () => {
+    const live = createSimplexLiveReplyController({
+      cfg: {},
+      account: account({ nativeTransport: true, throttleMs: 1, minChars: 1, wordBoundary: false }),
+      chatRef: "@123",
+      now: () => 10_000,
+    });
+    const paragraph = `${"x".repeat(999)}\n`;
+    const finalText = paragraph.repeat(20).trimEnd();
+
+    await expect(live.updatePartial({ text: "hello" })).resolves.toBe(true);
+    await expect(live.finalize({ text: finalText })).resolves.toBe(true);
+
+    const edited = simplexClientMock.editMessage.mock.lastCall?.[0]?.updatedMessage.msgContent.text;
+    const continuation = simplexClientMock.sendMessages.mock.lastCall?.[0]?.composedMessages;
+    expect(simplexClientMock.sendMessages).toHaveBeenCalledTimes(2);
+    expect(continuation).toHaveLength(1);
+    expect(`${edited}\n${continuation?.[0]?.msgContent.text}`).toBe(finalText);
   });
 
   it("falls back when a live update fails", async () => {

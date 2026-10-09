@@ -146,3 +146,13 @@ export function assertSimplexAccountReady(account: ResolvedSimplexAccount): void
     throw new Error(`SimpleX account "${account.accountId}" is not configured`);
   }
 }
+
+/**
+ * Reply quoting defaults to `first` rather than the host's `all`: a SimpleX
+ * quote embeds the quoted message, so quoting every part repeats it each time.
+ */
+export function resolveSimplexReplyToMode(
+  account: ResolvedSimplexAccount
+): NonNullable<SimplexAccountConfig["replyToMode"]> {
+  return account.config.replyToMode ?? "first";
+}

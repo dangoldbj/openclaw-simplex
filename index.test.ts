@@ -472,6 +472,30 @@ describe("simplex channel SDK metadata", () => {
   });
 });
 
+describe("simplex reply quoting", () => {
+  const resolveReplyToMode = (cfg: OpenClawConfig, accountId?: string) =>
+    simplexPlugin.threading?.resolveReplyToMode?.({ cfg, accountId });
+
+  it("quotes only the first message of a reply by default", () => {
+    expect(resolveReplyToMode(simplexConfiguredChannel)).toBe("first");
+  });
+
+  it("honors a configured reply-to mode, account over channel", () => {
+    const cfg = {
+      channels: {
+        "openclaw-simplex": {
+          connection: { wsUrl: "ws://127.0.0.1:5225" },
+          replyToMode: "off",
+          accounts: { work: { replyToMode: "all" } },
+        },
+      },
+    } as OpenClawConfig;
+
+    expect(resolveReplyToMode(cfg)).toBe("off");
+    expect(resolveReplyToMode(cfg, "work")).toBe("all");
+  });
+});
+
 describe("simplex channel config and allowlist adapters", () => {
   it("supports shared account enable and delete config hooks", () => {
     const cfg = {

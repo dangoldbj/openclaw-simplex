@@ -9,6 +9,7 @@ import {
   GroupPolicySchema,
   MarkdownConfigSchema,
   MentionPatternsPolicySchema,
+  ReplyToModeSchema,
   ToolPolicySchema,
 } from "openclaw/plugin-sdk/channel-config-schema";
 import { z } from "zod";
@@ -94,6 +95,7 @@ export const SimplexAccountConfigSchema = z
     streaming: SimplexStreamingSchema.optional(),
     draftChunk: SimplexDraftChunkSchema.optional(),
     messageTtlSeconds: z.number().int().positive().optional(),
+    replyToMode: ReplyToModeSchema.optional(),
     filePolicy: SimplexFilePolicySchema.optional(),
     experimentalChannels: z.boolean().optional(),
     groupPolicy: GroupPolicySchema.optional(),

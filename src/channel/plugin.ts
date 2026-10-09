@@ -11,6 +11,7 @@ import {
   listSimplexAccountIds,
   resolveDefaultSimplexAccountId,
   resolveSimplexAccount,
+  resolveSimplexReplyToMode,
 } from "../config/accounts.js";
 import {
   SIMPLEX_ACCOUNT_CONFIG_CLEAR_FIELDS,
@@ -241,6 +242,11 @@ export const simplexPlugin: SimplexPlugin = {
   status: buildSimplexStatus(),
   doctor: simplexDoctor,
   lifecycle: simplexLifecycle,
+  // Reply quoting only; SimpleX has no threads.
+  threading: {
+    resolveReplyToMode: ({ cfg, accountId }) =>
+      resolveSimplexReplyToMode(resolveSimplexAccount({ cfg, accountId })),
+  },
   // SimpleX has no child threads, so a binding always lives in the conversation
   // it was started from; `resolveConversationRef` normalizes the id the same way
   // every other SimpleX surface does.

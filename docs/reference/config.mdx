@@ -125,6 +125,7 @@ If <code>accounts</code> is set, each account entry can override the shared root
 | `draftChunk.maxChars` | Maximum characters shown in a single live draft update. The final reply is never truncated. |
 | `draftChunk.breakPreference` | Where a live draft update trims back to: `paragraph` \| `newline` \| `sentence`. |
 | `messageTtlSeconds` | Optional SimpleX message time-to-live applied to outbound text, media, poll, action, and reply sends for this account. |
+| `replyToMode` | Which replies quote the message they answer: `first` (default) quotes only the first message of a reply, `all` quotes every message, `off` never quotes. A SimpleX quote carries the quoted message, including a photo's thumbnail, so quoting every message repeats it. A reply larger than SimpleX's message limit (about 15.6 KB, quote included) is sent as several messages, and the quoted first message is shortened to make room for the quote. |
 | `filePolicy.autoAccept` | Preferred file auto-accept setting. If omitted, the legacy `connection.autoAcceptFiles` setting is used. |
 | `filePolicy.maxSizeMb` | Operator-facing receive-side file size policy for diagnostics. |
 | `experimentalChannels` | Enables capability-gated parsing for SimpleX channel-like targets such as `channel:<id>` and `!<id>`. This does not claim full SimpleX Channels support. |
@@ -185,7 +186,7 @@ This plugin talks to an already running external <code>simplex-chat</code> proce
 - <code>connection.autoAcceptFiles</code>
 - <code>streaming.nativeTransport</code>, <code>streaming.throttleMs</code>, <code>streaming.minChars</code>, and <code>streaming.wordBoundary</code>
 - <code>draftChunk.minChars</code>, <code>draftChunk.maxChars</code>, and <code>draftChunk.breakPreference</code>
-- <code>messageTtlSeconds</code> and <code>filePolicy</code>
+- <code>messageTtlSeconds</code>, <code>replyToMode</code>, and <code>filePolicy</code>
 - OpenClaw policy and UX settings such as <code>dmPolicy</code>, <code>allowFrom</code>, <code>groupPolicy</code>, <code>groupAllowFrom</code>, <code>mentionPatterns</code>, <code>contextVisibility</code>, <code>actions</code>, and <code>reactionLevel</code>
 
 ### Intentionally not mirrored into plugin config
