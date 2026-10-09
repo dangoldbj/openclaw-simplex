@@ -5,7 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/bin/simplex-chat -p 5225 --device-name "OpenClaw SimpleX" --files-folder %h/.local/state/openclaw-simplex/files --temp-folder %h/.local/state/openclaw-simplex/tmp --log-file %h/.local/state/openclaw-simplex/simplex-chat.log
+ExecStartPre=/bin/mkdir -p %h/.simplex/files %h/.simplex/tmp
+ExecStart=%h/.local/bin/simplex-chat -p 5225 --device-name "OpenClaw SimpleX" --files-folder %h/.simplex/files --temp-folder %h/.simplex/tmp --log-file %h/.local/state/openclaw-simplex/simplex-chat.log
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60

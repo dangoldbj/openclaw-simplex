@@ -39,7 +39,8 @@ What to check first: <code>simplex-chat</code> must be running on the same WebSo
 Start the runtime manually if needed:
 
 ```bash
-simplex-chat -p 5225
+mkdir -p ~/.simplex/files ~/.simplex/tmp
+simplex-chat -p 5225 --files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp
 ```
 
 Then verify the configured channel endpoint:
@@ -113,6 +114,7 @@ If that fails:
 
 - media URLs must be reachable from the OpenClaw host, not just from the client that sent the command
 - check the configured size limit (<code>mediaMaxMb</code>)
+- if received photos or files reach the agent without their contents and the gateway log shows `SimpleX inbound media staging failed` with `EPERM`, the runtime is saving files somewhere OpenClaw may not read, usually `~/Downloads` because it was started without `--files-folder`. Restart it with `--files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp`, or set `connection.filesFolder` to match a folder of your choice
 - verify the source URL returns a usable content type and file payload
 - if a specific message action fails, retry with a small known-good file first to separate transport issues from size/type issues
 
@@ -121,7 +123,8 @@ If that fails:
 Start the runtime in the foreground and watch connection behavior directly:
 
 ```bash
-simplex-chat -p 5225
+mkdir -p ~/.simplex/files ~/.simplex/tmp
+simplex-chat -p 5225 --files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp
 ```
 
 List installed plugins:

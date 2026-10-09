@@ -22,7 +22,8 @@ The migration helper updates config keys and stored pairing/allowlist state so e
     Run <code>simplex-chat</code> yourself and expose the WebSocket endpoint the channel should use:
 
     ```bash
-    simplex-chat -p 5225
+    mkdir -p ~/.simplex/files ~/.simplex/tmp
+    simplex-chat -p 5225 --files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp
     ```
 
     Make sure your config points to that endpoint under <code>channels.openclaw-simplex.connection.wsUrl</code>.

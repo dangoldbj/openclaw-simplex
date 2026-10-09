@@ -38,10 +38,13 @@ This path gets you from zero to the first invited contact talking to your OpenCl
     Start the WebSocket runtime in a separate terminal:
 
     ```bash
-    simplex-chat -p 5225
+    mkdir -p ~/.simplex/files ~/.simplex/tmp
+    simplex-chat -p 5225 --files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp
     ```
 
     Expected result: <code>simplex-chat</code> stays in the foreground and serves the WebSocket API on port <code>5225</code>.
+
+    The two folder flags keep received files in `~/.simplex/files`, where OpenClaw looks for them by default. Without them, `simplex-chat` saves received files to `~/Downloads`, which macOS privacy controls can stop OpenClaw from reading.
 
     <Info>
       This is a long-running foreground process. If you want it to start automatically, use the host-managed service examples in <a href="/guide/runtime-setup">Runtime Setup</a>.

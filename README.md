@@ -39,7 +39,8 @@ curl -o- https://raw.githubusercontent.com/simplex-chat/simplex-chat/stable/inst
 2. Start the WebSocket runtime:
 
 ```bash
-simplex-chat -p 5225
+mkdir -p ~/.simplex/files ~/.simplex/tmp
+simplex-chat -p 5225 --files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp
 ```
 
 3. Install and enable the plugin:
@@ -166,7 +167,8 @@ simplex-chat -h
 Start the long-running WebSocket process:
 
 ```bash
-simplex-chat -p 5225
+mkdir -p ~/.simplex/files ~/.simplex/tmp
+simplex-chat -p 5225 --files-folder ~/.simplex/files --temp-folder ~/.simplex/tmp
 ```
 
 ---
