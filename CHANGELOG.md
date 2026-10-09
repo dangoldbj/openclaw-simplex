@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-10-09
+
+Requires OpenClaw `2026.9.3` or newer (unchanged).
+
+### Changed
+
+- **Replies quote only their first message by default.** Previously every message of a reply quoted the message it answered, which repeated a quoted photo's thumbnail in each one. The new `replyToMode` setting (`first` by default, `all`, or `off`, at channel or account level) is OpenClaw's standard reply-quoting setting, and the pairing reply follows it too.
+- Quoting now follows OpenClaw's reply threading, so a message the host does not mark as a reply, such as some of its error notices, is sent unquoted.
+- SimpleX failures are named in logs, for example `SimpleX store error: largeMsg` or `SimpleX agent error: SMP PROXY NO_SESSION`, instead of a generic `SimpleX command failed`.
+
+### Fixed
+
+- Fixed replies to a photo being silently dropped with `largeMsg` (#33). A SimpleX quote carries the quoted message whole, including a photo's thumbnail of about 13 KB, and `simplex-chat` rejects a message above 15,602 encoded bytes, quote included. Outbound messages are now sized in encoded bytes with the quote counted, and a reply that does not fit is split: the first message keeps the quote and the rest follows unquoted. Replies to text and replies sent as an image or video are measured the same way.
+- Fixed long replies to an incoming message being dropped even without a quote. The 1.8.0 fix for #17 split replies only on the paths where OpenClaw chunks text; the path that answers an incoming message was never split, so a reply above the size limit failed. Every send path now splits by size.
+- A streamed (live) reply that outgrows one message now finishes in follow-up messages instead of failing on its final update.
+- The edit action now refuses text too large for one message with a clear error, since an edit cannot be split.
+
 ## [2.0.0] - 2026-09-08
 
 Requires OpenClaw `2026.9.3` or newer.

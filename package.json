@@ -1,6 +1,6 @@
 {
   "name": "@dangoldbj/openclaw-simplex",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "SimpleX channel plugin for OpenClaw using an external WebSocket runtime",
   "homepage": "https://openclaw-simplex.mintlify.app/",
   "repository": {
