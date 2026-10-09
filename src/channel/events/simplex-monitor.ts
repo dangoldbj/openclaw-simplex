@@ -1,6 +1,7 @@
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
+import { resolveSimplexReplyToMode } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import { describeError } from "../../errors.js";
 import { formatSimplexChatRef } from "../../simplex/runtime/api.js";
@@ -311,7 +312,7 @@ async function handleSimplexEvent(params: {
           account,
           chatRef,
           text,
-          replyToId: currentMessageId,
+          replyToId: resolveSimplexReplyToMode(account) === "off" ? undefined : currentMessageId,
           send: ({ chatRef, composedMessages, ttl, liveMessage }) =>
             client.sendMessages({ chatRef, composedMessages, ttl, liveMessage }),
           lookupQuote: (target) => client.getChatItemContent(target),

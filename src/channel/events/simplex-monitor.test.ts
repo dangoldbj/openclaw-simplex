@@ -29,7 +29,9 @@ const mocks = vi.hoisted(() => ({
   hasSimplexEventBeenSeen: vi.fn(async () => false),
   markSimplexEventSeen: vi.fn(async () => undefined),
   resolveSimplexInboundAccess: vi.fn(
-    async (): Promise<SimplexInboundAccessResult> => ({
+    async (_params: {
+      replyToPairingRequest: (text: string) => Promise<void>;
+    }): Promise<SimplexInboundAccessResult> => ({
       allowed: true,
       effectiveWasMentioned: true,
       commandAuthorized: true,
@@ -133,12 +135,12 @@ function directItem(overrides: Record<string, unknown> = {}): SimplexChatItem {
   } as unknown as SimplexChatItem;
 }
 
-async function startMonitor() {
+async function startMonitor(account = testSimplexAccount()) {
   const runtime = { log: vi.fn(), error: vi.fn() } as unknown as RuntimeEnv;
   const controller = new AbortController();
   const statusSink = vi.fn();
   await startSimplexMonitor({
-    account: testSimplexAccount(),
+    account,
     cfg,
     runtime,
     abortSignal: controller.signal,
@@ -435,6 +437,25 @@ describe("simplex monitor event handling", () => {
         (call: unknown[]) => (call[0] as { replyToId?: unknown }).replyToId
       );
       expect(replyTargets).toEqual(["11", undefined]);
+    });
+
+    it.each([
+      [undefined, 11],
+      ["off", undefined],
+    ] as const)("honors reply-to mode %s on the pairing reply", async (replyToMode, expected) => {
+      mocks.resolveSimplexInboundAccess.mockImplementation(async (params) => {
+        await params.replyToPairingRequest("pairing code");
+        return { allowed: false };
+      });
+      const { emit } = await startMonitor(
+        testSimplexAccount({ config: { connection: {}, replyToMode } })
+      );
+
+      await emit({ type: "newChatItems", chatItems: [directItem()] });
+
+      expect(mocks.buildAndSendSimplexMessages).toHaveBeenCalledWith(
+        expect.objectContaining({ text: "pairing code", replyToId: expected })
+      );
     });
 
     it("does not mark an event seen before it has been dispatched", async () => {
