@@ -1,9 +1,12 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { buildChannelInboundEventContext } from "openclaw/plugin-sdk/channel-inbound";
 import type { PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { markSimplexEventSeen } from "../../simplex/state/event-dedupe.js";
 import { setSimplexRuntime } from "../runtime.js";
+import { buildSimplexInboundEvent } from "./simplex-inbound-context.js";
 import {
   dispatchInbound,
   finalizePendingFile,
@@ -23,29 +26,46 @@ vi.mock("../../simplex/runtime/transport.js", () => ({
   withSimplexClient: vi.fn(async ({ run }) => run(simplexClientMock)),
 }));
 
+vi.mock("../../simplex/state/event-dedupe.js", () => ({
+  markSimplexEventSeen: vi.fn(async () => undefined),
+}));
+
+type TurnPlan = {
+  ctxPayload: Record<string, unknown>;
+  afterRecord?: () => void | Promise<void>;
+  delivery: {
+    deliver: (payload: { text?: string }, info: { kind: "block" | "final" }) => Promise<unknown>;
+  };
+  replyOptions?: {
+    onPartialReply?: (payload: { text?: string }) => Promise<void> | void;
+    disableBlockStreaming?: boolean;
+  };
+};
+
+/**
+ * Installs the host's real context builder and a dispatch stand-in that, like
+ * the host, records the turn and runs `afterRecord` before replying.
+ */
 function installRuntime(
-  dispatch: (params: {
-    dispatcherOptions: {
-      beforeDeliver?: (payload: { text?: string }) => { text?: string } | null;
-      deliver: (payload: { text?: string }, info: { kind: "block" | "final" }) => Promise<void>;
-    };
-    replyOptions?: {
-      onPartialReply?: (payload: { text?: string }) => Promise<void> | void;
-      disableBlockStreaming?: boolean;
-    };
-  }) => Promise<void>
-): void {
+  reply: (plan: TurnPlan) => Promise<void> = async () => undefined,
+  extra: { media?: object; channelMedia?: object } = {}
+) {
+  const recorded: Array<Record<string, unknown>> = [];
+  const dispatch = vi.fn(async (plan: TurnPlan) => {
+    recorded.push(plan.ctxPayload);
+    await plan.afterRecord?.();
+    await reply(plan);
+    return { dispatched: true };
+  });
   const runtime = {
+    media: extra.media,
     channel: {
-      session: {
-        recordInboundSession: vi.fn(async () => undefined),
-      },
-      reply: {
-        dispatchReplyWithBufferedBlockDispatcher: vi.fn(dispatch),
-      },
+      media: extra.channelMedia,
+      inbound: { buildContext: buildChannelInboundEventContext, dispatch },
     },
   };
   setSimplexRuntime(runtime as object as Partial<PluginRuntime> as PluginRuntime);
+  return { recorded, dispatch };
 }
 
 function fileClient(
@@ -55,14 +75,22 @@ function fileClient(
   return client as PendingInboundFile["client"];
 }
 
-function pending(sendPayload = vi.fn(async () => undefined)): PendingInboundFile {
+function pending(
+  sendPayload = vi.fn(async () => undefined),
+  rawBody = "hello"
+): PendingInboundFile {
   return {
     fileId: -1,
     chatRef: "@123",
     replyToId: 99,
-    ctxPayload: { SessionKey: "simplex:direct:123" },
-    storePath: "/tmp/simplex.jsonl",
-    sessionKey: "simplex:direct:123",
+    event: buildSimplexInboundEvent({
+      context: { chatType: "direct", chatId: 1, chatLabel: "Bob", senderId: "123" },
+      route: { agentId: "main", accountId: "default", sessionKey: "simplex:direct:123" },
+      buildEnvelope: ({ body }) => body,
+      rawBody,
+      dmPeerId: "123",
+      currentMessageId: 99,
+    }),
     account: {
       accountId: "default",
       enabled: true,
@@ -129,21 +157,10 @@ describe("finalizePendingFile media staging", () => {
       path: "/store/media/inbound/photo---uuid.jpg",
       contentType: "image/jpeg",
     }));
-    let capturedCtx: Record<string, unknown> | undefined;
-    setSimplexRuntime({
+    const { recorded } = installRuntime(undefined, {
       media: { detectMime },
-      channel: {
-        media: { saveMediaBuffer },
-        session: {
-          recordInboundSession: vi.fn(async ({ ctx }: { ctx: Record<string, unknown> }) => {
-            capturedCtx = ctx;
-          }),
-        },
-        reply: {
-          dispatchReplyWithBufferedBlockDispatcher: vi.fn(async () => undefined),
-        },
-      },
-    } as object as PluginRuntime);
+      channelMedia: { saveMediaBuffer },
+    });
 
     const current = pending();
     current.fileId = 7;
@@ -164,7 +181,7 @@ describe("finalizePendingFile media staging", () => {
       "photo.jpg",
       filePath
     );
-    expect(capturedCtx?.media).toMatchObject([
+    expect(recorded[0]?.media).toMatchObject([
       {
         path: "/store/media/inbound/photo---uuid.jpg",
         url: "/store/media/inbound/photo---uuid.jpg",
@@ -183,12 +200,11 @@ describe("simplex inbound live replies", () => {
 
   it("routes partial, block, and final assistant text through one SimpleX live message", async () => {
     const sendPayload = vi.fn(async () => undefined);
-    installRuntime(async ({ dispatcherOptions, replyOptions }) => {
+    installRuntime(async ({ delivery, replyOptions }) => {
       expect(replyOptions?.disableBlockStreaming).toBe(true);
-      expect(dispatcherOptions.beforeDeliver?.({ text: "probe" })).toEqual({ text: "probe" });
       await replyOptions?.onPartialReply?.({ text: "hello" });
-      await dispatcherOptions.deliver({ text: "hello world" }, { kind: "block" });
-      await dispatcherOptions.deliver({ text: "hello world!" }, { kind: "final" });
+      await delivery.deliver({ text: "hello world" }, { kind: "block" });
+      await delivery.deliver({ text: "hello world!" }, { kind: "final" });
     });
 
     await dispatchInbound({ pending: pending(sendPayload) });
@@ -214,7 +230,7 @@ describe("simplex inbound live replies", () => {
 
   it("clears pending file timeout when the file completes", async () => {
     vi.useFakeTimers();
-    installRuntime(async () => undefined);
+    installRuntime();
     const cancelFile = vi.fn(async () => undefined);
     const current = pending();
     current.fileId = 42;
@@ -229,7 +245,7 @@ describe("simplex inbound live replies", () => {
 
   it("tracks accept retries for queued pending files", async () => {
     vi.useFakeTimers();
-    installRuntime(async () => undefined);
+    installRuntime();
     const current = pending();
     current.fileId = 42;
     current.client = fileClient(vi.fn(async () => undefined));
@@ -252,7 +268,7 @@ describe("simplex inbound live replies", () => {
 
   it("replaces an older pending file timeout for the same key", async () => {
     vi.useFakeTimers();
-    installRuntime(async () => undefined);
+    installRuntime();
     const firstCancel = vi.fn(async () => undefined);
     const secondCancel = vi.fn(async () => undefined);
     const first = pending();
@@ -271,77 +287,115 @@ describe("simplex inbound live replies", () => {
   });
 });
 
-describe("inbound media unavailable notices", () => {
-  function installCapturingRuntime(): { recorded: Array<Record<string, unknown>> } {
-    const recorded: Array<Record<string, unknown>> = [];
+describe("inbound turn recording", () => {
+  beforeEach(() => {
+    vi.mocked(markSimplexEventSeen).mockClear();
+  });
+
+  it("marks the event seen only once the host has recorded the turn", async () => {
+    const target = pending();
+    target.eventKey = { accountId: "default", chatId: 1, messageId: 99 };
+    let seenBeforeRecord = false;
     const runtime = {
       channel: {
-        session: {
-          recordInboundSession: vi.fn(async (params: { ctx: Record<string, unknown> }) => {
-            recorded.push(params.ctx);
+        inbound: {
+          buildContext: buildChannelInboundEventContext,
+          dispatch: vi.fn(async (plan: TurnPlan) => {
+            seenBeforeRecord = vi.mocked(markSimplexEventSeen).mock.calls.length > 0;
+            await plan.afterRecord?.();
           }),
-        },
-        reply: {
-          dispatchReplyWithBufferedBlockDispatcher: vi.fn(async () => undefined),
         },
       },
     };
     setSimplexRuntime(runtime as object as Partial<PluginRuntime> as PluginRuntime);
-    return { recorded };
-  }
 
-  it("appends a size-limit notice to the caption when the attachment is refused", async () => {
-    const { recorded } = installCapturingRuntime();
-    const target = pending();
-    target.ctxPayload = { ...target.ctxPayload, Body: "look at this", RawBody: "look at this" };
+    await dispatchInbound({ pending: target });
+
+    expect(seenBeforeRecord).toBe(false);
+    expect(markSimplexEventSeen).toHaveBeenCalledWith(target.eventKey);
+  });
+
+  it("leaves the event unmarked when recording fails, so it is redelivered", async () => {
+    const runtime = {
+      channel: {
+        inbound: {
+          buildContext: buildChannelInboundEventContext,
+          dispatch: vi.fn(async () => {
+            throw new Error("session store unavailable");
+          }),
+        },
+      },
+    };
+    setSimplexRuntime(runtime as object as Partial<PluginRuntime> as PluginRuntime);
+
+    await expect(dispatchInbound({ pending: pending() })).rejects.toThrow(
+      "session store unavailable"
+    );
+    expect(markSimplexEventSeen).not.toHaveBeenCalled();
+  });
+
+  it("routes the turn to the session the message was resolved to", async () => {
+    const { dispatch } = installRuntime();
+    await dispatchInbound({ pending: pending() });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channel: "openclaw-simplex",
+        accountId: "default",
+        route: expect.objectContaining({ agentId: "main", sessionKey: "simplex:direct:123" }),
+      })
+    );
+  });
+});
+
+describe("inbound media unavailable notices", () => {
+  it("tells the agent the attachment was refused, not just the transcript", async () => {
+    const { recorded } = installRuntime();
 
     await dispatchInbound({
-      pending: target,
+      pending: pending(undefined, "look at this"),
       mediaUnavailable: { reason: "too-large", sizeBytes: 30_000_000, maxBytes: 10_000_000 },
     });
 
-    expect(recorded[0]?.Body).toBe(
-      "look at this\n\n[SimpleX attachment not delivered: 30.0 MB exceeds the 10.0 MB limit for this account.]"
-    );
+    const notice =
+      "look at this\n\n[SimpleX attachment not delivered: 30.0 MB exceeds the 10.0 MB limit for this account.]";
+    expect(recorded[0]?.Body).toBe(notice);
+    expect(recorded[0]?.BodyForAgent).toBe(notice);
     // Command parsing must keep seeing the literal transport text.
     expect(recorded[0]?.RawBody).toBe("look at this");
+    expect(recorded[0]?.CommandBody).toBe("look at this");
   });
 
   it("uses the notice alone when the message carried no caption", async () => {
-    const { recorded } = installCapturingRuntime();
-    const target = pending();
-    target.ctxPayload = { ...target.ctxPayload, Body: "" };
+    const { recorded } = installRuntime();
 
     await dispatchInbound({
-      pending: target,
+      pending: pending(undefined, ""),
       mediaUnavailable: { reason: "transfer-incomplete" },
     });
 
-    expect(recorded[0]?.Body).toBe(
+    expect(recorded[0]?.BodyForAgent).toBe(
       "[SimpleX attachment not delivered: the file transfer did not complete.]"
     );
   });
 
   it("leaves the body untouched when media was delivered", async () => {
-    const { recorded } = installCapturingRuntime();
-    const target = pending();
-    target.ctxPayload = { ...target.ctxPayload, Body: "look at this" };
+    const { recorded } = installRuntime();
 
     await dispatchInbound({
-      pending: target,
+      pending: pending(undefined, "look at this"),
       mediaPath: "/media/inbound/photo.jpg",
       mediaType: "image/jpeg",
       mediaUnavailable: { reason: "transfer-incomplete" },
     });
 
     expect(recorded[0]?.Body).toBe("look at this");
+    expect(recorded[0]?.BodyForAgent).toBe("look at this");
     expect(recorded[0]?.media).toMatchObject([{ path: "/media/inbound/photo.jpg" }]);
   });
 
-  // The host applies this fallback inside `finalizeInboundContext`, which has
-  // already run by the time SimpleX resolves media, so the plugin applies it.
   it("falls back to application/octet-stream when the runtime reports no type", async () => {
-    const { recorded } = installCapturingRuntime();
+    const { recorded } = installRuntime();
 
     await dispatchInbound({
       pending: pending(),
@@ -354,13 +408,13 @@ describe("inbound media unavailable notices", () => {
   });
 
   it("omits media entirely when nothing was delivered", async () => {
-    const { recorded } = installCapturingRuntime();
+    const { recorded } = installRuntime();
 
     await dispatchInbound({
       pending: pending(),
       mediaUnavailable: { reason: "transfer-incomplete" },
     });
 
-    expect(recorded[0]?.media).toBeUndefined();
+    expect(recorded[0]?.media ?? []).toEqual([]);
   });
 });

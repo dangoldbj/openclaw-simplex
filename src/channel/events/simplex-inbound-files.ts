@@ -10,7 +10,7 @@ import {
 } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveSimplexReplyToMode } from "../../config/accounts.js";
-import { DEFAULT_SIMPLEX_FILES_FOLDER } from "../../constants.js";
+import { DEFAULT_SIMPLEX_FILES_FOLDER, SIMPLEX_CHANNEL_ID } from "../../constants.js";
 import { expandHome } from "../../fs-paths.js";
 import type { SimplexClient } from "../../simplex/runtime/client.js";
 import { markSimplexEventSeen, type SimplexEventKey } from "../../simplex/state/event-dedupe.js";
@@ -21,6 +21,7 @@ import {
   type SimplexLiveReplyPayload,
 } from "../messaging/simplex-send.js";
 import { getSimplexRuntime } from "../runtime.js";
+import type { SimplexInboundEvent } from "./simplex-inbound-context.js";
 
 const PENDING_FILE_TIMEOUT_MS = 90_000;
 
@@ -53,9 +54,7 @@ export type PendingInboundFile = {
   fileId: number;
   chatRef: string;
   replyToId?: string | number | null;
-  ctxPayload: Record<string, unknown>;
-  storePath: string;
-  sessionKey: string;
+  event: SimplexInboundEvent;
   account: ResolvedSimplexAccount;
   cfg: OpenClawConfig;
   runtime: RuntimeEnv;
@@ -251,13 +250,9 @@ function describeMediaUnavailable(unavailable: SimplexInboundMediaUnavailable): 
 }
 
 /**
- * Builds the canonical `media` facts for an inbound attachment.
- *
- * SimpleX resolves media only after the turn context has been finalized, so the
- * facts are attached here rather than through `finalizeInboundContext`. That
- * means the host's own post-finalize normalization does not run over them, and
- * the `application/octet-stream` fallback below has to be applied locally to
- * match what a natively finalized context would carry.
+ * Builds the canonical `media` facts for an inbound attachment. The host's
+ * context builder normalizes them further (content-type fallback, legacy
+ * projection) when the turn is dispatched.
  *
  * Metadata enrichment (duration, dimensions) is best-effort: SimpleX files are
  * already on local disk, so it is cheap, but a probe failure must never cost the
@@ -279,18 +274,11 @@ async function resolveInboundMediaFacts(params: {
     },
   ];
 
-  let facts: InboundMediaFacts[];
   try {
-    facts = await toInboundMediaFactsWithMetadata(input);
+    return await toInboundMediaFactsWithMetadata(input);
   } catch {
-    facts = toInboundMediaFacts(input);
+    return toInboundMediaFacts(input);
   }
-
-  return facts.map((fact) =>
-    (fact.path || fact.url) && !fact.contentType && !fact.kind
-      ? { ...fact, contentType: "application/octet-stream" }
-      : fact
-  );
 }
 
 export async function dispatchInbound(params: {
@@ -310,46 +298,50 @@ export async function dispatchInbound(params: {
     replyToId: resolveSimplexReplyToMode(pending.account) === "off" ? undefined : pending.replyToId,
     logError: (message) => pending.runtime.error?.(`[${pending.account.accountId}] ${message}`),
   });
-  // Only `Body` carries the notice. `RawBody`/`CommandBody` stay the literal
-  // transport text so command parsing is unaffected.
-  const noticeBody =
-    mediaUnavailable && !mediaPath
-      ? formatInboundMediaUnavailableText({
-          body: typeof pending.ctxPayload.Body === "string" ? pending.ctxPayload.Body : "",
-          notice: describeMediaUnavailable(mediaUnavailable),
-        })
-      : undefined;
+  // The notice goes to both the transcript body and the agent prompt, which
+  // are separate fields. `RawBody`/`CommandBody` stay the literal transport
+  // text so command parsing is unaffected.
+  const notice =
+    mediaUnavailable && !mediaPath ? describeMediaUnavailable(mediaUnavailable) : undefined;
+  const withNotice = (text: string) =>
+    notice === undefined ? text : formatInboundMediaUnavailableText({ body: text, notice });
 
   const media = await resolveInboundMediaFacts({ mediaPath, mediaType });
+  const { event } = pending;
 
-  const ctxPayload = {
-    ...pending.ctxPayload,
-    ...(noticeBody === undefined ? {} : { Body: noticeBody }),
-    ...(media ? { media } : {}),
-  };
-
-  await core.channel.session.recordInboundSession({
-    storePath: pending.storePath,
-    sessionKey: (ctxPayload as { SessionKey?: string }).SessionKey ?? pending.sessionKey,
-    ctx: ctxPayload,
-    onRecordError: (err) => {
-      pending.runtime.error?.(`simplex: failed updating session meta: ${String(err)}`);
+  const ctxPayload = core.channel.inbound.buildContext({
+    ...event,
+    message: {
+      ...event.message,
+      body: withNotice(event.message.body ?? event.message.rawBody),
+      bodyForAgent: withNotice(event.message.bodyForAgent ?? event.message.rawBody),
     },
+    ...(media ? { media } : {}),
   });
 
-  // Dedupe is recorded here rather than before dispatch: once the inbound turn
-  // is durably recorded, OpenClaw owns replaying the agent run, so marking is
-  // safe. Marking any earlier would drop the message if this process died
-  // before the record landed.
-  await markSimplexEventSeen(pending.eventKey ?? null);
-
-  pending.statusSink?.({ lastInboundAt: Date.now() });
-
-  await core.channel.reply.dispatchReplyWithBufferedBlockDispatcher({
-    ctx: ctxPayload,
+  await core.channel.inbound.dispatch({
     cfg: pending.cfg,
-    dispatcherOptions: {
-      beforeDeliver: (payload) => payload,
+    channel: SIMPLEX_CHANNEL_ID,
+    accountId: pending.account.accountId,
+    route: {
+      agentId: event.route.agentId,
+      dmScope: event.route.dmScope,
+      sessionKey: event.route.routeSessionKey,
+    },
+    ctxPayload,
+    record: {
+      onRecordError: (err) => {
+        pending.runtime.error?.(`simplex: failed updating session meta: ${String(err)}`);
+      },
+    },
+    // Dedupe is marked once the host has durably recorded the inbound turn, and
+    // not earlier: from here OpenClaw owns replaying the agent run, while a
+    // crash before the record lands must leave the message to be redelivered.
+    afterRecord: async () => {
+      await markSimplexEventSeen(pending.eventKey ?? null);
+      pending.statusSink?.({ lastInboundAt: Date.now() });
+    },
+    delivery: {
       deliver: async (payload, info) => {
         const hasMedia =
           Boolean(payload.mediaUrl) ||

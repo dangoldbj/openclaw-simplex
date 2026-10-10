@@ -10,7 +10,7 @@ type DispatchCall = {
   pending?: {
     chatRef?: string;
     eventKey?: unknown;
-    ctxPayload?: Record<string, unknown>;
+    event?: { message?: { rawBody?: string } };
     sendPayload?: (payload: { text?: string; replyToId?: string }) => Promise<void>;
   };
   mediaPath?: string;
@@ -106,17 +106,14 @@ vi.mock("../runtime.js", () => ({
       routing: {
         resolveAgentRoute: () => ({ agentId: "main", sessionKey: "session-1" }),
       },
-      session: {
-        resolveStorePath: () => "/tmp/store",
-        readSessionUpdatedAt: () => undefined,
-      },
-      reply: {
-        resolveEnvelopeFormatOptions: () => ({}),
-        formatAgentEnvelope: (params: { body: string }) => params.body,
-        finalizeInboundContext: (ctx: Record<string, unknown>) => ctx,
-      },
     },
   }),
+}));
+
+// The real builder reads the previous turn's timestamp from the session store.
+vi.mock("openclaw/plugin-sdk/channel-inbound", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("openclaw/plugin-sdk/channel-inbound")>()),
+  createChannelInboundEnvelopeBuilder: () => (input: { body: string }) => input.body,
 }));
 
 const cfg = {
@@ -545,7 +542,7 @@ describe("simplex monitor event handling", () => {
         ],
       });
 
-      expect(mocks.dispatchInbound.mock.calls[0]?.[0]?.pending?.ctxPayload?.RawBody).toBe(
+      expect(mocks.dispatchInbound.mock.calls[0]?.[0]?.pending?.event?.message?.rawBody).toBe(
         "[message]"
       );
     });
@@ -563,7 +560,7 @@ describe("simplex monitor event handling", () => {
         ],
       });
 
-      expect(mocks.dispatchInbound.mock.calls[0]?.[0]?.pending?.ctxPayload?.RawBody).toBe(
+      expect(mocks.dispatchInbound.mock.calls[0]?.[0]?.pending?.event?.message?.rawBody).toBe(
         "[file: report.pdf]"
       );
     });

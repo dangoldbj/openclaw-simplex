@@ -1,5 +1,6 @@
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
+import { createChannelInboundEnvelopeBuilder } from "openclaw/plugin-sdk/channel-inbound";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { resolveSimplexReplyToMode } from "../../config/accounts.js";
 import { SIMPLEX_CHANNEL_ID } from "../../constants.js";
@@ -27,7 +28,7 @@ import {
   resolveSimplexMessageText,
 } from "./simplex-event-parser.js";
 import { resolveSimplexInboundAccess } from "./simplex-inbound-auth.js";
-import { buildSimplexInboundDispatchContext } from "./simplex-inbound-context.js";
+import { buildSimplexInboundEvent } from "./simplex-inbound-context.js";
 import {
   dispatchInbound,
   finalizePendingFile,
@@ -326,11 +327,10 @@ async function handleSimplexEvent(params: {
       continue;
     }
 
-    const { ctxPayload, storePath } = buildSimplexInboundDispatchContext({
-      core,
-      cfg,
+    const event = buildSimplexInboundEvent({
       context,
       route,
+      buildEnvelope: createChannelInboundEnvelopeBuilder({ cfg, route }),
       rawBody,
       dmPeerId,
       currentMessageId,
@@ -349,9 +349,7 @@ async function handleSimplexEvent(params: {
       fileId: typeof fileId === "number" ? fileId : -1,
       chatRef,
       replyToId: currentMessageId,
-      ctxPayload,
-      storePath,
-      sessionKey: route.sessionKey,
+      event,
       account,
       cfg,
       runtime,
