@@ -42,14 +42,15 @@ async function resolveMediaPath(params: {
   const core = getSimplexRuntime();
   const mediaUrlLower = params.mediaUrl.toLowerCase();
   if (mediaUrlLower.startsWith("http:") || mediaUrlLower.startsWith("https:")) {
-    const fetched = await core.channel.media.fetchRemoteMedia({
+    const fetchOptions = {
       url: params.mediaUrl,
       maxBytes: params.maxBytes,
       filePathHint: params.mediaUrl,
-    });
+    };
     // Shared outbound dir configured: write the buffer where the runtime can
     // read it (containerized runtime), instead of OpenClaw's media store.
     if (params.outboundDir) {
+      const fetched = await core.channel.media.readRemoteMediaBuffer(fetchOptions);
       const staged = await stageOutboundBuffer({
         outboundDir: params.outboundDir,
         clientDir: params.outboundClientDir,
@@ -58,14 +59,11 @@ async function resolveMediaPath(params: {
       });
       return { path: staged, contentType: fetched.contentType, fileName: fetched.fileName };
     }
-    const saved = await core.channel.media.saveMediaBuffer(
-      fetched.buffer,
-      fetched.contentType,
-      SIMPLEX_CHANNEL_ID,
-      params.maxBytes,
-      fetched.fileName
-    );
-    return { path: saved.path, contentType: saved.contentType, fileName: fetched.fileName };
+    const saved = await core.channel.media.saveRemoteMedia({
+      ...fetchOptions,
+      subdir: SIMPLEX_CHANNEL_ID,
+    });
+    return { path: saved.path, contentType: saved.contentType, fileName: saved.fileName };
   }
   // media://<subdir>/<id> references point into OpenClaw's media store (e.g.
   // media://inbound/<id> to re-send a received file). Resolve to the physical

@@ -23,7 +23,7 @@ const pluginEntry: ReturnType<typeof defineChannelPluginEntry> = defineChannelPl
     registerSimplexToolHooks(api);
     registerSimplexControlUi(api);
     registerSimplexPairingHooks(api);
-    api.registerRuntimeLifecycle(buildSimplexRuntimeLifecycle(api));
+    api.lifecycle.registerRuntimeLifecycle(buildSimplexRuntimeLifecycle(api));
   },
 });
 

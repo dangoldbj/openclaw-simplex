@@ -52,10 +52,10 @@
   "dependencies": {
     "@sinclair/typebox": "^0.34.49",
     "ws": "^8.21.0",
-    "zod": "4.4.3"
+    "zod": "4.6.5"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.9.3-0"
+    "openclaw": ">=2026.9.9-0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.13",
@@ -64,7 +64,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.11",
-    "openclaw": "2026.9.3",
+    "openclaw": "2026.9.9",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
@@ -74,12 +74,12 @@
       "./dist/index.js"
     ],
     "compat": {
-      "pluginApi": ">=2026.9.3",
-      "minGatewayVersion": "2026.9.3"
+      "pluginApi": ">=2026.9.9",
+      "minGatewayVersion": "2026.9.9"
     },
     "build": {
-      "openclawVersion": "2026.9.3",
-      "pluginSdkVersion": "2026.9.3"
+      "openclawVersion": "2026.9.9",
+      "pluginSdkVersion": "2026.9.9"
     },
     "channel": {
       "id": "openclaw-simplex",
@@ -154,7 +154,7 @@
     "install": {
       "npmSpec": "@dangoldbj/openclaw-simplex",
       "defaultChoice": "npm",
-      "minHostVersion": ">=2026.9.3"
+      "minHostVersion": ">=2026.9.9"
     }
   }
 }

@@ -2,7 +2,7 @@ import { constants as fsConstants } from "node:fs";
 import { access, stat } from "node:fs/promises";
 import type { ChannelDoctorAdapter } from "openclaw/plugin-sdk/channel-contract";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
+import { withTimeout } from "openclaw/plugin-sdk/security-runtime";
 import { LEGACY_SIMPLEX_RUNTIME_KEYS, migrateSimplexConfig } from "../../cli/migration.js";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
 import type { SimplexAccountConfig, SimplexChannelConfig } from "../../config/config-schema.js";

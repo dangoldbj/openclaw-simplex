@@ -1,8 +1,19 @@
 import type { PluginRuntime } from "openclaw/plugin-sdk/channel-core";
 
+export type SimplexKeyedStore<T> = {
+  register(key: string, value: T, opts?: { ttlMs?: number }): Promise<void>;
+  lookup(key: string): Promise<T | undefined>;
+  delete(key: string): Promise<boolean>;
+  entries(): Promise<Array<{ key: string; value: T }>>;
+};
+
 const memoryStores = new Map<string, Map<string, { value: unknown; expiresAt?: number }>>();
 
-function memoryStore<T>(params: { namespace: string; maxEntries: number; defaultTtlMs?: number }) {
+function memoryStore<T>(params: {
+  namespace: string;
+  maxEntries: number;
+  defaultTtlMs?: number;
+}): SimplexKeyedStore<T> {
   const entries =
     memoryStores.get(params.namespace) ?? new Map<string, { value: unknown; expiresAt?: number }>();
   memoryStores.set(params.namespace, entries);
@@ -41,16 +52,9 @@ function memoryStore<T>(params: { namespace: string; maxEntries: number; default
     async delete(key: string): Promise<boolean> {
       return entries.delete(key);
     },
-    async entries(): Promise<
-      Array<{ key: string; value: T; createdAt: number; expiresAt?: number }>
-    > {
+    async entries(): Promise<Array<{ key: string; value: T }>> {
       sweep();
-      return [...entries].map(([key, entry]) => ({
-        key,
-        value: entry.value as T,
-        createdAt: 0,
-        expiresAt: entry.expiresAt,
-      }));
+      return [...entries].map(([key, entry]) => ({ key, value: entry.value as T }));
     },
   };
 }
@@ -60,7 +64,7 @@ export function openSimplexKeyedStore<T>(params: {
   namespace: string;
   maxEntries: number;
   defaultTtlMs?: number;
-}) {
+}): SimplexKeyedStore<T> {
   const state = params.runtime?.state;
   if (state?.openKeyedStore) {
     try {

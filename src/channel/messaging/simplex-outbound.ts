@@ -83,7 +83,7 @@ export function buildSimplexOutbound(): NonNullable<
         presentation,
       }),
     }),
-    sendPayload: async ({ cfg, to, payload, accountId, replyToId }) => {
+    sendPayload: async ({ cfg, to, payload, accountId, replyToId, signal }) => {
       const account = resolveSimplexAccount({ cfg, accountId });
       assertSimplexAccountReady(account);
       const chatRef = normalizeOutboundChatRef(to);
@@ -96,6 +96,7 @@ export function buildSimplexOutbound(): NonNullable<
         mediaUrl: payload.mediaUrl,
         audioAsVoice: payload.audioAsVoice,
         replyToId,
+        signal,
       });
       return {
         channel: SIMPLEX_CHANNEL_ID,
@@ -109,7 +110,7 @@ export function buildSimplexOutbound(): NonNullable<
     },
     ...createAttachedChannelResultAdapter({
       channel: SIMPLEX_CHANNEL_ID,
-      sendText: async ({ cfg, to, text, accountId, replyToId }) => {
+      sendText: async ({ cfg, to, text, accountId, replyToId, signal }) => {
         const account = resolveSimplexAccount({ cfg, accountId });
         assertSimplexAccountReady(account);
         const chatRef = normalizeOutboundChatRef(to);
@@ -119,6 +120,7 @@ export function buildSimplexOutbound(): NonNullable<
           chatRef,
           text,
           replyToId,
+          signal,
         });
         return {
           messageId: result.messageId ?? "unknown",
@@ -126,7 +128,7 @@ export function buildSimplexOutbound(): NonNullable<
           meta: { receipt: result.receipt, ttl: account.config.messageTtlSeconds ?? null },
         };
       },
-      sendMedia: async ({ cfg, to, text, mediaUrl, accountId, replyToId }) => {
+      sendMedia: async ({ cfg, to, text, mediaUrl, accountId, replyToId, signal }) => {
         if (!mediaUrl) {
           return { messageId: "empty", chatId: to };
         }
@@ -140,6 +142,7 @@ export function buildSimplexOutbound(): NonNullable<
           text,
           mediaUrl,
           replyToId,
+          signal,
         });
         return {
           messageId: result.messageId ?? "unknown",

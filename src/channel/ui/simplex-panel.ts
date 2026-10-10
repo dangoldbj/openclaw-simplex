@@ -1,7 +1,7 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
+import { withTimeout } from "openclaw/plugin-sdk/security-runtime";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
 import {
   DEFAULT_SIMPLEX_WS_HOST,

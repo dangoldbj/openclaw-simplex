@@ -39,6 +39,46 @@ describe("buildAndSendSimplexMessages", () => {
     expect(messages.slice(1).every((message) => message.quotedItemId === undefined)).toBe(true);
   });
 
+  it("sends nothing once the host has cancelled the delivery", async () => {
+    const send = sendSpy();
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      buildAndSendSimplexMessages({
+        cfg: {},
+        account,
+        chatRef: "@3",
+        text: "hello",
+        send,
+        signal: controller.signal,
+      })
+    ).rejects.toThrow();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("stops before sending when cancelled while the quote is being looked up", async () => {
+    const send = sendSpy();
+    const controller = new AbortController();
+
+    await expect(
+      buildAndSendSimplexMessages({
+        cfg: {},
+        account,
+        chatRef: "@3",
+        text: "hello",
+        replyToId: 52,
+        send,
+        lookupQuote: async () => {
+          controller.abort();
+          return photo;
+        },
+        signal: controller.signal,
+      })
+    ).rejects.toThrow();
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it("does not look anything up for a reply without a quote", async () => {
     const lookupQuote = vi.fn(async () => photo);
 

@@ -261,7 +261,6 @@ function setupRegistration(
       clearRunContext: () => {},
     },
     lifecycle: { registerRuntimeLifecycle: () => {} },
-    registerDetachedTaskRuntime: () => {},
     registerMemoryCapability: () => {},
     registerMemoryPromptSupplement: () => {},
     registerMemoryPromptPreparation: () => {},
@@ -271,6 +270,8 @@ function setupRegistration(
     registerBoardWidgetContentKind: () => {},
     registerSessionCatalog: () => {},
     registerWorkerProvider: () => {},
+    registerGatewayAccessPolicy: () => {},
+    registerDecisionProvider: () => {},
     registerCommand: () => {},
     on: (hookName, handler) => {
       hooks.push({ events: hookName, handler });

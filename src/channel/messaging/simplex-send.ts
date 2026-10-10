@@ -122,8 +122,11 @@ export async function buildAndSendSimplexMessages(params: {
   send?: SimplexSendFn;
   lookupQuote?: SimplexQuoteLookup;
   logError?: (message: string) => void;
+  signal?: AbortSignal;
 }): Promise<{ messageId?: string; receipt?: MessageReceipt }> {
+  params.signal?.throwIfAborted();
   const quote = await resolveOutboundQuote(params);
+  params.signal?.throwIfAborted();
   const composedMessages = await buildComposedMessages({
     cfg: params.cfg,
     accountId: params.account.accountId,
@@ -133,6 +136,7 @@ export async function buildAndSendSimplexMessages(params: {
     audioAsVoice: params.audioAsVoice,
     quote,
   });
+  params.signal?.throwIfAborted();
   return await sendSimplexComposedMessages({
     chatRef: params.chatRef,
     composedMessages,
