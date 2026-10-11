@@ -44,9 +44,9 @@ export const simplexLifecycle: SimplexLifecycleAdapter = {
 
   /**
    * Per-account state is keyed by account id, so it would otherwise outlive the
-   * account and be inherited by a later account that reuses the same id. Both
-   * stores carry TTLs, which is why this is a tidy-up rather than a correctness
-   * fix today — it stops being optional once the stores become durable.
+   * account and be inherited by a later account that reuses the same id. The
+   * stores are durable, so without this a new account would see the old one's
+   * pending requests, and its messages could be dropped as already seen.
    */
   onAccountRemoved: async ({ accountId, runtime }) => {
     try {
