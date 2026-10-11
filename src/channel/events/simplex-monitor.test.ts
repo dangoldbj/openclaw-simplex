@@ -437,8 +437,9 @@ describe("simplex monitor event handling", () => {
     });
 
     it.each([
-      [undefined, 11],
+      [undefined, undefined],
       ["off", undefined],
+      ["first", 11],
     ] as const)("honors reply-to mode %s on the pairing reply", async (replyToMode, expected) => {
       mocks.resolveSimplexInboundAccess.mockImplementation(async (params) => {
         await params.replyToPairingRequest("pairing code");

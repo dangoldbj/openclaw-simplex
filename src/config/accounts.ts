@@ -148,11 +148,14 @@ export function assertSimplexAccountReady(account: ResolvedSimplexAccount): void
 }
 
 /**
- * Reply quoting defaults to `first` rather than the host's `all`: a SimpleX
- * quote embeds the quoted message, so quoting every part repeats it each time.
+ * Reply quoting defaults to `off`, which leaves quoting to the agent: OpenClaw
+ * keeps explicit reply tags and the message tool's `replyTo` under `off`. In a
+ * one-to-one chat an automatic quote of the message just received adds little,
+ * and a SimpleX quote embeds the quoted message, thumbnail included, which
+ * counts against the message size limit.
  */
 export function resolveSimplexReplyToMode(
   account: ResolvedSimplexAccount
 ): NonNullable<SimplexAccountConfig["replyToMode"]> {
-  return account.config.replyToMode ?? "first";
+  return account.config.replyToMode ?? "off";
 }

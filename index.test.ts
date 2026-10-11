@@ -478,8 +478,8 @@ describe("simplex reply quoting", () => {
   const resolveReplyToMode = (cfg: OpenClawConfig, accountId?: string) =>
     simplexPlugin.threading?.resolveReplyToMode?.({ cfg, accountId });
 
-  it("quotes only the first message of a reply by default", () => {
-    expect(resolveReplyToMode(simplexConfiguredChannel)).toBe("first");
+  it("leaves reply quoting to the agent by default", () => {
+    expect(resolveReplyToMode(simplexConfiguredChannel)).toBe("off");
   });
 
   it("honors a configured reply-to mode, account over channel", () => {
@@ -487,13 +487,13 @@ describe("simplex reply quoting", () => {
       channels: {
         "openclaw-simplex": {
           connection: { wsUrl: "ws://127.0.0.1:5225" },
-          replyToMode: "off",
+          replyToMode: "first",
           accounts: { work: { replyToMode: "all" } },
         },
       },
     } as OpenClawConfig;
 
-    expect(resolveReplyToMode(cfg)).toBe("off");
+    expect(resolveReplyToMode(cfg)).toBe("first");
     expect(resolveReplyToMode(cfg, "work")).toBe("all");
   });
 });

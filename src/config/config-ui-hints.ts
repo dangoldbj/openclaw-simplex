@@ -125,7 +125,7 @@ const accountScopedUiHints = withAccountScope({
   },
   replyToMode: {
     label: "Reply Quoting",
-    help: 'Which replies quote the message they answer: "first" (default) quotes only the first message of a reply, "all" quotes every message, "off" never quotes.',
+    help: 'Which replies quote the message they answer automatically: "off" (default) leaves quoting to the agent, "first" quotes the first message of every reply, "all" quotes every message.',
     advanced: true,
   },
   blockStreaming: {
