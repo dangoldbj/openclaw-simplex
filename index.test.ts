@@ -272,6 +272,7 @@ function setupRegistration(
     registerWorkerProvider: () => {},
     registerGatewayAccessPolicy: () => {},
     registerDecisionProvider: () => {},
+    registerStorageProvider: () => {},
     registerCommand: () => {},
     on: (hookName, handler) => {
       hooks.push({ events: hookName, handler });

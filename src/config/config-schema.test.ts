@@ -81,20 +81,20 @@ describe("simplex config schema manifest", () => {
     expect(channelManifest?.description).toBe(packageJson.openclaw?.channel?.blurb);
   });
 
-  it("advertises the 2026.9.9 compatibility and channel selection metadata", () => {
+  it("advertises the 2026.10.1 compatibility and channel selection metadata", () => {
     // Only npm reads the peer range, and npm sorts a prerelease-shaped `latest`
     // such as 2026.7.1-2 below 2026.7.1, so it needs `-0`. OpenClaw reads the
     // other floors and treats `x.y.z-N` as a correction release *above* x.y.z,
     // so `-0` there would reject the exact host version it names.
-    expect(packageJson.peerDependencies?.openclaw).toBe(">=2026.9.9-0");
-    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.9.9");
+    expect(packageJson.peerDependencies?.openclaw).toBe(">=2026.10.1-0");
+    expect(packageJson.openclaw?.install?.minHostVersion).toBe(">=2026.10.1");
     expect(packageJson.openclaw?.compat).toEqual({
-      pluginApi: ">=2026.9.9",
-      minGatewayVersion: "2026.9.9",
+      pluginApi: ">=2026.10.1",
+      minGatewayVersion: "2026.10.1",
     });
     expect(packageJson.openclaw?.build).toEqual({
-      openclawVersion: "2026.9.9",
-      pluginSdkVersion: "2026.9.9",
+      openclawVersion: "2026.10.1",
+      pluginSdkVersion: "2026.10.1",
     });
     expect(packageJson.openclaw?.channel).toMatchObject({
       detailLabel: "SimpleX Chat",
