@@ -1,8 +1,8 @@
 import type { ChannelAccountSnapshot } from "openclaw/plugin-sdk/channel-contract";
-import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
 import type { RuntimeEnv } from "openclaw/plugin-sdk/runtime-env";
 import { describeError } from "../../errors.js";
 import type { SimplexClient } from "../../simplex/runtime/client.js";
+import { withTimeout } from "../../timeout.js";
 
 /**
  * Bounded well below the account's `commandTimeoutMs` (20s by default): this

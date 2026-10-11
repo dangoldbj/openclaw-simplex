@@ -1,5 +1,4 @@
 import type { OpenClawConfig } from "openclaw/plugin-sdk/channel-core";
-import { withTimeout } from "openclaw/plugin-sdk/infra-runtime";
 import { renderQrPngDataUrl } from "openclaw/plugin-sdk/media-runtime";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk/plugin-entry";
 import { listEnabledSimplexAccounts } from "../../config/accounts.js";
@@ -14,6 +13,7 @@ import { listSimplexContactRequests } from "../../simplex/services/contact-reque
 import { listSimplexInvites } from "../../simplex/services/invites.js";
 import { getSimplexRuntimeStatus } from "../../simplex/services/runtime-status.js";
 import { listStoredSimplexPairingRequests } from "../../simplex/state/pairing-requests.js";
+import { withTimeout } from "../../timeout.js";
 
 export const SIMPLEX_PANEL_PATH = `/plugins/${SIMPLEX_PLUGIN_ID}/panel`;
 
