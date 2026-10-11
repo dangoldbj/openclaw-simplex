@@ -91,6 +91,22 @@ function readStringField(payload: unknown, fields: string[]): string | null {
   return null;
 }
 
+/**
+ * simplex-chat answers `/version` with
+ * `{ type: "versionInfo", versionInfo: { version: "6.4.8.0", ... }, chatMigrations: [...] }`,
+ * so the version is one level down. Top-level fields are kept as a fallback.
+ */
+function readRuntimeVersion(payload: unknown): string | null {
+  const versionInfo =
+    payload && typeof payload === "object"
+      ? (payload as Record<string, unknown>).versionInfo
+      : undefined;
+  return (
+    readStringField(versionInfo, ["version"]) ??
+    readStringField(payload, ["version", "simplexVersion", "simplexChatVersion", "chatVersion"])
+  );
+}
+
 function isUnsupportedRuntimeError(message: string): boolean {
   const normalized = message.toLowerCase();
   return [
@@ -205,12 +221,7 @@ async function probeRuntimeVersion(
   const command = "/version";
   try {
     const payload = await client.runCommand(command);
-    const version = readStringField(payload, [
-      "version",
-      "simplexVersion",
-      "simplexChatVersion",
-      "chatVersion",
-    ]);
+    const version = readRuntimeVersion(payload);
     return {
       runtimeVersion: version ?? null,
       probe: valueProbe(version ? "supported" : "unknown", {

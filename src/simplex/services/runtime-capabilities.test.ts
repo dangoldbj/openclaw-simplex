@@ -25,6 +25,35 @@ describe("simplex runtime capability probes", () => {
     clearSimplexDirectoryProbeCache();
   });
 
+  it("reads the runtime version from the nested versionInfo that simplex-chat returns", async () => {
+    const result = await probeSimplexRuntimeCapabilities({
+      account: testSimplexAccount(),
+      client: client({
+        runCommand: async (command) =>
+          command === "/version"
+            ? {
+                type: "versionInfo",
+                versionInfo: { version: "6.4.8.0" },
+                chatMigrations: [],
+              }
+            : {},
+      }),
+    });
+
+    expect(result.capabilities.runtimeVersion).toBe("6.4.8.0");
+    expect(result.capabilities.version).toMatchObject({ state: "supported", value: "6.4.8.0" });
+  });
+
+  it("reports an unknown version when /version answers without one", async () => {
+    const result = await probeSimplexRuntimeCapabilities({
+      account: testSimplexAccount(),
+      client: client({ runCommand: async () => ({ type: "versionInfo", versionInfo: {} }) }),
+    });
+
+    expect(result.capabilities.runtimeVersion).toBeNull();
+    expect(result.capabilities.version.state).toBe("unknown");
+  });
+
   it("marks a supported command response", async () => {
     const result = await probeSimplexCommandSupport({
       client: client(),
