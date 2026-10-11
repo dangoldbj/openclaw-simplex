@@ -140,8 +140,8 @@ The key runtime boundary is explicit: OpenClaw does not own or supervise the `si
 
 Requirements:
 
-- OpenClaw `2026.9.3` or newer
-- Node.js as required by your OpenClaw release. `2026.9.3` needs `>=24.16.0 <25` or `>=26.1.0` — Node 22, 23 and 25 are **not** supported. Check with `npm view openclaw engines.node`
+- OpenClaw `2026.10.1` or newer
+- Node.js as required by your OpenClaw release. `2026.10.1` needs `>=24.16.0 <25` or `>=26.1.0` — Node 22, 23 and 25 are **not** supported. Check with `npm view openclaw engines.node`
 - an external `simplex-chat` runtime reachable over WebSocket
 
 ### 1. Install SimpleX CLI (`simplex-chat`)
