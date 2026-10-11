@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-10-11
+
+Requires OpenClaw `2026.10.1` or newer.
+
+### Breaking
+
+- **Raised the minimum supported OpenClaw version to `2026.10.1`.** OpenClaw `2026.10.1` removed `openclaw/plugin-sdk/infra-runtime`, so 2.1.0 fails to load on it with `ERR_PACKAGE_PATH_NOT_EXPORTED` (#35). The plugin no longer imports it and moves off the other SDK surfaces deprecated in `2026.9.x`. Hosts older than `2026.10.1` should stay on 2.1.0. Thanks to @lundog for the report and diagnosis.
+- **Replies no longer quote the message they answer by default.** `replyToMode` now defaults to `off`, which leaves quoting to the agent: OpenClaw still honours a quote the agent asks for, through a reply tag or the message tool's `replyTo`. Set `replyToMode: "first"` to restore the 2.1.0 behaviour. The pairing reply follows the same setting.
+
+### Changed
+
+- **Plugin state survives gateway restarts.** OpenClaw `2026.10.1` gives every plugin durable state, so pending contact requests, pending pairing approvals and the record of already-handled messages are now kept in OpenClaw's plugin state store instead of memory. A restart no longer forgets who is waiting or re-sends handled messages to the agent. If the store fails, the plugin keeps working from memory and logs one warning per store. Disabling or removing the plugin clears this state.
+- Inbound messages go through OpenClaw's inbound turn API (`channel.inbound.buildContext` and `dispatch`). Delivery stays at-least-once: a message is marked handled only after OpenClaw has recorded the turn.
+- Outbound sends stop when OpenClaw cancels them, including between preparing media and sending.
+- Remote media for outbound messages is saved straight to OpenClaw's media store when no outbound folder is configured, instead of being held in memory first.
+
+### Fixed
+
+- `openclaw simplex runtime doctor` and the Control UI tab report the runtime version again. They read only top-level fields of the `/version` response, while `simplex-chat` nests it as `versionInfo.version`, so the version always showed as `null` (#27).
+- The agent now sees the notice for an attachment it could not receive (too large, timed out, or missing a usable path). The notice was added only to the displayed body, not to the text the agent reads.
+- Other plugins' `message_sending` hooks now run on SimpleX replies. The plugin's own delivery hook replaced OpenClaw's default, which skipped them.
+
+### Documentation
+
+- Every quick-start command starts `simplex-chat` with `--files-folder` and `--temp-folder`. Without them the runtime saves received files to `~/Downloads`, which macOS may block OpenClaw from reading, so photos reached the agent without their contents (#27). Troubleshooting covers the `EPERM` error this produces.
+
 ## [2.1.0] - 2026-10-09
 
 Requires OpenClaw `2026.9.3` or newer (unchanged).
